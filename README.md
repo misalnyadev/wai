@@ -30,7 +30,8 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   - **Video saat chat** — adegan bicara selama mengobrol, bisa tampil sebagai **panel 16:9** di
     atas pesan atau **latar penuh** memenuhi area chat
   - **Video video call** — klip yang diputar saat menekan tombol video call (suara video ikut
-    aktif bila browser mengizinkan); area status bar ikut digelapkan agar terasa layar penuh
+    aktif bila browser mengizinkan, tanpa dobel dengan rekaman telepon); ada **zoom 100–200%**
+    untuk memotong bingkai hitam, dan area status bar ikut digelapkan agar terasa layar penuh
   - **Suara telepon (MP3/WAV)** — rekaman suara untuk panggilan telepon; tanpa rekaman, panggilan
     memakai suara perangkat bawaan
   Video disimpan di perangkat (tidak ikut file cadangan). Di header chat ada tombol **video call**

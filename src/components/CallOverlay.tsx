@@ -58,39 +58,46 @@ export function CallOverlay({
 
   const audioId = media?.callAudioId ?? null;
   const audioUrl = useCallAudioUrl(audioId);
-  const hasRecording = Boolean(audioId);
+  // Rekaman telepon & TTS hanya untuk panggilan suara — video call memakai
+  // suara dari video itu sendiri (kalau diputar dua-duanya jadi dobel).
+  const voiceCall = mode === "audio";
+  const hasRecording = Boolean(audioId) && voiceCall;
+  const zoom = Math.min(2, Math.max(1, (media?.callVideoZoom ?? 100) / 100));
 
   const greeting = (character.greeting?.trim() || `Halo, ini ${character.name}.`).slice(0, 220);
 
   useEscape(onClose);
 
-  // Warnai area status bar supaya video terlihat sampai tepi atas layar.
+  // Warnai area status bar supaya video terlihat sampai tepi atas layar,
+  // dan hentikan suara chat yang mungkin masih berjalan.
   useEffect(() => {
     setStatusBarColor("#0a0a0c");
+    stopSpeaking();
     return () => resetStatusBarColor();
   }, []);
 
   useEffect(() => {
-    if (audioId) ensureCallAudio(audioId);
-  }, [audioId]);
+    if (audioId && voiceCall) ensureCallAudio(audioId);
+  }, [audioId, voiceCall]);
 
   // "Menyambungkan" panggilan sebentar, lalu karakter menyapa.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setConnected(true);
-      // Rekaman MP3 diputar oleh <audio>; tanpa rekaman pakai suara perangkat.
-      if (!hasRecording) speak(greeting, voice);
+      // Hanya panggilan suara: rekaman MP3 diputar oleh <audio>, dan bila tidak
+      // ada rekaman pakai suara perangkat. Video call pakai suara videonya.
+      if (voiceCall && !hasRecording) speak(greeting, voice);
     }, CONNECT_DELAY);
     return () => window.clearTimeout(timer);
-  }, [greeting, voice, hasRecording]);
+  }, [greeting, voice, hasRecording, voiceCall]);
 
   // Putar rekaman suara telepon begitu tersambung (dan ikuti tombol bisukan).
   useEffect(() => {
     const el = audioRef.current;
-    if (!connected || !audioUrl || !el) return;
+    if (!connected || !audioUrl || !el || !voiceCall) return;
     el.muted = muted;
     void el.play().catch(() => setAudioBlocked(true));
-  }, [connected, audioUrl, muted]);
+  }, [connected, audioUrl, muted, voiceCall]);
 
   // Penghitung durasi panggilan.
   useEffect(() => {
@@ -129,7 +136,7 @@ export function CallOverlay({
       role="dialog"
       aria-modal="true"
       aria-label={`${mode === "video" ? "Video call" : "Panggilan suara"} dengan ${character.name}`}
-      className="fade-in fixed inset-0 z-[65] overflow-hidden bg-[#0a0a0c] text-white"
+      className="fade-in fixed inset-0 z-[65] h-[100dvh] w-full overflow-hidden bg-[#0a0a0c] text-white"
     >
       {/* Latar: klip video call karakter, atau gradasi gelap */}
       <div className="absolute inset-0 isolate overflow-hidden">
@@ -141,6 +148,7 @@ export function CallOverlay({
             talkingVideoId={media?.callVideoId ? undefined : media?.chatVideoId}
             talking={speaking}
             sound={!muted}
+            zoom={zoom}
           />
         ) : (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,#1d1d24,#0a0a0c_72%)]" />
@@ -224,7 +232,7 @@ export function CallOverlay({
         </div>
       </div>
 
-      {audioUrl && (
+      {audioUrl && voiceCall && (
         <audio ref={audioRef} src={audioUrl} preload="auto" className="hidden" />
       )}
     </div>

@@ -140,6 +140,9 @@ function sanitizeMedia(media: CharacterMedia | null | undefined): CharacterMedia
       : undefined,
     callVideoId: id(media.callVideoId),
     callVideoPosterUrl: poster(media.callVideoPosterUrl),
+    callVideoZoom: media.callVideoId
+      ? Math.min(200, Math.max(100, Number(media.callVideoZoom) || 100))
+      : undefined,
     callAudioId: id(media.callAudioId),
     callAudioName: id(media.callAudioName),
   };

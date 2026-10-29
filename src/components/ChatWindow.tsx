@@ -207,7 +207,7 @@ export function ChatWindow({
             aria-label={`Video call dengan ${character.name}`}
             title="Video call"
           >
-            <VideoCallIcon className="h-7 w-7" />
+            <VideoCallIcon className="h-8 w-8" />
           </button>
         )}
         {onAudioCall && (
@@ -217,7 +217,7 @@ export function ChatWindow({
             aria-label={`Panggilan suara dengan ${character.name}`}
             title="Panggilan suara"
           >
-            <PhoneCallIcon className="h-7 w-7" />
+            <PhoneCallIcon className="h-6 w-6" />
           </button>
         )}
       </div>
