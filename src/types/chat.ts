@@ -38,6 +38,8 @@ export type VoiceSettings = {
   pitch: number;
   /** Volume 0–1. */
   volume: number;
+  /** Jeda antar kalimat (ms) — bikin terdengar seperti mengambil napas. */
+  pause: number;
 };
 
 /** Latar area chat: bawaan tema, warna pilihan, atau gambar sendiri. */
@@ -94,8 +96,9 @@ export const DEFAULT_VOICE: VoiceSettings = {
   enabled: false,
   voiceURI: "",
   rate: 0.97,
-  pitch: 1.02,
+  pitch: 1.0,
   volume: 1,
+  pause: 150,
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {

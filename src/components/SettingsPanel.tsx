@@ -321,7 +321,7 @@ export function SettingsPanel({
   const body = (
     <>
       <div
-        className={`flex items-center justify-between border-b border-line bg-header px-5 pb-3 ${
+        className={`flex items-center justify-between bg-header px-5 pb-3 ${
           inline ? "pt-[max(1rem,env(safe-area-inset-top))]" : "pt-4"
         }`}
       >

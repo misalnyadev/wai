@@ -41,8 +41,8 @@ export function Sidebar({
   );
 
   return (
-    <div className="flex h-full w-full flex-col border-r border-line bg-surface md:w-[380px] lg:w-[400px]">
-      <div className="flex items-center justify-between gap-2 border-b border-line bg-header px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3">
+    <div className="flex h-full w-full flex-col bg-surface md:w-[380px] lg:w-[400px]">
+      <div className="flex items-center justify-between gap-2 bg-header px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3">
         <button
           onClick={onOpenProfile}
           className="flex min-w-0 items-center gap-2 text-left md:pointer-events-none"
@@ -149,7 +149,7 @@ export function Sidebar({
               <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-ink" />
             )}
             <Avatar name={c.name} src={c.avatarUrl} size={48} />
-            <div className="min-w-0 flex-1 border-b border-line/70 pb-3 pt-0.5">
+            <div className="min-w-0 flex-1 pb-3 pt-0.5">
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-semibold text-ink">{c.name}</p>
                 <span className="shrink-0 text-[12px] text-muted">
