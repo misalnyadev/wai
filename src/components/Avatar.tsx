@@ -1,7 +1,7 @@
 const PALETTE = [
   "from-rose-400 to-orange-300",
   "from-violet-400 to-indigo-300",
-  "from-emerald-400 to-teal-300",
+  "from-slate-400 to-slate-300",
   "from-amber-400 to-pink-300",
   "from-sky-400 to-cyan-300",
 ];
@@ -38,7 +38,7 @@ export function Avatar({
         src={src}
         alt={name}
         style={style}
-        className={`shrink-0 rounded-full object-cover ${ring ? "ring-2 ring-emerald-400 ring-offset-2 ring-offset-surface" : ""}`}
+        className={`shrink-0 rounded-full object-cover ${ring ? "ring-2 ring-ink/15 ring-offset-2 ring-offset-surface" : ""}`}
       />
     );
   }
@@ -48,7 +48,7 @@ export function Avatar({
       style={style}
       className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${colorFor(
         name || "?"
-      )} font-semibold text-white ${ring ? "ring-2 ring-emerald-400 ring-offset-2 ring-offset-surface" : ""}`}
+      )} font-semibold text-white ${ring ? "ring-2 ring-ink/15 ring-offset-2 ring-offset-surface" : ""}`}
     >
       <span style={{ fontSize: size * 0.38 }}>{initials || "?"}</span>
     </div>

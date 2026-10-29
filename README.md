@@ -14,7 +14,8 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
 - 🔑 **Multi API key + auto-fallback** — beberapa key per provider dicoba berurutan; kalau kena
   limit (429) key berikutnya dipakai otomatis, dan bila semua key habis aplikasi bisa pindah ke
   provider lain (bisa dimatikan di Setelan)
-- 🎨 **Tema terang / gelap / ikut sistem** — tema gelap netral (abu arang) tanpa tint hijau
+- 🎨 **Tema terang / gelap / ikut sistem** — tampilan monokrom netral (abu), tanpa aksen hijau;
+  tema gelap abu arang, tombol utama otomatis kontras di kedua tema
 - 📱 **Navigasi ala WhatsApp**: rail di desktop, tab bawah di HP (Chat · Karakter · Profil · Setelan)
 - 📷 Kirim foto (dikompres otomatis di browser)
 - 💾 **Cadangan & pemulihan** data (JSON) + hapus semua data perangkat
@@ -33,7 +34,7 @@ src/
 │  ├─ api/models/route.ts  # daftar model aktif untuk sebuah API key
 │  ├─ api/health/route.ts
 │  ├─ fonts/               # font Plus Jakarta Sans (self-host, di-preload)
-│  ├─ globals.css          # token warna tema + palet hijau WhatsApp
+│  ├─ globals.css          # token warna tema (netral terang & gelap, tanpa aksen hijau)
 │  ├─ layout.tsx           # metadata, OG image, manifest PWA, skrip anti-FOUC tema
 │  └─ page.tsx
 ├─ components/

@@ -62,9 +62,9 @@ export function Sidebar({
           />
           <span className="min-w-0">
             <h1 className="font-display truncate text-lg font-extrabold tracking-tight text-ink">
-              WaiChat<span className="text-brand-accent">.</span>
+              WaiChat<span className="text-muted">.</span>
             </h1>
-            <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted">
               {profile.nickname?.trim()
                 ? `hai, ${profile.nickname.trim()}`
                 : "privat · di perangkatmu"}
@@ -83,12 +83,12 @@ export function Sidebar({
           >
             <SettingsIcon className="h-5 w-5" />
             {!hasProviders && (
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 animate-pulse rounded-full bg-rose-500 ring-2 ring-header" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 animate-pulse rounded-full bg-ink/40 ring-2 ring-header" />
             )}
           </button>
           <button
             onClick={onNewCharacter}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-accent text-white shadow-sm transition hover:brightness-95 active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-brand-ink shadow-sm transition hover:bg-brand-strong active:scale-95"
             title="Buat karakter baru"
             aria-label="Buat karakter baru"
           >
@@ -98,7 +98,7 @@ export function Sidebar({
       </div>
 
       <div className="px-3 py-2.5">
-        <div className="flex items-center gap-2 rounded-full bg-surface-2 px-3 py-2 ring-1 ring-line transition focus-within:ring-2 focus-within:ring-emerald-400">
+        <div className="flex items-center gap-2 rounded-full bg-surface-2 px-3 py-2 ring-1 ring-line transition focus-within:ring-2 focus-within:ring-ink/20">
           <SearchIcon className="h-4 w-4 shrink-0 text-muted" />
           <input
             value={query}
@@ -122,7 +122,7 @@ export function Sidebar({
       {!hasProviders && (
         <button
           onClick={onOpenSettings}
-          className="mx-3 mb-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-left text-xs font-medium text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/15"
+          className="mx-3 mb-2 rounded-xl border border-line bg-surface-2 px-3 py-2 text-left text-xs font-medium text-ink-soft transition hover:text-ink"
         >
           Belum ada API key · atur di sini
         </button>
@@ -146,7 +146,7 @@ export function Sidebar({
             }`}
           >
             {activeId === c.id && (
-              <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-emerald-500" />
+              <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-ink" />
             )}
             <Avatar name={c.name} src={c.avatarUrl} size={48} />
             <div className="min-w-0 flex-1 border-b border-line/70 pb-3 pt-0.5">

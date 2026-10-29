@@ -32,7 +32,7 @@ export function NavRail({
     <nav className="hidden w-[74px] shrink-0 flex-col items-center gap-1 border-r border-line bg-header py-3 md:flex">
       <button
         onClick={() => onChange("profile")}
-        className="mb-2 rounded-full ring-2 ring-transparent transition hover:ring-brand-accent/60"
+        className="mb-2 rounded-full ring-2 ring-transparent transition hover:ring-ink/15"
         title={profile.name ? `Profil: ${profile.name}` : "Isi profil kamu"}
         aria-label="Profil saya"
       >
@@ -53,13 +53,13 @@ export function NavRail({
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
                 active
-                  ? "bg-brand-accent/15 text-brand"
+                  ? "bg-ink/10 text-ink"
                   : "text-ink-soft group-hover:bg-line/60 group-hover:text-ink"
               }`}
             >
               <Icon className="h-5 w-5" />
             </span>
-            <span className={`text-[10px] font-medium ${active ? "text-brand" : "text-ink-soft"}`}>
+            <span className={`text-[10px] font-medium ${active ? "text-ink" : "text-ink-soft"}`}>
               {label}
             </span>
           </button>
@@ -101,7 +101,7 @@ export function MobileTabBar({
               aria-current={active}
               aria-label={label}
               className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition active:scale-[0.97] ${
-                active ? "bg-brand-accent/15 text-brand" : "text-ink-soft"
+                active ? "bg-ink/10 text-ink" : "text-ink-soft"
               }`}
             >
               <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
