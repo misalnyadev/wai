@@ -2,8 +2,6 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
-import { VIEWPORT_INIT_SCRIPT } from "@/lib/viewport";
-import { AppViewport } from "@/components/AppViewport";
 import "./globals.css";
 
 /**
@@ -108,13 +106,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id" className={displayFont.variable} suppressHydrationWarning>
       <head>
-        {/* Tinggi viewport + tema diterapkan sebelum paint supaya tidak ada
-            kedipan tata letak / kilatan putih saat aplikasi dibuka. */}
-        <script dangerouslySetInnerHTML={{ __html: VIEWPORT_INIT_SCRIPT }} />
+        {/* Terapkan tema tersimpan sebelum paint supaya tidak ada kilatan putih. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="text-ink antialiased">
-        <AppViewport />
         <div className="status-scrim" aria-hidden="true" />
         {children}
       </body>
