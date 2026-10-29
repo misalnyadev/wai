@@ -105,6 +105,27 @@ body {
 }
 
 /*
+ * Karena konten sekarang boleh masuk ke area status bar (black-translucent),
+ * tema terang diberi selubung gelap tipis di paling atas supaya ikon jam dan
+ * baterai tetap terbaca. Di tema gelap selubung ini tidak perlu.
+ */
+@media (display-mode: standalone) {
+  .status-scrim {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    height: env(safe-area-inset-top, 0px);
+    z-index: 45;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0));
+  }
+
+  .dark .status-scrim {
+    background: none;
+  }
+}
+
+/*
  * Warna area paling atas (status bar iOS / overscroll) dibuat sama dengan header
  * aplikasi supaya tidak terlihat seperti garis terputus.
  */

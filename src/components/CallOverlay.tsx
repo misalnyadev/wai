@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import type { Character, CharacterMedia, ChatBackground, VoiceSettings } from "@/types/chat";
 import { ensureCallAudio, useCallAudioUrl } from "@/lib/callAudio";
 import { speak, stopSpeaking, useIsSpeaking } from "@/lib/voice";
@@ -11,6 +12,17 @@ import { ChatVideoBackground } from "./ChatVideo";
 import { CallEndIcon, SpeakerIcon, SpeakerOffIcon } from "./icons";
 
 const CONNECT_DELAY = 1400;
+
+const subscribeNothing = () => () => {};
+
+/** true hanya setelah komponen hidup di browser (aman untuk portal). */
+function useIsClient() {
+  return useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false
+  );
+}
 
 function formatDuration(total: number) {
   const minutes = Math.floor(total / 60)
@@ -41,6 +53,7 @@ export function CallOverlay({
   voice: VoiceSettings;
   onClose: () => void;
 }) {
+  const isClient = useIsClient();
   const [connected, setConnected] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
@@ -72,8 +85,14 @@ export function CallOverlay({
   // dan hentikan suara chat yang mungkin masih berjalan.
   useEffect(() => {
     setStatusBarColor("#0a0a0c");
+    // Latar body ikut digelapkan supaya tidak ada sisa warna terang di tepi.
+    const previousBody = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = "#0a0a0c";
     stopSpeaking();
-    return () => resetStatusBarColor();
+    return () => {
+      resetStatusBarColor();
+      document.body.style.backgroundColor = previousBody;
+    };
   }, []);
 
   useEffect(() => {
@@ -131,12 +150,12 @@ export function CallOverlay({
 
   const showWave = connected && !muted && (speaking || (hasRecording && mode === "audio"));
 
-  return (
+  const content = (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={`${mode === "video" ? "Video call" : "Panggilan suara"} dengan ${character.name}`}
-      className="fade-in fixed inset-0 z-[65] h-[100dvh] w-full overflow-hidden bg-[#0a0a0c] text-white"
+      className="fade-in fixed inset-0 z-[80] h-[100dvh] w-full overflow-hidden bg-[#0a0a0c] text-white"
     >
       {/* Latar: klip video call karakter, atau gradasi gelap */}
       <div className="absolute inset-0 isolate overflow-hidden">
@@ -237,4 +256,9 @@ export function CallOverlay({
       )}
     </div>
   );
+
+  // Portal ke <body> supaya layar panggilan benar-benar di atas segalanya —
+  // tidak terpotong status bar, app-shell, atau stacking context mana pun.
+  if (!isClient) return null;
+  return createPortal(content, document.body);
 }
