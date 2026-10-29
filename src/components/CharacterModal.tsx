@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Character, Provider } from "@/types/chat";
+import type { Character, ChatBackground, Provider } from "@/types/chat";
 import { fileToDataUrl } from "@/lib/imageClient";
 import { genId } from "@/lib/storage";
 import { useEscape } from "@/lib/useEscape";
 import { Avatar } from "./Avatar";
+import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
 import { CameraIcon, XIcon } from "./icons";
 
 const PERSONALITY_PLACEHOLDER = `Contoh:
@@ -34,6 +35,9 @@ export function CharacterModal({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initial?.avatarUrl ?? null);
   const [providerId, setProviderId] = useState<string>(initial?.providerId ?? "");
   const [model, setModel] = useState(initial?.model ?? "");
+  const [chatBackground, setChatBackground] = useState<ChatBackground | null>(
+    initial?.chatBackground ?? null
+  );
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -68,6 +72,7 @@ export function CharacterModal({
       greeting: greeting.trim(),
       providerId: providerId || null,
       model: model.trim() || null,
+      chatBackground,
       preview: initial?.preview ?? (greeting.trim() || "Mulai percakapan baru"),
       createdAt: initial?.createdAt ?? now,
       updatedAt: initial?.updatedAt ?? now,
@@ -202,6 +207,15 @@ export function CharacterModal({
                 className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-ink-soft">Latar chat karakter</label>
+            <ChatBackgroundPicker
+              value={chatBackground}
+              onChange={setChatBackground}
+              allowInherit
+            />
           </div>
 
           {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}

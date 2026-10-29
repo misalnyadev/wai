@@ -6,6 +6,7 @@ import {
   EMPTY_PROFILE,
   type AppSettings,
   type Character,
+  type ChatBackground,
   type ChatMessage,
   type Provider,
   type UserProfile,
@@ -24,6 +25,7 @@ import {
   saveUserProfile,
 } from "@/lib/storage";
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
+import { speak } from "@/lib/voice";
 import { Avatar } from "./Avatar";
 import { Sidebar } from "./Sidebar";
 import { ChatWindow } from "./ChatWindow";
@@ -33,6 +35,7 @@ import { CharacterModal } from "./CharacterModal";
 import { CharacterProfileModal } from "./CharacterProfileModal";
 import { CharactersView } from "./CharactersView";
 import { UserProfileView } from "./UserProfileView";
+import { VoiceView } from "./VoiceView";
 import { MobileTabBar, NavRail, type AppView } from "./Navigation";
 import { PlusIcon, SettingsIcon, XIcon } from "./icons";
 
@@ -292,6 +295,7 @@ export function ChatApp() {
         };
         updateMessages(activeId, (l) => [...l, reply]);
         touchCharacter(activeId, bubbles[i]);
+        if (settings.voice.enabled) speak(bubbles[i], settings.voice);
         if (i < bubbles.length - 1) await sleep(350);
       }
       setTypingFor(null);
@@ -329,6 +333,16 @@ export function ChatApp() {
       );
       showToast("Karakter diperbarui.");
     }
+  }
+
+  /** Simpan latar khusus karakter (null = ikut setelan global). */
+  function handleCharacterBackground(id: string, next: ChatBackground | null) {
+    persistCharacters(
+      charactersRef.current.map((c) => (c.id === id ? { ...c, chatBackground: next } : c))
+    );
+    setProfileCharacter((current) =>
+      current && current.id === id ? { ...current, chatBackground: next } : current
+    );
   }
 
   function handleClearChat(id: string) {
@@ -428,10 +442,11 @@ export function ChatApp() {
                       character={activeCharacter}
                       messages={activeMessages}
                       isTyping={typingFor === activeId}
-                      background={settings.chatBackground}
+                      background={activeCharacter.chatBackground ?? settings.chatBackground}
                       onBack={() => setMobileShowChat(false)}
                       onOpenProfile={() => setProfileCharacter(activeCharacter)}
                       onImageClick={(url) => setLightbox(url)}
+                      onSpeak={(text) => speak(text, settings.voice)}
                     />
                     <Composer onSend={handleSend} disabled={typingFor === activeId} />
                   </>
@@ -491,6 +506,13 @@ export function ChatApp() {
             />
           )}
 
+          {view === "voice" && (
+            <VoiceView
+              settings={settings.voice}
+              onChange={(voice) => persistSettings({ ...settings, voice })}
+            />
+          )}
+
           {view === "profile" && <UserProfileView profile={profile} onSave={persistProfile} />}
 
           {view === "settings" && (
@@ -540,6 +562,7 @@ export function ChatApp() {
           }}
           onClearChat={() => handleClearChat(profileCharacter.id)}
           onDelete={() => handleDeleteCharacter(profileCharacter.id)}
+          onBackgroundChange={(next) => handleCharacterBackground(profileCharacter.id, next)}
         />
       )}
 

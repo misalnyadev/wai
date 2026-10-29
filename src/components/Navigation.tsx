@@ -3,9 +3,9 @@
 import type { UserProfile } from "@/types/chat";
 import { Avatar } from "./Avatar";
 import { ThemeQuickToggle } from "./ThemeToggle";
-import { ChatsIcon, GridIcon, SettingsIcon, UserIcon } from "./icons";
+import { ChatsIcon, GridIcon, PhoneIcon, SettingsIcon, UserIcon } from "./icons";
 
-export type AppView = "chats" | "characters" | "profile" | "settings";
+export type AppView = "chats" | "characters" | "voice" | "profile" | "settings";
 
 const ITEMS: {
   view: AppView;
@@ -14,6 +14,7 @@ const ITEMS: {
 }[] = [
   { view: "chats", label: "Chat", Icon: ChatsIcon },
   { view: "characters", label: "Karakter", Icon: GridIcon },
+  { view: "voice", label: "Suara", Icon: PhoneIcon },
   { view: "profile", label: "Profil", Icon: UserIcon },
   { view: "settings", label: "Setelan", Icon: SettingsIcon },
 ];

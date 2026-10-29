@@ -1,6 +1,7 @@
 import { CHAT_COLOR_PRESETS } from "@/lib/chatBackground";
 import {
   DEFAULT_SETTINGS,
+  DEFAULT_VOICE,
   EMPTY_PROFILE,
   providerTypeValues,
   type AppSettings,
@@ -73,8 +74,14 @@ export function genId(): string {
   return `id-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/** Karakter lama belum punya latar sendiri — anggap ikut setelan. */
+function normalizeCharacter(c: Character): Character {
+  return { ...c, chatBackground: c.chatBackground ?? null };
+}
+
 export async function getCharacters(): Promise<Character[]> {
-  return (await kvGet<Character[]>("characters")) ?? [];
+  const list = (await kvGet<Character[]>("characters")) ?? [];
+  return list.map(normalizeCharacter);
 }
 
 export async function saveCharacters(list: Character[]): Promise<void> {
@@ -136,7 +143,20 @@ function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings
     };
   }
 
-  return { ...merged, chatBackground: safe };
+  const clamp = (value: unknown, min: number, max: number, fallback: number) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+  };
+  const rawVoice = (merged.voice ?? {}) as Partial<AppSettings["voice"]>;
+  const voice = {
+    enabled: Boolean(rawVoice.enabled),
+    voiceURI: typeof rawVoice.voiceURI === "string" ? rawVoice.voiceURI : "",
+    rate: clamp(rawVoice.rate, 0.5, 1.6, DEFAULT_VOICE.rate),
+    pitch: clamp(rawVoice.pitch, 0.5, 1.6, DEFAULT_VOICE.pitch),
+    volume: clamp(rawVoice.volume, 0, 1, DEFAULT_VOICE.volume),
+  };
+
+  return { ...merged, chatBackground: safe, voice };
 }
 
 export async function getSettings(): Promise<AppSettings> {
@@ -252,7 +272,7 @@ export function isBackupData(value: unknown): value is BackupData {
 
 /** Timpa seluruh data perangkat dengan isi file cadangan. */
 export async function restoreBackup(data: BackupData): Promise<void> {
-  await saveCharacters(data.characters);
+  await saveCharacters(data.characters.map(normalizeCharacter));
   await saveProviders(cleanProviders(data.providers));
   if (data.profile) await saveUserProfile({ ...EMPTY_PROFILE, ...data.profile });
   if (data.settings) await saveSettings(normalizeSettings(data.settings));

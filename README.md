@@ -16,9 +16,14 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   provider lain (bisa dimatikan di Setelan)
 - 🎨 **Tema terang / gelap / ikut sistem** — tampilan monokrom netral (abu), tanpa aksen hijau;
   tema gelap abu arang, tombol utama otomatis kontras di kedua tema
-- 📱 **Navigasi ala WhatsApp**: rail di desktop, tab bawah di HP (Chat · Karakter · Profil · Setelan)
+- 📱 **Navigasi ala WhatsApp**: rail di desktop, kapsul kaca di HP dengan **5 menu**
+  (Chat · Karakter · Suara · Profil · Setelan)
 - 🖼️ **Latar chat custom** — pilih salah satu warna bawaan (punya versi terang & gelap) atau
-  unggah gambar sendiri, lengkap dengan pengatur keredupan agar tulisan tetap terbaca
+  unggah gambar sendiri, lengkap dengan pengatur keredupan agar tulisan tetap terbaca.
+  Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat menu ⋯ di percakapan
+- 🔊 **Suara lokal** (Web Speech API) — karakter bisa membacakan balasannya, dengan pilihan
+  suara perangkat, preset "Natural/Kalem/Ceria/Jelas", serta pengatur kecepatan, nada, dan volume.
+  Gratis, tanpa API key, dan tidak dikirim ke mana pun
 - 📷 Kirim foto (dikompres otomatis di browser)
 - 💾 **Cadangan & pemulihan** data (JSON) + hapus semua data perangkat
 - 🔒 Tanpa database: semua chat, foto, profil, dan API key tersimpan **di browser perangkat**
@@ -43,11 +48,13 @@ src/
 │  ├─ ChatApp.tsx          # orkestrasi state, rotasi key, fallback provider
 │  ├─ Navigation.tsx       # rail desktop + tab bawah mobile
 │  ├─ Sidebar.tsx · ChatWindow.tsx · Composer.tsx
-│  ├─ CharactersView.tsx · UserProfileView.tsx · SettingsPanel.tsx
+│  ├─ CharactersView.tsx · UserProfileView.tsx · SettingsPanel.tsx · VoiceView.tsx
+│  ├─ ChatBackgroundPicker.tsx  # pemilih latar (global & per karakter)
 │  └─ CharacterModal.tsx · CharacterProfileModal.tsx · ThemeToggle.tsx
 ├─ lib/
 │  ├─ ai/                  # gemini, openai-compatible, daftar model, promptBuilder, error mapping
 │  ├─ chatBackground.ts    # preset warna & gaya latar chat
+│  ├─ voice.ts             # pembacaan balasan (Web Speech API) + cache daftar suara
 │  ├─ imageClient.ts       # kompres foto di browser sebelum dikirim
 │  ├─ storage.ts           # IndexedDB + profil + setelan + cadangan
 │  └─ theme.ts             # mode tema & sinkronisasi preferensi sistem
