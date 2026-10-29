@@ -74,9 +74,54 @@ export function genId(): string {
   return `id-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/**
+ * Pastikan latar chat yang tersimpan masih valid (mis. preset sudah dihapus
+ * atau video sudah tidak ada). Hasil `null` = ikut setelan global.
+ */
+function sanitizeBackground(background: ChatBackground | null | undefined): ChatBackground | null {
+  if (!background) return null;
+
+  if (background.kind === "preset") {
+    return CHAT_COLOR_PRESETS.some((p) => p.id === background.id) ? background : { kind: "default" };
+  }
+
+  if (background.kind === "animated") {
+    return CHAT_ANIMATED_PRESETS.some((p) => p.id === background.id)
+      ? background
+      : { kind: "default" };
+  }
+
+  if (background.kind === "image") {
+    if (typeof background.imageUrl !== "string" || !background.imageUrl.startsWith("data:image/")) {
+      return { kind: "default" };
+    }
+    return {
+      kind: "image",
+      imageUrl: background.imageUrl,
+      dim: Math.min(0.7, Math.max(0, Number(background.dim) || 0)),
+    };
+  }
+
+  if (background.kind === "video") {
+    if (typeof background.videoId !== "string" || !background.videoId) return { kind: "default" };
+    return {
+      kind: "video",
+      videoId: background.videoId,
+      posterUrl:
+        typeof background.posterUrl === "string" && background.posterUrl.startsWith("data:image/")
+          ? background.posterUrl
+          : "",
+      dim: Math.min(0.7, Math.max(0, Number(background.dim) || 0)),
+      layout: background.layout === "tile" ? "tile" : "full",
+    };
+  }
+
+  return { kind: "default" };
+}
+
 /** Karakter lama belum punya latar sendiri — anggap ikut setelan. */
 function normalizeCharacter(c: Character): Character {
-  return { ...c, chatBackground: c.chatBackground ?? null };
+  return { ...c, chatBackground: sanitizeBackground(c.chatBackground) };
 }
 
 export async function getCharacters(): Promise<Character[]> {
@@ -123,30 +168,9 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
   await kvSet("user-profile", profile);
 }
 
-/** Pastikan latar chat yang tersimpan masih valid (mis. setelah preset dihapus). */
 function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings {
   const merged: AppSettings = { ...DEFAULT_SETTINGS, ...(saved ?? {}) };
-  const background = merged.chatBackground as ChatBackground | undefined;
-
-  let safe: ChatBackground = { kind: "default" };
-  if (background?.kind === "preset" && CHAT_COLOR_PRESETS.some((p) => p.id === background.id)) {
-    safe = background;
-  } else if (
-    background?.kind === "animated" &&
-    CHAT_ANIMATED_PRESETS.some((p) => p.id === background.id)
-  ) {
-    safe = background;
-  } else if (
-    background?.kind === "image" &&
-    typeof background.imageUrl === "string" &&
-    background.imageUrl.startsWith("data:image/")
-  ) {
-    safe = {
-      kind: "image",
-      imageUrl: background.imageUrl,
-      dim: Math.min(0.7, Math.max(0, Number(background.dim) || 0)),
-    };
-  }
+  const safe: ChatBackground = sanitizeBackground(merged.chatBackground) ?? { kind: "default" };
 
   const clamp = (value: unknown, min: number, max: number, fallback: number) => {
     const n = Number(value);
@@ -189,6 +213,22 @@ export async function saveMessages(characterId: string, list: ChatMessage[]): Pr
 
 export async function deleteCharacterData(characterId: string): Promise<void> {
   await kvDel(`messages:${characterId}`);
+}
+
+/* ------------------------------------------------------------------ */
+/* Video latar (blob besar — tetap di IndexedDB, bukan data URL)       */
+/* ------------------------------------------------------------------ */
+
+export async function saveVideoBlob(videoId: string, blob: Blob): Promise<void> {
+  await kvSet(`video:${videoId}`, blob);
+}
+
+export async function getVideoBlob(videoId: string): Promise<Blob | undefined> {
+  return kvGet<Blob>(`video:${videoId}`);
+}
+
+export async function deleteVideoBlob(videoId: string): Promise<void> {
+  await kvDel(`video:${videoId}`);
 }
 
 const SEED = [

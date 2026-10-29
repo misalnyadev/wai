@@ -278,3 +278,29 @@ export function SpeakerIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function SpeakerOffIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <path d="M11 5 6 9H3v6h3l5 4z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m16 9.5 5 5m0-5-5 5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function PlayIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <path d="M8 5.5v13l11-6.5z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function FilmIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+      <path d="M7 5v14M17 5v14M2.5 12h19M2.5 8.5h4.5M2.5 15.5h4.5M17 8.5h4.5M17 15.5h4.5" strokeLinecap="round" />
+    </svg>
+  );
+}

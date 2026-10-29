@@ -743,7 +743,10 @@ export function SettingsPanel({
             >
               {dataBusy === "wipe" ? "Menghapus..." : "Hapus semua data"}
             </button>
-            <p className="mt-2 text-[12px] text-muted">File cadangan memuat API key.</p>
+            <p className="mt-2 text-[12px] text-muted">
+              File cadangan memuat API key. Video latar tidak ikut tersimpan — pasang ulang setelah
+              memulihkan di perangkat lain.
+            </p>
             {dataNote && (
               <p
                 className={`mt-1 text-xs ${

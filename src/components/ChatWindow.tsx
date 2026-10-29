@@ -5,6 +5,7 @@ import type { Character, ChatBackground, ChatMessage } from "@/types/chat";
 import { chatBackgroundProps } from "@/lib/chatBackground";
 import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { Avatar } from "./Avatar";
+import { ChatVideoBackground, ChatVideoPanel } from "./ChatVideo";
 import { BackIcon, DoubleCheckIcon, SpeakerIcon } from "./icons";
 
 function formatTime(iso: string) {
@@ -79,6 +80,7 @@ export function ChatWindow({
   const [atBottom, setAtBottom] = useState(true);
   const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
   const backdrop = chatBackgroundProps(background, isDark);
+  const video = background?.kind === "video" ? background : null;
 
   useEffect(() => {
     if (atBottom && scrollRef.current) {
@@ -110,6 +112,14 @@ export function ChatWindow({
       className={`chat-wallpaper flex h-full min-h-0 flex-1 flex-col ${backdrop.className}`}
       style={backdrop.style}
     >
+      {video && video.layout !== "tile" && (
+        <ChatVideoBackground
+          videoId={video.videoId}
+          posterUrl={video.posterUrl}
+          dim={video.dim}
+        />
+      )}
+
       {/* Header */}
       <div className="z-10 flex items-center gap-3 bg-header px-2 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4">
         <button
@@ -156,6 +166,19 @@ export function ChatWindow({
           ⋯
         </button>
       </div>
+
+      {video?.layout === "tile" && (
+        <div className="px-3 pt-3 sm:px-4">
+          <div className="mx-auto w-full max-w-lg">
+            <ChatVideoPanel
+              videoId={video.videoId}
+              posterUrl={video.posterUrl}
+              dim={video.dim}
+              name={character.name}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div

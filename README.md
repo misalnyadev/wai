@@ -22,7 +22,11 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   unggah gambar sendiri, lengkap dengan pengatur keredupan agar tulisan tetap terbaca.
   Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat menu ⋯ di percakapan.
   Ada juga **5 latar animasi** halus (Bokeh, Aurora, Gelombang, Bintang, Kabut) bergaya
-  virtual background video call — otomatis berhenti bila perangkat memakai mode "kurangi gerakan"
+  virtual background video call — otomatis berhenti bila perangkat memakai mode "kurangi gerakan".
+  Untuk karakter yang "hidup", tempel **video pendek** (MP4/WebM, maks 24 MB — mis. hasil rekaman
+  atau video dari Flow) sebagai latar: tampil **latar penuh** di belakang pesan, atau **panel 16:9**
+  di atas pesan ala video call lengkap dengan tombol suara. Video diputar berulang, tanpa suara
+  secara bawaan, dan disimpan di perangkat (tidak ikut file cadangan)
 - 🔊 **Suara lokal** (Web Speech API) — karakter bisa membacakan balasannya. Teks dipecah per
   kalimat dengan jeda alami, suara "Enhanced/Premium" diprioritaskan otomatis, ada preset
   "Natural/Hangat/Santai/Ceria/Jelas" plus pengatur kecepatan, nada, volume, dan jeda kalimat.

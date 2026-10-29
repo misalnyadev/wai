@@ -70,7 +70,7 @@ export function animatedSwatch(preset: ChatAnimatedPreset, isDark: boolean): str
 }
 
 /**
- * Properti untuk area chat: kelas animasi (bila dipilih) + style latar.
+ * Properti untuk area chat: kelas animasi/video (bila dipilih) + style latar.
  * `default` dibiarkan kosong supaya memakai pola bawaan `.chat-wallpaper`.
  */
 export function chatBackgroundProps(
@@ -98,6 +98,15 @@ export function chatBackgroundProps(
         backgroundColor: isDark ? "#0b0b0d" : "#f2f3f5",
         backgroundImage: "none",
       },
+    };
+  }
+
+  if (background.kind === "video") {
+    // Mode panel: biarkan pola bawaan tema, videonya tampil sebagai kartu di atas pesan.
+    if (background.layout === "tile") return { className: "", style: {} };
+    return {
+      className: "chat-video",
+      style: { backgroundColor: "#07070a", backgroundImage: "none" },
     };
   }
 

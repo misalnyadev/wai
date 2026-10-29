@@ -228,6 +228,15 @@ select:focus-visible {
 }
 
 /* ------------------------------------------------------------------ */
+/* Latar video — lapisan video di belakang konten (isolate + z negatif) */
+/* ------------------------------------------------------------------ */
+.chat-video {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
 /* Latar animasi — nuansa "virtual background" video call, monokrom    */
 /* ------------------------------------------------------------------ */
 .chat-anim {

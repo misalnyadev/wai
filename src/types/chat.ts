@@ -42,12 +42,22 @@ export type VoiceSettings = {
   pause: number;
 };
 
-/** Latar area chat: bawaan tema, warna, gambar sendiri, atau animasi. */
+/** Latar area chat: bawaan tema, warna, gambar sendiri, animasi, atau video. */
 export type ChatBackground =
   | { kind: "default" }
   | { kind: "preset"; id: string }
   | { kind: "image"; imageUrl: string; dim: number }
-  | { kind: "animated"; id: string };
+  | { kind: "animated"; id: string }
+  | {
+      kind: "video";
+      /** Kunci blob video di IndexedDB (blob-nya tidak disimpan di objek ini). */
+      videoId: string;
+      /** Bingkai pertama sebagai gambar pembuka & pratinjau pemilih. */
+      posterUrl: string;
+      dim: number;
+      /** `full` = memenuhi area chat, `tile` = panel 16:9 di atas pesan. */
+      layout?: "full" | "tile";
+    };
 
 export type AppSettings = {
   /** Pindah otomatis ke provider lain saat semua key provider ini gagal. */
