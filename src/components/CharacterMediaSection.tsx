@@ -75,6 +75,15 @@ export function CharacterMediaSection({
   const callAudioRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<Slot | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Nilai sementara slider zoom — disimpan saat jari dilepas. */
+  const [zoomDraft, setZoomDraft] = useState<number | null>(null);
+  const zoom = zoomDraft ?? media?.callVideoZoom ?? 100;
+
+  function commitZoom(percent: number) {
+    setZoomDraft(null);
+    if (!media) return;
+    onChange({ ...media, callVideoZoom: percent });
+  }
 
   async function pickVideo(slot: "chatVideo" | "callVideo", file: File) {
     setBusy(slot);
@@ -196,6 +205,31 @@ export function CharacterMediaSection({
         onPick={() => callVideoRef.current?.click()}
         onRemove={() => void dropVideo("callVideo")}
       />
+
+      {media?.callVideoId && (
+        <div className="rounded-xl border border-line px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-ink-soft">Zoom video call</span>
+            <span className="text-xs font-semibold text-ink">{zoom}%</span>
+          </div>
+          <input
+            type="range"
+            min={100}
+            max={200}
+            step={5}
+            value={zoom}
+            onChange={(e) => setZoomDraft(Number(e.target.value))}
+            onPointerUp={(e) => commitZoom(Number(e.currentTarget.value))}
+            onKeyUp={(e) => commitZoom(Number(e.currentTarget.value))}
+            onBlur={(e) => commitZoom(Number(e.currentTarget.value))}
+            aria-label="Zoom video panggilan"
+            className="mt-1 w-full accent-ink"
+          />
+          <p className="mt-1 text-[12px] leading-snug text-muted">
+            Perbesar bila ada bingkai hitam di tepi video, supaya layar panggilan penuh.
+          </p>
+        </div>
+      )}
 
       <MediaRow
         label="Suara telepon"

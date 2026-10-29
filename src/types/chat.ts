@@ -88,6 +88,8 @@ export type CharacterMedia = {
   /** Klip adegan video call. */
   callVideoId?: string;
   callVideoPosterUrl?: string;
+  /** Perbesaran klip panggilan (100–200%) untuk memotong bingkai hitam di tepi. */
+  callVideoZoom?: number;
   /** Rekaman suara (MP3) untuk panggilan telepon. */
   callAudioId?: string;
   callAudioName?: string;

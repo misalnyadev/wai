@@ -16,6 +16,8 @@ type VideoBackgroundProps = {
   talking?: boolean;
   /** Izinkan suara video (bawaan: senyap, mengikuti aturan autoplay browser). */
   sound?: boolean;
+  /** Perbesaran media (1 = normal). Berguna untuk memotong bingkai hitam. */
+  zoom?: number;
 };
 
 /**
@@ -83,6 +85,7 @@ export function ChatVideoBackground({
   talkingPosterUrl,
   talking = false,
   sound = false,
+  zoom = 1,
 }: VideoBackgroundProps) {
   const reduced = usePrefersReducedMotion();
   const baseRef = useRef<HTMLVideoElement>(null);
@@ -107,6 +110,7 @@ export function ChatVideoBackground({
         className={`absolute inset-0 transition-opacity duration-300 ${
           talkingActive ? "opacity-0" : "opacity-100"
         }`}
+        style={zoom !== 1 ? { transform: `scale(${zoom})` } : undefined}
       >
         {posterUrl && (
           <img src={posterUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
