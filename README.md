@@ -27,10 +27,11 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   (pesan memakai latar transparan tanpa blur, kepekatannya bisa diatur 30–95%).
 - 🎬 **Media pribadi karakter** (halaman karakter — ketuk foto/nama) — tiga klip opsional, boleh
   diisi salah satu saja:
-  - **Video saat chat** — adegan bicara yang tampil di atas pesan selama mengobrol
+  - **Video saat chat** — adegan bicara selama mengobrol, bisa tampil sebagai **panel 16:9** di
+    atas pesan atau **latar penuh** memenuhi area chat
   - **Video video call** — klip yang diputar saat menekan tombol video call (suara video ikut
-    aktif bila browser mengizinkan)
-  - **Suara telepon (MP3)** — rekaman suara untuk panggilan telepon; tanpa rekaman, panggilan
+    aktif bila browser mengizinkan); area status bar ikut digelapkan agar terasa layar penuh
+  - **Suara telepon (MP3/WAV)** — rekaman suara untuk panggilan telepon; tanpa rekaman, panggilan
     memakai suara perangkat bawaan
   Video disimpan di perangkat (tidak ikut file cadangan). Di header chat ada tombol **video call**
   dan **panggilan suara** ala WhatsApp; profil karakter cukup dibuka dengan mengetuk foto/nama.

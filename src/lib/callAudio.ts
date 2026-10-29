@@ -10,7 +10,7 @@ import { deleteAudioBlob, genId, getAudioBlob, saveAudioBlob } from "@/lib/stora
  * sesi — sama seperti video — supaya file besar tidak masuk ke objek setelan.
  */
 
-export const MAX_AUDIO_MB = 12;
+export const MAX_AUDIO_MB = 25;
 const MAX_AUDIO_BYTES = MAX_AUDIO_MB * 1024 * 1024;
 
 export type CallAudioImport = {
@@ -87,8 +87,8 @@ function readDuration(file: File): Promise<number> {
 
 /** Impor rekaman suara untuk panggilan telepon. */
 export async function importCallAudio(file: File): Promise<CallAudioImport> {
-  const isAudio = file.type.startsWith("audio/") || /\.(mp3|m4a|aac|ogg|wav)$/i.test(file.name);
-  if (!isAudio) throw new Error("Pilih file suara (MP3).");
+  const isAudio = file.type.startsWith("audio/") || /\.(mp3|m4a|aac|ogg|wav|wave)$/i.test(file.name);
+  if (!isAudio) throw new Error("Pilih file suara (MP3 atau WAV).");
   if (file.size > MAX_AUDIO_BYTES) {
     throw new Error(
       `File suara terlalu besar (${Math.round(file.size / 1024 / 1024)} MB). Maksimal ${MAX_AUDIO_MB} MB.`

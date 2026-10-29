@@ -103,6 +103,8 @@ export function ChatWindow({
   const chatVideo = chatMedia?.chatVideoId
     ? { videoId: chatMedia.chatVideoId, posterUrl: chatMedia.chatVideoPosterUrl ?? "" }
     : null;
+  // "Latar penuh" = video menutup area chat; "Panel atas" = kartu di atas pesan.
+  const chatVideoFull = Boolean(chatVideo && (chatMedia?.chatVideoLayout ?? "tile") === "full");
   // Karakter dianggap "bicara" saat mengetik atau saat suaranya dibacakan —
   // dipakai untuk berganti ke klip video bicara bila pengguna memasangnya.
   const speaking = useIsSpeaking();
@@ -135,9 +137,19 @@ export function ChatWindow({
 
   return (
     <div
-      className={`chat-wallpaper flex h-full min-h-0 flex-1 flex-col ${backdrop.className}`}
+      className={`chat-wallpaper flex h-full min-h-0 flex-1 flex-col ${backdrop.className} ${
+        chatVideoFull ? "chat-video" : ""
+      }`}
       style={backdrop.style}
     >
+      {chatVideoFull && chatVideo && (
+        <ChatVideoBackground
+          videoId={chatVideo.videoId}
+          posterUrl={chatVideo.posterUrl}
+          dim={0.12}
+        />
+      )}
+
       {video && video.layout !== "tile" && (
         <ChatVideoBackground
           videoId={video.videoId}
@@ -191,29 +203,29 @@ export function ChatWindow({
         {onVideoCall && (
           <button
             onClick={onVideoCall}
-            className="rounded-full p-2.5 text-ink-soft transition hover:bg-line/60 hover:text-ink"
+            className="rounded-full p-2 text-ink-soft transition hover:bg-line/60 hover:text-ink"
             aria-label={`Video call dengan ${character.name}`}
             title="Video call"
           >
-            <VideoCallIcon className="h-6 w-6" />
+            <VideoCallIcon className="h-7 w-7" />
           </button>
         )}
         {onAudioCall && (
           <button
             onClick={onAudioCall}
-            className="rounded-full p-2.5 text-ink-soft transition hover:bg-line/60 hover:text-ink"
+            className="rounded-full p-2 text-ink-soft transition hover:bg-line/60 hover:text-ink"
             aria-label={`Panggilan suara dengan ${character.name}`}
             title="Panggilan suara"
           >
-            <PhoneCallIcon className="h-6 w-6" />
+            <PhoneCallIcon className="h-7 w-7" />
           </button>
         )}
       </div>
 
-      {(chatVideo || video?.layout === "tile") && (
+      {((chatVideo && !chatVideoFull) || video?.layout === "tile") && (
         <div className="px-3 pt-3 sm:px-4">
           <div className="mx-auto w-full max-w-lg">
-            {chatVideo ? (
+            {chatVideo && !chatVideoFull ? (
               <ChatVideoPanel
                 videoId={chatVideo.videoId}
                 posterUrl={chatVideo.posterUrl}

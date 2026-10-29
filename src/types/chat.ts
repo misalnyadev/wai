@@ -83,6 +83,8 @@ export type CharacterMedia = {
   /** Klip yang tampil di atas pesan selama mengobrol (adegan bicara). */
   chatVideoId?: string;
   chatVideoPosterUrl?: string;
+  /** `tile` = panel 16:9 di atas pesan, `full` = memenuhi area chat. */
+  chatVideoLayout?: "tile" | "full";
   /** Klip adegan video call. */
   callVideoId?: string;
   callVideoPosterUrl?: string;
