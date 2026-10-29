@@ -105,7 +105,7 @@ export function Sidebar({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cari karakter"
             aria-label="Cari karakter"
-            className="w-full bg-transparent text-base text-ink outline-none placeholder:text-muted sm:text-sm"
+            className="min-w-0 w-full bg-transparent text-base text-ink outline-none placeholder:text-muted sm:text-sm"
           />
           {query && (
             <button
