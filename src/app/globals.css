@@ -194,10 +194,26 @@ html {
   border-radius: 999px;
 }
 
-/* Cincin fokus netral (tanpa warna aksen) */
-:focus-visible {
+/* Cincin fokus netral — hanya untuk navigasi keyboard (tombol & tautan) */
+:focus-visible:not(input):not(textarea):not(select) {
   outline: 2px solid var(--ink-soft);
   outline-offset: 2px;
+}
+
+/*
+ * Field isian: tidak ada efek garis/cincin sama sekali saat fokus maupun
+ * diketik — cukup kursor yang berkedip. Ditulis di luar @layer dengan
+ * !important supaya menang dari utility Tailwind dan gaya bawaan browser
+ * (Safari/Chrome). Border diam (border-line / ring-line) tidak diubah.
+ */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
 }
 
 /* Wallpaper chat ala WhatsApp: doodle halus di atas krem hangat (versi gelap ikut tema) */
