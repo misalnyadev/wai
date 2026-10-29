@@ -133,6 +133,11 @@ function sanitizeMedia(media: CharacterMedia | null | undefined): CharacterMedia
   const next: CharacterMedia = {
     chatVideoId: id(media.chatVideoId),
     chatVideoPosterUrl: poster(media.chatVideoPosterUrl),
+    chatVideoLayout: media.chatVideoId
+      ? media.chatVideoLayout === "full"
+        ? "full"
+        : "tile"
+      : undefined,
     callVideoId: id(media.callVideoId),
     callVideoPosterUrl: poster(media.callVideoPosterUrl),
     callAudioId: id(media.callAudioId),

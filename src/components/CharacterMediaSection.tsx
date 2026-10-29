@@ -157,6 +157,33 @@ export function CharacterMediaSection({
         onRemove={() => void dropVideo("chatVideo")}
       />
 
+      {media?.chatVideoId && (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2">
+          <span className="text-xs font-medium text-ink-soft">Tampilan video chat</span>
+          <div className="flex gap-0.5 rounded-full bg-surface-2 p-0.5">
+            {[
+              { id: "tile" as const, label: "Panel atas" },
+              { id: "full" as const, label: "Latar penuh" },
+            ].map((option) => {
+              const active = (media.chatVideoLayout ?? "tile") === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onChange({ ...media, chatVideoLayout: option.id })}
+                  className={`rounded-full px-2.5 py-1 text-[12px] font-medium transition ${
+                    active ? "bg-surface text-ink shadow-sm" : "text-ink-soft hover:text-ink"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <MediaRow
         label="Video video call"
         hint={
@@ -175,7 +202,7 @@ export function CharacterMediaSection({
         hint={
           media?.callAudioId
             ? (media.callAudioName ?? "Rekaman suara aktif.")
-            : "MP3 rekaman suara untuk panggilan telepon."
+            : "Rekaman MP3/WAV untuk panggilan telepon."
         }
         active={Boolean(media?.callAudioId)}
         icon={<SpeakerIcon className="h-4 w-4" />}
@@ -213,7 +240,7 @@ export function CharacterMediaSection({
       <input
         ref={callAudioRef}
         type="file"
-        accept="audio/*"
+        accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/wave,audio/mp4,audio/aac,audio/ogg,audio/*"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];

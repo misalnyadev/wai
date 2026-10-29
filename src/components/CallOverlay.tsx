@@ -5,6 +5,7 @@ import type { Character, CharacterMedia, ChatBackground, VoiceSettings } from "@
 import { ensureCallAudio, useCallAudioUrl } from "@/lib/callAudio";
 import { speak, stopSpeaking, useIsSpeaking } from "@/lib/voice";
 import { useEscape } from "@/lib/useEscape";
+import { resetStatusBarColor, setStatusBarColor } from "@/lib/theme";
 import { Avatar } from "./Avatar";
 import { ChatVideoBackground } from "./ChatVideo";
 import { CallEndIcon, SpeakerIcon, SpeakerOffIcon } from "./icons";
@@ -62,6 +63,12 @@ export function CallOverlay({
   const greeting = (character.greeting?.trim() || `Halo, ini ${character.name}.`).slice(0, 220);
 
   useEscape(onClose);
+
+  // Warnai area status bar supaya video terlihat sampai tepi atas layar.
+  useEffect(() => {
+    setStatusBarColor("#0a0a0c");
+    return () => resetStatusBarColor();
+  }, []);
 
   useEffect(() => {
     if (audioId) ensureCallAudio(audioId);

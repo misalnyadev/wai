@@ -17,6 +17,20 @@ function syncStatusBarColor(resolved: "light" | "dark") {
     .forEach((meta) => meta.setAttribute("content", color));
 }
 
+/** Warnai area status bar untuk layar gelap penuh (mis. video call). */
+export function setStatusBarColor(color: string) {
+  if (typeof document === "undefined") return;
+  document
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((meta) => meta.setAttribute("content", color));
+}
+
+/** Kembalikan warna status bar sesuai tema yang sedang aktif. */
+export function resetStatusBarColor() {
+  if (typeof document === "undefined") return;
+  syncStatusBarColor(document.documentElement.classList.contains("dark") ? "dark" : "light");
+}
+
 export const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: "light", label: "Terang" },
   { value: "dark", label: "Gelap" },
