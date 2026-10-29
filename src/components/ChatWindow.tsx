@@ -1,12 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import type { Character, ChatBackground, ChatMessage } from "@/types/chat";
 import { chatBackgroundProps } from "@/lib/chatBackground";
 import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
+import { copyText } from "@/lib/clipboard";
 import { Avatar } from "./Avatar";
 import { useIsSpeaking } from "@/lib/voice";
 import { ChatVideoBackground, ChatVideoPanel } from "./ChatVideo";
+import { MessageActionsSheet, MessageHoverActions } from "./MessageActions";
 import { BackIcon, DoubleCheckIcon, PhoneCallIcon, SpeakerIcon, VideoCallIcon } from "./icons";
 
 function formatTime(iso: string) {
@@ -78,6 +87,8 @@ export function ChatWindow({
   onSpeak,
   onVideoCall,
   onAudioCall,
+  onDeleteMessage,
+  onRegenerate,
 }: {
   character: Character;
   messages: ChatMessage[];
@@ -93,9 +104,18 @@ export function ChatWindow({
   onSpeak?: (text: string) => void;
   onVideoCall?: () => void;
   onAudioCall?: () => void;
+  /** Hapus satu pesan (tekan lama / klik kanan pada gelembung). */
+  onDeleteMessage?: (messageId: string) => void;
+  /** Minta balasan baru untuk pesan terakhir (hanya bila memungkinkan). */
+  onRegenerate?: () => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  /** Pesan yang sedang dibuka lembar aksinya (tekan lama / klik kanan). */
+  const [actionMessage, setActionMessage] = useState<ChatMessage | null>(null);
+  const pressTimer = useRef<number | null>(null);
+  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
+  const didLongPress = useRef(false);
   const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
   const backdrop = chatBackgroundProps(background, isDark);
   const video = background?.kind === "video" ? background : null;
@@ -116,7 +136,55 @@ export function ChatWindow({
     }
   }, [messages, isTyping, atBottom]);
 
-  // Tandai pesan pertama tiap hari untuk pemisah tanggal ala WhatsApp.
+  // Bersihkan timer tekan lama saat percakapan ditutup / berganti karakter.
+  useEffect(() => {
+    return () => {
+      if (pressTimer.current !== null) window.clearTimeout(pressTimer.current);
+    };
+  }, []);
+
+  function clearPressTimer() {
+    if (pressTimer.current !== null) {
+      window.clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  }
+
+  function startLongPress(e: ReactPointerEvent, message: ChatMessage) {
+    // Mouse memakai hover / klik kanan; tekan lama hanya untuk layar sentuh.
+    if (e.pointerType === "mouse") return;
+    pressOrigin.current = { x: e.clientX, y: e.clientY };
+    didLongPress.current = false;
+    clearPressTimer();
+    pressTimer.current = window.setTimeout(() => {
+      pressTimer.current = null;
+      didLongPress.current = true;
+      setActionMessage(message);
+      navigator.vibrate?.(12);
+    }, 420);
+  }
+
+  function cancelLongPress() {
+    clearPressTimer();
+    pressOrigin.current = null;
+  }
+
+  function cancelOnMove(e: ReactPointerEvent) {
+    const origin = pressOrigin.current;
+    if (!origin) return;
+    if (Math.abs(e.clientX - origin.x) > 10 || Math.abs(e.clientY - origin.y) > 10) {
+      cancelLongPress();
+    }
+  }
+
+  // Balasan karakter paling akhir — satu-satunya yang boleh diulang.
+  const lastReplyId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") return messages[i].id;
+    }
+    return null;
+  }, [messages]);
+
   const lastReply = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i].role === "assistant" && messages[i].content.trim()) return messages[i].content;
@@ -124,6 +192,7 @@ export function ChatWindow({
     return "";
   }, [messages]);
 
+  // Tandai pesan pertama tiap hari untuk pemisah tanggal ala WhatsApp.
   const items = useMemo(
     () =>
       messages.map((message, index) => {
@@ -258,6 +327,8 @@ export function ChatWindow({
       >
         <div className="mx-auto w-full max-w-3xl">
           {items.map(({ message: m, divider }) => {
+            const canSpeak = m.role === "assistant" && Boolean(m.content.trim()) && Boolean(onSpeak);
+            const canRegenerate = Boolean(onRegenerate) && m.id === lastReplyId && !isTyping;
             return (
               <div key={m.id}>
                 {divider && (
@@ -268,37 +339,69 @@ export function ChatWindow({
                   </div>
                 )}
                 <div
-                  className={`mb-1.5 flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`group mb-1.5 flex items-end gap-1 ${
+                    m.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setActionMessage(m);
+                  }}
+                  onPointerDown={(e) => startLongPress(e, m)}
+                  onPointerMove={cancelOnMove}
+                  onPointerUp={cancelLongPress}
+                  onPointerCancel={cancelLongPress}
+                  onPointerLeave={cancelLongPress}
                 >
-                  <div
-                    className={`bubble-in relative max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[75%] ${
-                      m.role === "user"
-                        ? "rounded-br-sm bg-bubble-out text-bubble-out-ink"
-                        : "rounded-bl-sm bg-bubble-in text-bubble-in-ink"
-                    } ${m.pending ? "opacity-60" : ""}`}
-                    style={
-                      glass
-                        ? {
-                            backgroundColor: `color-mix(in oklab, var(--bubble-${
-                              m.role === "user" ? "out" : "in"
-                            }) ${glassOpacity}%, transparent)`,
-                          }
-                        : undefined
-                    }
-                  >
-                    {m.imageUrl && (
-                      <img
-                        src={m.imageUrl}
-                        alt="lampiran foto"
-                        onClick={() => onImageClick(m.imageUrl!)}
-                        className="mb-1.5 max-h-64 w-full cursor-pointer rounded-lg object-cover transition hover:opacity-90"
+                  <div className="relative max-w-[85%] sm:max-w-[75%]">
+                    {onDeleteMessage && (
+                      <MessageHoverActions
+                        side={m.role === "user" ? "right" : "left"}
+                        canSpeak={canSpeak}
+                        canRegenerate={canRegenerate}
+                        onCopy={() => copyText(m.content)}
+                        onSpeak={() => onSpeak?.(m.content)}
+                        onRegenerate={() => onRegenerate?.()}
+                        onDelete={() => setActionMessage(m)}
                       />
                     )}
-                    {m.content && <p className="whitespace-pre-wrap break-words">{m.content}</p>}
-                    <span className="float-right ml-2 mt-1 flex translate-y-0.5 items-center gap-1 select-none text-[12px] text-ink-soft/80">
-                      {formatTime(m.createdAt)}
-                      {m.role === "user" && <Ticks pending={m.pending} />}
-                    </span>
+                    <div
+                      className={`bubble-in relative max-w-full rounded-2xl px-3 py-2 text-sm shadow-sm max-md:select-none ${
+                        m.role === "user"
+                          ? "rounded-br-sm bg-bubble-out text-bubble-out-ink"
+                          : "rounded-bl-sm bg-bubble-in text-bubble-in-ink"
+                      } ${m.pending ? "opacity-60" : ""}`}
+                      style={
+                        glass
+                          ? {
+                              backgroundColor: `color-mix(in oklab, var(--bubble-${
+                                m.role === "user" ? "out" : "in"
+                              }) ${glassOpacity}%, transparent)`,
+                            }
+                          : undefined
+                      }
+                    >
+                      {m.imageUrl && (
+                        <img
+                          src={m.imageUrl}
+                          alt="lampiran foto"
+                          onClick={() => {
+                            if (didLongPress.current) {
+                              didLongPress.current = false;
+                              return;
+                            }
+                            onImageClick(m.imageUrl!);
+                          }}
+                          className="mb-1.5 max-h-64 w-full cursor-pointer rounded-lg object-cover transition hover:opacity-90"
+                        />
+                      )}
+                      {m.content && (
+                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      )}
+                      <span className="float-right ml-2 mt-1 flex translate-y-0.5 items-center gap-1 select-none text-[12px] text-ink-soft/80">
+                        {formatTime(m.createdAt)}
+                        {m.role === "user" && <Ticks pending={m.pending} />}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -307,6 +410,22 @@ export function ChatWindow({
           {isTyping && <TypingBubble glass={glass} glassOpacity={glassOpacity} />}
         </div>
       </div>
+
+      {actionMessage && (
+        <MessageActionsSheet
+          message={actionMessage}
+          canSpeak={
+            actionMessage.role === "assistant" &&
+            Boolean(actionMessage.content.trim()) &&
+            Boolean(onSpeak)
+          }
+          canRegenerate={Boolean(onRegenerate) && actionMessage.id === lastReplyId && !isTyping}
+          onClose={() => setActionMessage(null)}
+          onSpeak={() => onSpeak?.(actionMessage.content)}
+          onRegenerate={() => onRegenerate?.()}
+          onDelete={() => onDeleteMessage?.(actionMessage.id)}
+        />
+      )}
     </div>
   );
 }

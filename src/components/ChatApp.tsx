@@ -144,10 +144,29 @@ export function ChatApp() {
     );
   }
 
+  /**
+   * Petunjuk sekali saja (per browser): aksi pesan dibuka dengan tekan lama.
+   * Sengaja tidak diulang supaya tidak mengganggu percakapan berikutnya.
+   */
+  function maybeShowActionsHint() {
+    const key = "waichat.hint-message-actions";
+    try {
+      if (window.localStorage.getItem(key)) return;
+      window.localStorage.setItem(key, "1");
+    } catch {
+      return; // localStorage diblokir (mode privat) — jangan ganggu.
+    }
+    window.setTimeout(
+      () => showToast("Tekan lama sebuah pesan untuk menyalin, membacakan, atau menghapusnya."),
+      900
+    );
+  }
+
   async function handleSelect(id: string) {
     setActiveId(id);
     setView("chats");
     setMobileShowChat(true);
+    maybeShowActionsHint();
     if (!messagesRef.current[id]) {
       const msgs = await getMessages(id).catch(() => []);
       updateMessages(id, () => msgs);
@@ -201,6 +220,27 @@ export function ChatApp() {
       }
     }
 
+    await sendTurn(character, text, imageDataUrl);
+  }
+
+  /**
+   * Satu giliran percakapan: tambahkan pesan pengguna, minta balasan ke AI,
+   * lalu tampilkan jawabannya satu gelembung demi satu gelembung.
+   * Dipakai oleh kirim biasa maupun "Ulangi balasan" agar perilakunya sama.
+   */
+  async function sendTurn(
+    character: Character,
+    text: string,
+    imageDataUrl: string | null
+  ) {
+    const characterId = character.id;
+    const primary = resolveProvider(character);
+    if (!primary) {
+      showToast("Atur API key dulu di Setelan.");
+      setView("settings");
+      return;
+    }
+
     const userMsg: ChatMessage = {
       id: genId(),
       role: "user",
@@ -210,10 +250,10 @@ export function ChatApp() {
       pending: true,
     };
 
-    const withUser = updateMessages(activeId, (l) => [...l, userMsg]);
-    saveMessages(activeId, withUser).catch(() => {});
-    touchCharacter(activeId, text || "📷 Foto");
-    setTypingFor(activeId);
+    const withUser = updateMessages(characterId, (l) => [...l, userMsg]);
+    saveMessages(characterId, withUser).catch(() => {});
+    touchCharacter(characterId, text || "📷 Foto");
+    setTypingFor(characterId);
 
     const history = withUser.slice(0, -1).slice(-20).map((m) => ({
       role: m.role,
@@ -266,14 +306,14 @@ export function ChatApp() {
         if (!data?.retryable) break;
       }
 
-      updateMessages(activeId, (l) =>
+      updateMessages(characterId, (l) =>
         l.map((m) => (m.id === userMsg.id ? { ...m, pending: false } : m))
       );
 
       if (!succeeded || !data) {
         setTypingFor(null);
         showToast(data?.error || "Gagal mendapatkan balasan. Cek API key di Setelan.");
-        saveMessages(activeId, messagesRef.current[activeId] ?? []).catch(() => {});
+        saveMessages(characterId, messagesRef.current[characterId] ?? []).catch(() => {});
         return;
       }
 
@@ -288,7 +328,7 @@ export function ChatApp() {
 
       const bubbles: string[] = data.bubbles ?? [];
       for (let i = 0; i < bubbles.length; i++) {
-        setTypingFor(activeId);
+        setTypingFor(characterId);
         await sleep(typingDelayFor(bubbles[i]));
         const reply: ChatMessage = {
           id: genId(),
@@ -297,20 +337,65 @@ export function ChatApp() {
           imageUrl: null,
           createdAt: new Date().toISOString(),
         };
-        updateMessages(activeId, (l) => [...l, reply]);
-        touchCharacter(activeId, bubbles[i]);
+        updateMessages(characterId, (l) => [...l, reply]);
+        touchCharacter(characterId, bubbles[i]);
         if (settings.voice.enabled) speak(bubbles[i], settings.voice, { append: i > 0 });
         if (i < bubbles.length - 1) await sleep(350);
       }
       setTypingFor(null);
-      saveMessages(activeId, messagesRef.current[activeId] ?? []).catch(() => {});
+      saveMessages(characterId, messagesRef.current[characterId] ?? []).catch(() => {});
     } catch {
       setTypingFor(null);
-      updateMessages(activeId, (l) =>
+      updateMessages(characterId, (l) =>
         l.map((m) => (m.id === userMsg.id ? { ...m, pending: false } : m))
       );
       showToast("Koneksi gagal. Periksa internet lalu coba lagi.");
     }
+  }
+
+  /**
+   * Hapus satu pesan (dari lembar aksi tekan lama / klik kanan).
+   * Pratinjau di daftar chat ikut disegarkan supaya tidak menunjuk teks
+   * yang sudah tidak ada.
+   */
+  function handleDeleteMessage(id: string, messageId: string) {
+    const next = updateMessages(id, (list) => list.filter((m) => m.id !== messageId));
+    saveMessages(id, next).catch(() => {});
+
+    const last = [...next].reverse().find((m) => m.content.trim() || m.imageUrl);
+    const preview = last ? last.content.trim() || "📷 Foto" : "Belum ada pesan";
+    persistCharacters(
+      charactersRef.current.map((c) => (c.id === id ? { ...c, preview } : c))
+    );
+  }
+
+  /**
+   * Ulangi balasan terakhir: buang pesan pengguna terakhir beserta balasan
+   * sesudahnya, lalu kirim ulang pesan itu supaya karakter menjawab lagi.
+   */
+  async function handleRegenerate(id: string) {
+    if (typingFor === id) return;
+    const character = charactersRef.current.find((c) => c.id === id);
+    if (!character) return;
+
+    const list = messagesRef.current[id] ?? [];
+    let lastUserIndex = -1;
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (list[i].role === "user") {
+        lastUserIndex = i;
+        break;
+      }
+    }
+    if (lastUserIndex === -1) {
+      showToast("Belum ada pesan yang bisa diulang.");
+      return;
+    }
+
+    const lastUser = list[lastUserIndex];
+    const trimmed = updateMessages(id, (l) => l.slice(0, lastUserIndex));
+    await saveMessages(id, trimmed).catch(() => {});
+
+    await sendTurn(character, lastUser.content, lastUser.imageUrl);
   }
 
   function handleSaveCharacter(character: Character, isNew: boolean) {
@@ -465,6 +550,12 @@ export function ChatApp() {
                       onOpenProfile={() => setProfileCharacter(activeCharacter)}
                       onImageClick={(url) => setLightbox(url)}
                       onSpeak={(text) => speak(text, settings.voice)}
+                      onDeleteMessage={(messageId) =>
+                        handleDeleteMessage(activeCharacter.id, messageId)
+                      }
+                      onRegenerate={() => {
+                        void handleRegenerate(activeCharacter.id);
+                      }}
                     />
                     <Composer onSend={handleSend} disabled={typingFor === activeId} />
                   </>
