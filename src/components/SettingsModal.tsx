@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Provider, ProviderType } from "@/types/chat";
-import { genId } from "@/lib/storage";
+import { buildBackup, genId, isBackupData, restoreBackup, wipeAll } from "@/lib/storage";
 import {
   BoltIcon,
   CheckIcon,
@@ -56,6 +56,9 @@ export function SettingsModal({
   const [error, setError] = useState<string | null>(null);
   const [tests, setTests] = useState<Record<string, TestState>>({});
   const [copied, setCopied] = useState(false);
+  const [dataBusy, setDataBusy] = useState<"export" | "import" | "wipe" | null>(null);
+  const [dataNote, setDataNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+  const backupInputRef = useRef<HTMLInputElement>(null);
 
   function resetForm() {
     setEditingId(null);
@@ -126,6 +129,72 @@ export function SettingsModal({
     }
     onChange(next);
     if (editingId === id) resetForm();
+  }
+
+
+  async function handleExport() {
+    setDataBusy("export");
+    setDataNote(null);
+    try {
+      const backup = await buildBackup();
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `persona-backup-${stamp}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setDataNote({
+        tone: "ok",
+        text: `Cadangan tersimpan (${backup.characters.length} karakter). Simpan file ini baik-baik.`,
+      });
+    } catch {
+      setDataNote({ tone: "err", text: "Gagal membuat cadangan. Coba lagi." });
+    } finally {
+      setDataBusy(null);
+    }
+  }
+
+  async function handleImportFile(file: File) {
+    setDataBusy("import");
+    setDataNote(null);
+    try {
+      const parsed: unknown = JSON.parse(await file.text());
+      if (!isBackupData(parsed)) {
+        setDataNote({ tone: "err", text: "File bukan cadangan Persona yang valid." });
+        return;
+      }
+      const ok = confirm(
+        `Pulihkan ${parsed.characters.length} karakter dari file ini? Data yang ada di perangkat sekarang akan ditimpa.`
+      );
+      if (!ok) return;
+      await restoreBackup(parsed);
+      setDataNote({ tone: "ok", text: "Data dipulihkan. Memuat ulang aplikasi..." });
+      setTimeout(() => window.location.reload(), 700);
+    } catch {
+      setDataNote({ tone: "err", text: "File tidak bisa dibaca. Pastikan file .json dari Persona." });
+    } finally {
+      setDataBusy(null);
+      if (backupInputRef.current) backupInputRef.current.value = "";
+    }
+  }
+
+  async function handleWipe() {
+    if (!confirm("Hapus SEMUA data di perangkat ini (karakter, chat, foto, API key)?")) return;
+    if (!confirm("Yakin? Tindakan ini tidak bisa dibatalkan. Pastikan kamu sudah mengunduh cadangan."))
+      return;
+    setDataBusy("wipe");
+    setDataNote(null);
+    try {
+      await wipeAll();
+      setDataNote({ tone: "ok", text: "Semua data dihapus. Memuat ulang aplikasi..." });
+      setTimeout(() => window.location.reload(), 700);
+    } catch {
+      setDataNote({ tone: "err", text: "Gagal menghapus data." });
+    } finally {
+      setDataBusy(null);
+    }
   }
 
   async function handleTest(p: Provider) {
@@ -375,6 +444,63 @@ export function SettingsModal({
               {editingId ? "Simpan Perubahan" : "Simpan Provider"}
             </button>
           </form>
+
+          {/* Cadangan data perangkat */}
+          <div className="mt-6 rounded-xl border border-slate-200 p-3">
+            <h3 className="text-sm font-semibold text-slate-800">Data &amp; cadangan</h3>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              Karena tidak ada server penyimpanan, chat bisa hilang bila data browser dibersihkan
+              atau kamu ganti perangkat. Unduh cadangan secara berkala.
+            </p>
+            <input
+              ref={backupInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImportFile(file);
+              }}
+            />
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={dataBusy !== null}
+                className="rounded-lg bg-slate-900 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+              >
+                {dataBusy === "export" ? "Menyiapkan..." : "Unduh cadangan"}
+              </button>
+              <button
+                type="button"
+                onClick={() => backupInputRef.current?.click()}
+                disabled={dataBusy !== null}
+                className="rounded-lg border border-slate-300 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                {dataBusy === "import" ? "Memulihkan..." : "Pulihkan cadangan"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={handleWipe}
+              disabled={dataBusy !== null}
+              className="mt-2 w-full rounded-lg border border-rose-200 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+            >
+              {dataBusy === "wipe" ? "Menghapus..." : "Hapus semua data di perangkat ini"}
+            </button>
+            <p className="mt-2 text-[11px] leading-relaxed text-amber-700">
+              ⚠️ File cadangan memuat API key-mu. Simpan di tempat aman, jangan dibagikan.
+            </p>
+            {dataNote && (
+              <p
+                className={`mt-1.5 text-xs ${
+                  dataNote.tone === "ok" ? "text-emerald-600" : "text-rose-600"
+                }`}
+              >
+                {dataNote.text}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

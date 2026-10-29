@@ -284,7 +284,7 @@ export function ChatApp() {
 
   if (!loaded) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-3 bg-[#f0f2f5]">
+      <div className="app-shell flex flex-col items-center justify-center gap-3 bg-[#f0f2f5]">
         <div className="font-display animate-pulse text-2xl font-extrabold tracking-tight text-emerald-700">
           Persona
         </div>
@@ -294,7 +294,7 @@ export function ChatApp() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-100">
+    <div className="app-shell flex w-full overflow-hidden bg-slate-100">
       <div className={`${mobileShowChat ? "hidden" : "flex"} w-full md:flex md:w-auto`}>
         <Sidebar
           characters={sorted}
@@ -428,8 +428,14 @@ export function ChatApp() {
       )}
 
       {toast && (
-        <div className="bubble-in fixed bottom-5 left-1/2 z-[70] w-max max-w-[90vw] -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg">
-          {toast}
+        <div className="pointer-events-none fixed inset-x-0 bottom-5 z-[70] flex justify-center px-4">
+          <div
+            className="bubble-in max-w-md rounded-2xl bg-slate-900/95 px-4 py-2.5 text-center text-sm text-white shadow-lg"
+            role="status"
+            aria-live="polite"
+          >
+            {toast}
+          </div>
         </div>
       )}
     </div>

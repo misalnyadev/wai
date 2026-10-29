@@ -4,7 +4,12 @@ type Options = GenerateReplyInput & {
   baseUrl: string;
   providerLabel: string;
   extraHeaders?: Record<string, string>;
+  /** Parameter opsional khusus per provider (mis. reasoning_effort untuk Grok). */
+  extraBody?: Record<string, unknown>;
 };
+
+type OpenAIContentPart = Record<string, unknown>;
+type OpenAIMessage = { role: string; content: string | OpenAIContentPart[] };
 
 /**
  * Works for any OpenAI "chat/completions"-compatible endpoint: xAI (Grok),
@@ -12,14 +17,24 @@ type Options = GenerateReplyInput & {
  * OpenAI shim, Groq-cloud, etc.)
  */
 export async function generateOpenAICompatibleReply(options: Options): Promise<string> {
-  const { apiKey, model, systemPrompt, history, userText, image, baseUrl, providerLabel, extraHeaders } =
-    options;
+  const {
+    apiKey,
+    model,
+    systemPrompt,
+    history,
+    userText,
+    image,
+    baseUrl,
+    providerLabel,
+    extraHeaders,
+    extraBody,
+  } = options;
 
   if (!model) {
     throw new AiProviderError(`Model untuk ${providerLabel} belum diatur.`);
   }
 
-  const userContent: Record<string, unknown>[] = [];
+  const userContent: OpenAIContentPart[] = [];
   if (userText) userContent.push({ type: "text", text: userText });
   if (image) {
     userContent.push({
@@ -29,10 +44,17 @@ export async function generateOpenAICompatibleReply(options: Options): Promise<s
   }
   if (userContent.length === 0) userContent.push({ type: "text", text: "(tidak ada pesan)" });
 
-  const messages = [
+  // Kalau turn ini hanya teks, kirim sebagai string biasa — beberapa endpoint
+  // (Ollama, LM Studio, sebagian gateway) lebih toleran terhadap format itu.
+  const hasImage = userContent.some((part) => part.type === "image_url");
+  const lastUserContent: string | OpenAIContentPart[] = hasImage
+    ? userContent
+    : userText || "(tidak ada pesan)";
+
+  const messages: OpenAIMessage[] = [
     { role: "system", content: systemPrompt },
     ...history.map((turn) => ({ role: turn.role, content: turn.content })),
-    { role: "user", content: userContent },
+    { role: "user", content: lastUserContent },
   ];
 
   const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
@@ -50,22 +72,44 @@ export async function generateOpenAICompatibleReply(options: Options): Promise<s
       messages,
       temperature: 1.0,
       max_tokens: 1024,
+      ...extraBody,
     }),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new AiProviderError(
-      `${providerLabel} API error (${res.status}): ${text.slice(0, 400) || res.statusText}`
-    );
+    const detail = text.slice(0, 400) || res.statusText;
+    if (res.status === 401 || res.status === 403) {
+      throw new AiProviderError(
+        `${providerLabel}: API key ditolak (${res.status}). Periksa key di Pengaturan. ${detail}`
+      );
+    }
+    if (res.status === 429) {
+      throw new AiProviderError(
+        `${providerLabel}: kuota/limit tercapai (429). Tunggu sebentar atau ganti provider/key.`
+      );
+    }
+    throw new AiProviderError(`${providerLabel} API error (${res.status}): ${detail}`);
   }
 
   const data = await res.json();
-  const textOut: string | undefined = data?.choices?.[0]?.message?.content;
+  const textOut = data?.choices?.[0]?.message?.content as unknown;
 
-  if (!textOut || !textOut.trim()) {
+  // Sebagian model reasoning mengembalikan content berupa array part.
+  const normalized =
+    typeof textOut === "string"
+      ? textOut
+      : Array.isArray(textOut)
+        ? textOut
+            .map((part) =>
+              typeof part === "string" ? part : typeof part?.text === "string" ? part.text : ""
+            )
+            .join("\n")
+        : "";
+
+  if (!normalized.trim()) {
     throw new AiProviderError(`${providerLabel} tidak mengembalikan teks balasan.`);
   }
 
-  return textOut.trim();
+  return normalized.trim();
 }

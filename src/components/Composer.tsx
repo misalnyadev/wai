@@ -17,11 +17,14 @@ export function Composer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   function handlePickFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   }
 
   function clearImage() {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImageFile(null);
     setImagePreview(null);
     if (fileRef.current) fileRef.current.value = "";
@@ -37,7 +40,7 @@ export function Composer({
   }
 
   return (
-    <div className="border-t border-slate-200 bg-[#f0f2f5] px-3 py-2.5">
+    <div className="border-t border-slate-200 bg-[#f0f2f5] px-2.5 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-3 sm:py-2.5">
       {imagePreview && (
         <div className="mb-2 flex items-center gap-2">
           <div className="relative">
@@ -66,8 +69,9 @@ export function Composer({
         <button
           onClick={() => fileRef.current?.click()}
           disabled={disabled}
-          className="mb-1 shrink-0 rounded-full p-2 text-slate-500 hover:bg-slate-200 disabled:opacity-50"
+          className="mb-0.5 shrink-0 rounded-full p-2.5 text-slate-500 transition hover:bg-slate-200 disabled:opacity-50"
           title="Kirim foto"
+          aria-label="Lampirkan foto"
         >
           <PaperclipIcon className="h-5 w-5" />
         </button>
@@ -88,7 +92,10 @@ export function Composer({
           rows={1}
           placeholder="Ketik pesan"
           disabled={disabled}
-          className="max-h-[120px] flex-1 resize-none rounded-full border-none bg-white px-4 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 disabled:opacity-60"
+          autoComplete="off"
+          enterKeyHint="send"
+          aria-label="Tulis pesan"
+          className="max-h-[120px] flex-1 resize-none rounded-full border-none bg-white px-4 py-2.5 text-base text-slate-800 outline-none placeholder:text-slate-400 disabled:opacity-60 sm:text-sm"
         />
         <button
           onClick={handleSubmit}

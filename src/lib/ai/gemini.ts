@@ -1,10 +1,36 @@
 import { AiProviderError, type GenerateReplyInput } from "./types";
 
+/** Pecah teks penjelasan request Gemini yang panjang jadi pesan ramah. */
+function describeGeminiError(status: number, raw: string): string {
+  if (status === 400 && /API key not valid/i.test(raw)) {
+    return "API key Gemini tidak valid. Ambil key baru di aistudio.google.com/apikey lalu simpan ulang di Pengaturan.";
+  }
+  if (status === 401 || status === 403) {
+    return `Gemini menolak API key (${status}). Periksa key di Pengaturan atau apakah key dibatasi untuk domain lain.`;
+  }
+  if (status === 404) {
+    return `Model Gemini tidak ditemukan. Coba model lain seperti gemini-2.5-flash. (${raw.slice(0, 160)})`;
+  }
+  if (status === 429) {
+    return "Kuota Gemini habis atau terlalu banyak permintaan (429). Tunggu sebentar atau pakai key lain.";
+  }
+  return `Gemini API error (${status}): ${raw.slice(0, 300)}`;
+}
+
+function fallbackModel(model: string) {
+  const clean = model.trim();
+  return clean.startsWith("models/") ? clean.slice("models/".length) : clean;
+}
+
 export async function generateGeminiReply(input: GenerateReplyInput): Promise<string> {
-  const { apiKey, model, systemPrompt, history, userText, image } = input;
+  const { apiKey, systemPrompt, history, userText, image } = input;
+  const model = fallbackModel(input.model);
 
   if (!apiKey) {
     throw new AiProviderError("API key Gemini belum diisi. Buka Pengaturan untuk menambahkannya.");
+  }
+  if (!model) {
+    throw new AiProviderError("Model Gemini belum diisi (contoh: gemini-2.5-flash).");
   }
 
   const contents = history.map((turn) => ({
@@ -43,6 +69,9 @@ export async function generateGeminiReply(input: GenerateReplyInput): Promise<st
         temperature: 1.05,
         topP: 0.95,
         maxOutputTokens: 1024,
+        // Gemini 2.5 menyalakan "thinking" secara default, yang membuat balasan
+        // chat terasa lambat. Matikan agar balasan kilat seperti WhatsApp asli.
+        thinkingConfig: { thinkingBudget: 0 },
       },
       safetySettings: [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
@@ -54,23 +83,31 @@ export async function generateGeminiReply(input: GenerateReplyInput): Promise<st
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new AiProviderError(
-      `Gemini API error (${res.status}): ${text.slice(0, 400) || res.statusText}`
-    );
+    const raw = await res.text().catch(() => "");
+    throw new AiProviderError(describeGeminiError(res.status, raw || res.statusText));
   }
 
   const data = await res.json();
   const candidate = data?.candidates?.[0];
   const parts = candidate?.content?.parts as { text?: string }[] | undefined;
-  const textOut = parts?.map((p) => p.text ?? "").join("\n").trim();
+  const textOut = parts
+    ?.filter((p) => !(p as { thought?: boolean }).thought)
+    .map((p) => p.text ?? "")
+    .join("\n")
+    .trim();
 
   if (!textOut) {
     const finishReason = candidate?.finishReason;
+    const blockReason = data?.promptFeedback?.blockReason;
+    if (blockReason) {
+      throw new AiProviderError(`Pesan diblokir filter keamanan Gemini (${blockReason}). Coba ubah kalimatnya.`);
+    }
     throw new AiProviderError(
-      finishReason
-        ? `Gemini tidak mengembalikan teks (finishReason: ${finishReason}).`
-        : "Gemini tidak mengembalikan teks."
+      finishReason === "MAX_TOKENS"
+        ? "Balasan Gemini terpotong sebelum sempat ditulis. Coba kirim pesan lebih singkat."
+        : finishReason
+          ? `Gemini tidak mengembalikan teks (${finishReason}). Coba lagi.`
+          : "Gemini tidak mengembalikan teks."
     );
   }
 
