@@ -6,6 +6,7 @@ import {
   EMPTY_PROFILE,
   type AppSettings,
   type Character,
+  type CharacterMedia,
   type ChatBackground,
   type ChatMessage,
   type Provider,
@@ -348,6 +349,16 @@ export function ChatApp() {
     );
   }
 
+  /** Simpan media pribadi karakter (video call, suara telepon, video chat). */
+  function handleCharacterMedia(id: string, next: CharacterMedia | null) {
+    persistCharacters(
+      charactersRef.current.map((c) => (c.id === id ? { ...c, media: next } : c))
+    );
+    setProfileCharacter((current) =>
+      current && current.id === id ? { ...current, media: next } : current
+    );
+  }
+
   function handleClearChat(id: string) {
     if (!confirm("Hapus seluruh riwayat chat dengan karakter ini?")) return;
     const character = charactersRef.current.find((c) => c.id === id);
@@ -570,6 +581,7 @@ export function ChatApp() {
           onClearChat={() => handleClearChat(profileCharacter.id)}
           onDelete={() => handleDeleteCharacter(profileCharacter.id)}
           onBackgroundChange={(next) => handleCharacterBackground(profileCharacter.id, next)}
+          onMediaChange={(next) => handleCharacterMedia(profileCharacter.id, next)}
         />
       )}
 
@@ -578,6 +590,7 @@ export function ChatApp() {
           character={call.character}
           mode={call.mode}
           background={call.character.chatBackground ?? settings.chatBackground}
+          media={call.character.media}
           voice={settings.voice}
           onClose={() => setCall(null)}
         />

@@ -75,6 +75,22 @@ export type AppSettings = {
   voice: VoiceSettings;
 };
 
+/**
+ * Media pribadi karakter — semuanya opsional, boleh diisi salah satu saja.
+ * Blob-nya disimpan di IndexedDB, bukan di objek ini.
+ */
+export type CharacterMedia = {
+  /** Klip yang tampil di atas pesan selama mengobrol (adegan bicara). */
+  chatVideoId?: string;
+  chatVideoPosterUrl?: string;
+  /** Klip adegan video call. */
+  callVideoId?: string;
+  callVideoPosterUrl?: string;
+  /** Rekaman suara (MP3) untuk panggilan telepon. */
+  callAudioId?: string;
+  callAudioName?: string;
+};
+
 export type Character = {
   id: string;
   name: string;
@@ -86,6 +102,8 @@ export type Character = {
   model: string | null;
   /** Latar khusus karakter ini. null/undefined = ikut setelan global. */
   chatBackground?: ChatBackground | null;
+  /** Klip video call, suara telepon, dan video saat mengobrol. */
+  media?: CharacterMedia | null;
   preview: string;
   createdAt: string;
   updatedAt: string;
@@ -123,6 +141,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoFallback: true,
   chatBackground: { kind: "default" },
   glassBubbles: false,
-  bubbleOpacity: 70,
+  bubbleOpacity: 55,
   voice: DEFAULT_VOICE,
 };

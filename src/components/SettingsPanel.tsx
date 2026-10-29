@@ -87,7 +87,7 @@ export function SettingsPanel({
     onSettingsChange({ ...settings, chatBackground: next });
   }
 
-  const glassOpacity = opacityDraft ?? settings.bubbleOpacity ?? 70;
+  const glassOpacity = opacityDraft ?? settings.bubbleOpacity ?? 55;
 
   function commitOpacity(percent: number) {
     setOpacityDraft(null);
@@ -407,7 +407,7 @@ export function SettingsPanel({
                 </div>
                 <input
                   type="range"
-                  min={40}
+                  min={30}
                   max={95}
                   step={5}
                   value={glassOpacity}

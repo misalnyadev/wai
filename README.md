@@ -23,15 +23,17 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat menu ⋯ di percakapan.
   Ada juga **5 latar animasi** halus (Bokeh, Aurora, Gelombang, Bintang, Kabut) bergaya
   virtual background video call — otomatis berhenti bila perangkat memakai mode "kurangi gerakan".
-  Ada juga **video saat bicara**: klip kedua yang otomatis diputar ketika karakter mengetik atau
-  suaranya dibacakan, lalu kembali ke klip utama — karakter jadi terasa benar-benar membalas.
   Bila pesan menutupi latar, nyalakan **Gelembung tembus pandang** di Setelan → Latar chat
-  (pesan memakai latar transparan + blur, kepekatannya bisa diatur 40–95%).
-  Di header chat ada tombol **video call** dan **panggilan suara** ala WhatsApp — profil karakter
-  cukup dibuka dengan mengetuk foto/nama. Untuk karakter yang "hidup", tempel **video pendek** (MP4/WebM, maks 24 MB — mis. hasil rekaman
-  atau video dari Flow) sebagai latar: tampil **latar penuh** di belakang pesan, atau **panel 16:9**
-  di atas pesan ala video call lengkap dengan tombol suara. Video diputar berulang, tanpa suara
-  secara bawaan, dan disimpan di perangkat (tidak ikut file cadangan)
+  (pesan memakai latar transparan tanpa blur, kepekatannya bisa diatur 30–95%).
+- 🎬 **Media pribadi karakter** (halaman karakter — ketuk foto/nama) — tiga klip opsional, boleh
+  diisi salah satu saja:
+  - **Video saat chat** — adegan bicara yang tampil di atas pesan selama mengobrol
+  - **Video video call** — klip yang diputar saat menekan tombol video call (suara video ikut
+    aktif bila browser mengizinkan)
+  - **Suara telepon (MP3)** — rekaman suara untuk panggilan telepon; tanpa rekaman, panggilan
+    memakai suara perangkat bawaan
+  Video disimpan di perangkat (tidak ikut file cadangan). Di header chat ada tombol **video call**
+  dan **panggilan suara** ala WhatsApp; profil karakter cukup dibuka dengan mengetuk foto/nama.
 - 🔊 **Suara lokal** (Web Speech API) — karakter bisa membacakan balasannya. Teks dipecah per
   kalimat dengan jeda alami, suara "Enhanced/Premium" diprioritaskan otomatis, ada preset
   "Natural/Hangat/Santai/Ceria/Jelas" plus pengatur kecepatan, nada, volume, dan jeda kalimat.

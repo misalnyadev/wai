@@ -1,9 +1,10 @@
 "use client";
 
-import type { Character, ChatBackground } from "@/types/chat";
+import type { Character, CharacterMedia, ChatBackground } from "@/types/chat";
 import { useEscape } from "@/lib/useEscape";
 import { Avatar } from "./Avatar";
 import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
+import { CharacterMediaSection } from "./CharacterMediaSection";
 import { PencilIcon, TrashIcon, XIcon } from "./icons";
 
 export function CharacterProfileModal({
@@ -14,6 +15,7 @@ export function CharacterProfileModal({
   onClearChat,
   onDelete,
   onBackgroundChange,
+  onMediaChange,
 }: {
   character: Character;
   providerLabel: string;
@@ -22,6 +24,7 @@ export function CharacterProfileModal({
   onClearChat: () => void;
   onDelete: () => void;
   onBackgroundChange: (next: ChatBackground | null) => void;
+  onMediaChange: (next: CharacterMedia | null) => void;
 }) {
   useEscape(onClose);
 
@@ -75,6 +78,13 @@ export function CharacterProfileModal({
               onChange={onBackgroundChange}
               allowInherit
             />
+          </div>
+
+          <div className="mt-5">
+            <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+              Media karakter
+            </h4>
+            <CharacterMediaSection media={character.media} onChange={onMediaChange} />
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-2">
