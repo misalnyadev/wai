@@ -304,3 +304,58 @@ export function FilmIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/** Kamera video (handycam) — tombol video call di header chat. */
+export function VideoCallIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.9}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect x="2.5" y="6" width="12.5" height="12" rx="3" />
+      <path d="M15 11.2 21 8v8l-6-3.2z" />
+    </svg>
+  );
+}
+
+/** Gagang telepon terbalik — tombol akhiri panggilan. */
+export function CallEndIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.9}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <g transform="rotate(135 12 12)">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z" />
+      </g>
+    </svg>
+  );
+}
+
+/** Tombol kamera mati (video call tanpa video). */
+export function VideoOffIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.9}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M2.5 6.8A2.5 2.5 0 0 1 5 6h8.5a2.5 2.5 0 0 1 2.5 2.5v1.9l5-3.1v8.9l-5-3.1v1.4" />
+      <path d="m3 21 18-18" />
+    </svg>
+  );
+}

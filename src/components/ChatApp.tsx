@@ -29,6 +29,7 @@ import { speak } from "@/lib/voice";
 import { Avatar } from "./Avatar";
 import { Sidebar } from "./Sidebar";
 import { ChatWindow } from "./ChatWindow";
+import { CallOverlay } from "./CallOverlay";
 import { Composer } from "./Composer";
 import { SettingsPanel } from "./SettingsPanel";
 import { CharacterModal } from "./CharacterModal";
@@ -70,6 +71,8 @@ export function ChatApp() {
   const [profileCharacter, setProfileCharacter] = useState<Character | null>(null);
   const [editCharacter, setEditCharacter] = useState<Character | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  /** Panggilan video/suara yang sedang berjalan. */
+  const [call, setCall] = useState<{ character: Character; mode: "video" | "audio" } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
@@ -444,6 +447,9 @@ export function ChatApp() {
                       isTyping={typingFor === activeId}
                       background={activeCharacter.chatBackground ?? settings.chatBackground}
                       glass={settings.glassBubbles}
+                      glassOpacity={settings.bubbleOpacity}
+                      onVideoCall={() => setCall({ character: activeCharacter, mode: "video" })}
+                      onAudioCall={() => setCall({ character: activeCharacter, mode: "audio" })}
                       onBack={() => setMobileShowChat(false)}
                       onOpenProfile={() => setProfileCharacter(activeCharacter)}
                       onImageClick={(url) => setLightbox(url)}
@@ -564,6 +570,16 @@ export function ChatApp() {
           onClearChat={() => handleClearChat(profileCharacter.id)}
           onDelete={() => handleDeleteCharacter(profileCharacter.id)}
           onBackgroundChange={(next) => handleCharacterBackground(profileCharacter.id, next)}
+        />
+      )}
+
+      {call && (
+        <CallOverlay
+          character={call.character}
+          mode={call.mode}
+          background={call.character.chatBackground ?? settings.chatBackground}
+          voice={settings.voice}
+          onClose={() => setCall(null)}
         />
       )}
 

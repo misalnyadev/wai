@@ -69,6 +69,8 @@ export type AppSettings = {
   chatBackground: ChatBackground;
   /** Gelembung pesan tembus pandang supaya latar (video/gambar) terlihat di baliknya. */
   glassBubbles: boolean;
+  /** Kepekatan gelembung saat mode tembus pandang (40–95%). */
+  bubbleOpacity: number;
   /** Suara untuk membacakan balasan. */
   voice: VoiceSettings;
 };
@@ -121,5 +123,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoFallback: true,
   chatBackground: { kind: "default" },
   glassBubbles: false,
+  bubbleOpacity: 70,
   voice: DEFAULT_VOICE,
 };
