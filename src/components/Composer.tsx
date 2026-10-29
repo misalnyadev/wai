@@ -119,7 +119,7 @@ export function Composer({
             autoComplete="off"
             enterKeyHint="send"
             aria-label="Tulis pesan"
-            className={`max-h-[120px] min-w-0 w-full flex-1 resize-none border-none bg-surface px-4 py-2.5 text-base text-ink outline-none transition-[border-radius] duration-150 placeholder:text-muted disabled:opacity-60 sm:text-sm ${
+            className={`max-h-[120px] min-w-0 w-full flex-1 resize-none border-none bg-surface px-4 py-2.5 text-base text-ink outline-none ring-1 ring-line transition-[border-radius] duration-150 placeholder:text-muted disabled:opacity-60 sm:text-sm ${
               multiline ? "rounded-2xl" : "rounded-full"
             }`}
           />
