@@ -128,7 +128,7 @@ export function Sidebar({
         </button>
       )}
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-[var(--tabbar-space)] md:pb-0">
         {filtered.length === 0 && (
           <div className="px-4 py-10 text-center text-sm text-muted">
             {characters.length === 0
@@ -162,7 +162,7 @@ export function Sidebar({
         ))}
       </div>
 
-      <div className="flex items-center justify-center gap-1.5 border-t border-line px-4 py-2.5 text-[11px] text-muted">
+      <div className="hidden items-center justify-center gap-1.5 border-t border-line px-4 py-2.5 text-[11px] text-muted md:flex">
         <LockIcon className="h-3 w-3" />
         Tidak ada server penyimpanan · data di browser ini
       </div>

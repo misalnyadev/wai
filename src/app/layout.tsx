@@ -88,11 +88,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Zoom tetap diizinkan (aksesibilitas); input sudah 16px agar iOS tidak auto-zoom.
+  // Zoom tetap diizinkan (aksesibilitas); semua field dipaksa >=16px
+  // (lihat guard di globals.css) supaya iOS tidak auto-zoom saat mengetik.
   viewportFit: "cover",
+  // Saat keyboard muncul, layout mengecil sehingga composer tetap terlihat.
+  interactiveWidget: "resizes-content",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#00a884" },
-    { media: "(prefers-color-scheme: dark)", color: "#111b21" },
+    { media: "(prefers-color-scheme: light)", color: "#f0f2f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#202c33" },
   ],
 };
 

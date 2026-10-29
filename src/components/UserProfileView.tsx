@@ -46,14 +46,14 @@ export function UserProfileView({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
-      <header className="border-b border-line px-5 py-4">
+      <header className="border-b border-line bg-header px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <h2 className="font-display text-lg font-bold text-ink">Profil saya</h2>
         <p className="text-xs text-ink-soft">
           Karakter membaca profil ini supaya tahu sedang chat dengan siapa
         </p>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-5 py-5">
+      <div className="flex-1 overflow-y-auto px-5 py-5 pb-[calc(var(--tabbar-space)+0.5rem)]">
         <form onSubmit={handleSubmit} className="mx-auto w-full max-w-xl space-y-4">
           <div className="flex flex-col items-center gap-2">
             <button
@@ -158,7 +158,7 @@ export function UserProfileView({
 }
 
 const inputClass =
-  "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400";
+  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

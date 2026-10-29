@@ -135,7 +135,7 @@ export function CharacterModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Mis. Alya Rahmadhani"
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
           </div>
 
@@ -147,7 +147,7 @@ export function CharacterModal({
               value={shortBio}
               onChange={(e) => setShortBio(e.target.value)}
               placeholder="Mis. sedang syuting di Bandung 🎬"
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
           </div>
 
@@ -160,7 +160,7 @@ export function CharacterModal({
               onChange={(e) => setPersonality(e.target.value)}
               placeholder={PERSONALITY_PLACEHOLDER}
               rows={7}
-              className="w-full resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+              className="w-full resize-none rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
             <p className="mt-1 text-[11px] text-muted">
               Makin detail & spesifik, makin konsisten dan nyata karakter ini saat diajak chat.
@@ -176,7 +176,7 @@ export function CharacterModal({
               onChange={(e) => setGreeting(e.target.value)}
               placeholder="Mis. Heyy udah lama ga chat, kangen tau 😄"
               rows={2}
-              className="w-full resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+              className="w-full resize-none rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
           </div>
 
@@ -186,7 +186,7 @@ export function CharacterModal({
               <select
                 value={providerId}
                 onChange={(e) => setProviderId(e.target.value)}
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
               >
                 <option value="">Gunakan default</option>
                 {providers.map((p) => (
@@ -202,7 +202,7 @@ export function CharacterModal({
                 value={model ?? ""}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="override model"
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
               />
             </div>
           </div>

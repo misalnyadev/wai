@@ -93,7 +93,7 @@ export function ChatWindow({
   return (
     <div className="chat-wallpaper flex h-full min-h-0 flex-1 flex-col">
       {/* Header */}
-      <div className="z-10 flex items-center gap-3 border-b border-line bg-header/95 px-2 py-2.5 shadow-sm backdrop-blur sm:px-4">
+      <div className="z-10 flex items-center gap-3 border-b border-line bg-header px-2 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4">
         <button
           onClick={onBack}
           className="rounded-full p-1.5 text-ink-soft transition hover:bg-line/60 md:hidden"

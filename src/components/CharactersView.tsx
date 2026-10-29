@@ -19,7 +19,7 @@ export function CharactersView({
 }) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
-      <header className="flex items-center justify-between gap-2 border-b border-line px-5 py-4">
+      <header className="flex items-center justify-between gap-2 border-b border-line bg-header px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <div>
           <h2 className="font-display text-lg font-bold text-ink">Karakter</h2>
           <p className="text-xs text-ink-soft">
@@ -36,7 +36,7 @@ export function CharactersView({
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-[calc(var(--tabbar-space)+0.5rem)]">
         {characters.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
             <p className="text-sm text-ink-soft">Belum ada karakter.</p>
