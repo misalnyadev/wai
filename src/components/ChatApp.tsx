@@ -82,6 +82,26 @@ export function ChatApp() {
   const messagesRef = useRef<Record<string, ChatMessage[]>>({});
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /**
+   * iOS kadang memulihkan posisi scroll dokumen saat aplikasi dibuka kembali,
+   * sehingga seluruh tampilan terlihat naik ke atas sampai digeser sekali.
+   * Dokumen memang sudah dikunci lewat CSS (globals.css); ini jaring pengaman.
+   */
+  useEffect(() => {
+    const resetScroll = () => {
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+    };
+    resetScroll();
+    window.addEventListener("pageshow", resetScroll);
+    window.addEventListener("focus", resetScroll);
+    document.addEventListener("visibilitychange", resetScroll);
+    return () => {
+      window.removeEventListener("pageshow", resetScroll);
+      window.removeEventListener("focus", resetScroll);
+      document.removeEventListener("visibilitychange", resetScroll);
+    };
+  }, []);
+
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     if (toastTimer.current) clearTimeout(toastTimer.current);
