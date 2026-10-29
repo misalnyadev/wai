@@ -428,6 +428,7 @@ export function ChatApp() {
                       character={activeCharacter}
                       messages={activeMessages}
                       isTyping={typingFor === activeId}
+                      background={settings.chatBackground}
                       onBack={() => setMobileShowChat(false)}
                       onOpenProfile={() => setProfileCharacter(activeCharacter)}
                       onImageClick={(url) => setLightbox(url)}

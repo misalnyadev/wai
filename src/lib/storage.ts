@@ -1,9 +1,11 @@
+import { CHAT_COLOR_PRESETS } from "@/lib/chatBackground";
 import {
   DEFAULT_SETTINGS,
   EMPTY_PROFILE,
   providerTypeValues,
   type AppSettings,
   type Character,
+  type ChatBackground,
   type ChatMessage,
   type Provider,
   type UserProfile,
@@ -114,9 +116,32 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
   await kvSet("user-profile", profile);
 }
 
+/** Pastikan latar chat yang tersimpan masih valid (mis. setelah preset dihapus). */
+function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings {
+  const merged: AppSettings = { ...DEFAULT_SETTINGS, ...(saved ?? {}) };
+  const background = merged.chatBackground as ChatBackground | undefined;
+
+  let safe: ChatBackground = { kind: "default" };
+  if (background?.kind === "preset" && CHAT_COLOR_PRESETS.some((p) => p.id === background.id)) {
+    safe = background;
+  } else if (
+    background?.kind === "image" &&
+    typeof background.imageUrl === "string" &&
+    background.imageUrl.startsWith("data:image/")
+  ) {
+    safe = {
+      kind: "image",
+      imageUrl: background.imageUrl,
+      dim: Math.min(0.7, Math.max(0, Number(background.dim) || 0)),
+    };
+  }
+
+  return { ...merged, chatBackground: safe };
+}
+
 export async function getSettings(): Promise<AppSettings> {
   const saved = await kvGet<Partial<AppSettings>>("settings");
-  return { ...DEFAULT_SETTINGS, ...saved };
+  return normalizeSettings(saved);
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
@@ -230,7 +255,7 @@ export async function restoreBackup(data: BackupData): Promise<void> {
   await saveCharacters(data.characters);
   await saveProviders(cleanProviders(data.providers));
   if (data.profile) await saveUserProfile({ ...EMPTY_PROFILE, ...data.profile });
-  if (data.settings) await saveSettings({ ...DEFAULT_SETTINGS, ...data.settings });
+  if (data.settings) await saveSettings(normalizeSettings(data.settings));
   for (const character of data.characters) {
     const list = data.messages[character.id] ?? [];
     if (list.length) await saveMessages(character.id, list);
