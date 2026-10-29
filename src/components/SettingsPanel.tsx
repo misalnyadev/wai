@@ -1,48 +1,49 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { AppSettings, Provider, ProviderType, UserProfile } from "@/types/chat";
 import { buildBackup, genId, isBackupData, restoreBackup, wipeAll } from "@/lib/storage";
+import { PROVIDER_META, PROVIDER_ORDER, RECOMMENDED_MODELS } from "@/lib/ai/providerDefaults";
 import { useEscape } from "@/lib/useEscape";
 import { ThemeSegmented } from "./ThemeToggle";
 import {
   BoltIcon,
   CheckIcon,
-  CopyIcon,
-  LockIcon,
+  ChevronDownIcon,
   PencilIcon,
-  PhoneIcon,
   PlusIcon,
+  RefreshIcon,
   TrashIcon,
   UserIcon,
   XIcon,
 } from "./icons";
 
-const PROVIDER_LABELS: Record<ProviderType, string> = {
-  gemini: "Google Gemini",
-  groq: "Groq",
-  grok: "Grok (xAI)",
-  openrouter: "OpenRouter",
-  custom: "Custom (OpenAI-compatible)",
-};
-
-const PROVIDER_DEFAULT_MODEL: Record<ProviderType, string> = {
-  gemini: "gemini-2.5-flash",
-  groq: "llama-3.3-70b-versatile",
-  grok: "grok-4",
-  openrouter: "openai/gpt-4o-mini",
-  custom: "",
-};
-
-const KEY_HELP: Record<ProviderType, string> = {
-  gemini: "API key gratis: buka aistudio.google.com/apikey → Create API key → tempel di sini.",
-  groq: "API key gratis (dengan limit harian) dari console.groq.com/keys — balasannya paling cepat.",
-  grok: "API key dari console.x.ai (berbayar).",
-  openrouter: "API key dari openrouter.ai/keys (ada model gratis berakhiran :free).",
-  custom: "Endpoint OpenAI-compatible milikmu, mis. Ollama: http://localhost:11434/v1",
-};
+type ModelOption = { id: string; label?: string };
 
 type TestState = { status: "testing" | "ok" | "fail"; message?: string };
+
+const FIELD =
+  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink outline-none transition placeholder:text-muted focus:border-emerald-400 sm:py-2 sm:text-sm";
+
+/** Versi angka dari nama model, untuk mengurutkan yang terbaru di atas. */
+function versionScore(id: string): number[] {
+  return (id.match(/\d+/g) ?? []).slice(0, 3).map(Number);
+}
+
+function sortModels(list: ModelOption[], recommended: string[]): ModelOption[] {
+  return [...list].sort((a, b) => {
+    const ra = recommended.indexOf(a.id);
+    const rb = recommended.indexOf(b.id);
+    if (ra !== rb) return (ra < 0 ? 999 : ra) - (rb < 0 ? 999 : rb);
+    const va = versionScore(a.id);
+    const vb = versionScore(b.id);
+    for (let i = 0; i < Math.max(va.length, vb.length); i++) {
+      const diff = (vb[i] ?? 0) - (va[i] ?? 0);
+      if (diff) return diff;
+    }
+    return a.id.localeCompare(b.id);
+  });
+}
 
 export function SettingsPanel({
   providers,
@@ -76,12 +77,30 @@ export function SettingsPanel({
   const [showKeys, setShowKeys] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tests, setTests] = useState<Record<string, TestState>>({});
-  const [copied, setCopied] = useState(false);
   const [dataBusy, setDataBusy] = useState<"export" | "import" | "wipe" | null>(null);
   const [dataNote, setDataNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
 
+  // Pemilih model
+  const [models, setModels] = useState<ModelOption[] | null>(null);
+  const [modelsBusy, setModelsBusy] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const [showModels, setShowModels] = useState(false);
+  const [modelQuery, setModelQuery] = useState("");
+
   useEscape(onClose, !inline);
+
+  const meta = PROVIDER_META[type];
+  const recommended = useMemo(() => RECOMMENDED_MODELS[type] ?? [], [type]);
+
+  const sortedModels = useMemo(
+    () => (models ? sortModels(models, recommended) : []),
+    [models, recommended]
+  );
+  const visibleModels = useMemo(() => {
+    const q = modelQuery.trim().toLowerCase();
+    return q ? sortedModels.filter((m) => m.id.toLowerCase().includes(q)) : sortedModels;
+  }, [sortedModels, modelQuery]);
 
   function resetForm() {
     setEditingId(null);
@@ -91,6 +110,10 @@ export function SettingsPanel({
     setBaseUrl("");
     setModel("");
     setError(null);
+    setModels(null);
+    setShowModels(false);
+    setModelsError(null);
+    setModelQuery("");
   }
 
   function startEdit(p: Provider) {
@@ -103,15 +126,61 @@ export function SettingsPanel({
     setModel(p.model);
     setIsDefault(p.isDefault);
     setError(null);
+    setModels(null);
+    setShowModels(false);
+    setModelsError(null);
+    setModelQuery("");
+  }
+
+  function chooseType(next: ProviderType) {
+    if (next !== type) setModel("");
+    setType(next);
+    setModels(null);
+    setShowModels(false);
+    setModelsError(null);
+    setModelQuery("");
+  }
+
+  async function loadModels() {
+    if (type !== "custom" && !apiKey.trim()) {
+      setModelsError("Isi API key dulu.");
+      setShowModels(true);
+      return;
+    }
+    setModelsBusy(true);
+    setModelsError(null);
+    try {
+      const res = await fetch("/api/models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, apiKey, backupKeys, baseUrl }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setModels(null);
+        setModelsError(data.error || "Gagal memuat model.");
+        setShowModels(true);
+        return;
+      }
+      setModels(data.models as ModelOption[]);
+      setShowModels(true);
+      setModelQuery("");
+    } catch {
+      setModels(null);
+      setModelsError("Koneksi gagal.");
+      setShowModels(true);
+    } finally {
+      setModelsBusy(false);
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    const finalModel = model.trim() || PROVIDER_DEFAULT_MODEL[type];
+    const finalModel = model.trim() || PROVIDER_META[type].defaultModel;
     if (type === "custom" && !baseUrl.trim()) {
-      return setError("Base URL wajib diisi untuk provider custom.");
+      return setError("Base URL wajib diisi.");
     }
     if (!finalModel) return setError("Model wajib diisi.");
     if (type !== "custom" && !apiKey.trim()) {
@@ -122,7 +191,7 @@ export function SettingsPanel({
     const record: Provider = {
       id: editingId ?? genId(),
       type,
-      label: label.trim() || PROVIDER_LABELS[type],
+      label: label.trim() || PROVIDER_META[type].name,
       apiKey: apiKey.trim(),
       backupKeys: backupKeys.map((k) => k.trim()).filter(Boolean),
       baseUrl: baseUrl.trim() || null,
@@ -148,7 +217,7 @@ export function SettingsPanel({
   }
 
   function handleDelete(id: string) {
-    if (!confirm("Hapus provider ini beserta API key-nya dari perangkat?")) return;
+    if (!confirm("Hapus provider ini?")) return;
     let next = providers.filter((p) => p.id !== id);
     if (!next.some((p) => p.isDefault) && next.length > 0) {
       next = next.map((p, i) => ({ ...p, isDefault: i === 0 }));
@@ -170,12 +239,9 @@ export function SettingsPanel({
       a.download = `waichat-backup-${stamp}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      setDataNote({
-        tone: "ok",
-        text: `Cadangan tersimpan (${backup.characters.length} karakter). Simpan file ini baik-baik.`,
-      });
+      setDataNote({ tone: "ok", text: `Tersimpan · ${backup.characters.length} karakter` });
     } catch {
-      setDataNote({ tone: "err", text: "Gagal membuat cadangan. Coba lagi." });
+      setDataNote({ tone: "err", text: "Gagal membuat cadangan." });
     } finally {
       setDataBusy(null);
     }
@@ -187,18 +253,15 @@ export function SettingsPanel({
     try {
       const parsed: unknown = JSON.parse(await file.text());
       if (!isBackupData(parsed)) {
-        setDataNote({ tone: "err", text: "File bukan cadangan WaiChat yang valid." });
+        setDataNote({ tone: "err", text: "File cadangan tidak valid." });
         return;
       }
-      const ok = confirm(
-        `Pulihkan ${parsed.characters.length} karakter dari file ini? Data yang ada di perangkat sekarang akan ditimpa.`
-      );
-      if (!ok) return;
+      if (!confirm(`Pulihkan ${parsed.characters.length} karakter? Data sekarang ditimpa.`)) return;
       await restoreBackup(parsed);
-      setDataNote({ tone: "ok", text: "Data dipulihkan. Memuat ulang aplikasi..." });
+      setDataNote({ tone: "ok", text: "Dipulihkan. Memuat ulang..." });
       setTimeout(() => window.location.reload(), 700);
     } catch {
-      setDataNote({ tone: "err", text: "File tidak bisa dibaca. Pastikan file .json dari WaiChat." });
+      setDataNote({ tone: "err", text: "File tidak bisa dibaca." });
     } finally {
       setDataBusy(null);
       if (backupInputRef.current) backupInputRef.current.value = "";
@@ -206,14 +269,13 @@ export function SettingsPanel({
   }
 
   async function handleWipe() {
-    if (!confirm("Hapus SEMUA data di perangkat ini (karakter, chat, foto, API key)?")) return;
-    if (!confirm("Yakin? Tindakan ini tidak bisa dibatalkan. Pastikan kamu sudah mengunduh cadangan."))
-      return;
+    if (!confirm("Hapus semua data di perangkat ini?")) return;
+    if (!confirm("Yakin? Tindakan ini tidak bisa dibatalkan.")) return;
     setDataBusy("wipe");
     setDataNote(null);
     try {
       await wipeAll();
-      setDataNote({ tone: "ok", text: "Semua data dihapus. Memuat ulang aplikasi..." });
+      setDataNote({ tone: "ok", text: "Data dihapus. Memuat ulang..." });
       setTimeout(() => window.location.reload(), 700);
     } catch {
       setDataNote({ tone: "err", text: "Gagal menghapus data." });
@@ -239,12 +301,12 @@ export function SettingsPanel({
       const data = await res.json();
       const usedKeyNote =
         data.ok && data.usedKeyNumber > 1
-          ? ` (key ke-${data.usedKeyNumber} dari ${data.totalKeys})`
+          ? ` · key ke-${data.usedKeyNumber} dari ${data.totalKeys}`
           : "";
       setTests((t) => ({
         ...t,
         [p.id]: data.ok
-          ? { status: "ok", message: `Terhubung${usedKeyNote}! Balasan: "${data.sample}"` }
+          ? { status: "ok", message: `Terhubung${usedKeyNote}` }
           : { status: "fail", message: data.error || "Gagal terhubung." },
       }));
     } catch {
@@ -252,20 +314,10 @@ export function SettingsPanel({
     }
   }
 
-  async function handleCopyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.origin);
-    } catch {
-      // clipboard bisa diblokir; tautan tetap terlihat di bawah
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   const body = (
     <>
       <div
-        className={`flex items-center justify-between border-b border-line bg-header px-5 pb-4 ${
+        className={`flex items-center justify-between border-b border-line bg-header px-5 pb-3 ${
           inline ? "pt-[max(1rem,env(safe-area-inset-top))]" : "pt-4"
         }`}
       >
@@ -288,213 +340,202 @@ export function SettingsPanel({
           {/* Profil */}
           <button
             onClick={onOpenProfile}
-            className="mb-4 flex w-full items-center gap-3 rounded-xl border border-line bg-surface-2 p-3 text-left transition hover:bg-line/30"
+            className="mb-4 flex w-full items-center gap-3 rounded-xl border border-line bg-surface-2 p-2.5 text-left transition hover:bg-line/30"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
-              <UserIcon className="h-5 w-5" />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+              <UserIcon className="h-4 w-4" />
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-ink">
-                {profile.name?.trim() || "Lengkapi profil kamu"}
-              </span>
-              <span className="block truncate text-xs text-ink-soft">
-                Karakter membaca profil ini supaya tahu sedang chat dengan siapa
-              </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+              {profile.name?.trim() || "Profil"}
             </span>
             <PencilIcon className="h-4 w-4 shrink-0 text-muted" />
           </button>
 
           {/* Tema */}
           <section className="mb-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-              Tampilan
-            </h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Tema</h3>
             <ThemeSegmented />
           </section>
 
-          {/* Provider */}
-          <section>
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
-                API key &amp; provider
-              </h3>
-              <span className="text-[11px] text-muted">{providers.length} provider</span>
-            </div>
+          {/* Provider tersimpan */}
+          <section className="mb-5">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+              Provider
+            </h3>
 
-            <div className="mb-3 flex items-start gap-2 rounded-xl bg-surface-2 p-3 text-xs leading-relaxed text-ink-soft">
-              <LockIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
-              <span>
-                Semua chat, foto, dan API key tersimpan <b>hanya di browser perangkat ini</b>.
-                Saat chat, key hanya diteruskan ke provider AI pilihanmu — server tidak menyimpan
-                apa pun.
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {providers.length === 0 && (
-                <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
-                  Belum ada API key. Tambahkan satu di bawah supaya karakter bisa membalas chat —
-                  paling mudah pakai <b>Gemini (gratis)</b> atau <b>Groq (gratis)</b>.
-                </p>
-              )}
-              {providers.map((p) => {
-                const test = tests[p.id];
-                const keyCount = 1 + (p.backupKeys?.length ?? 0);
-                return (
-                  <div key={p.id} className="rounded-xl border border-line px-3 py-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="truncate text-sm font-medium text-ink">{p.label}</span>
-                          {p.isDefault && (
-                            <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-brand">
-                              DEFAULT
-                            </span>
-                          )}
-                          {keyCount > 1 && (
-                            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-ink-soft ring-1 ring-line">
-                              {keyCount} key · auto-fallback
-                            </span>
-                          )}
+            {providers.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-line px-3 py-2 text-xs text-muted">
+                Belum ada API key.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {providers.map((p) => {
+                  const test = tests[p.id];
+                  const keyCount = 1 + (p.backupKeys?.length ?? 0);
+                  return (
+                    <div key={p.id} className="rounded-xl border border-line px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="truncate text-sm font-medium text-ink">{p.label}</span>
+                            {p.isDefault && (
+                              <span className="rounded-full bg-brand/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand">
+                                default
+                              </span>
+                            )}
+                            {keyCount > 1 && (
+                              <span className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-ink-soft ring-1 ring-line">
+                                {keyCount} key
+                              </span>
+                            )}
+                          </div>
+                          <p className="truncate text-xs text-ink-soft">{p.model}</p>
                         </div>
-                        <p className="truncate text-xs text-ink-soft">
-                          {PROVIDER_LABELS[p.type]} · {p.model}
-                          {p.apiKey ? ` · ••••${p.apiKey.slice(-4)}` : " · tanpa key"}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          onClick={() => handleTest(p)}
-                          title="Tes koneksi"
-                          aria-label="Tes koneksi"
-                          className="rounded-full p-1.5 text-ink-soft transition hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10"
-                        >
-                          <BoltIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => startEdit(p)}
-                          title="Edit"
-                          aria-label="Edit provider"
-                          className="rounded-full p-1.5 text-ink-soft transition hover:bg-sky-50 hover:text-sky-600 dark:hover:bg-sky-500/10"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                        {!p.isDefault && (
+                        <div className="flex shrink-0 items-center gap-0.5">
                           <button
-                            onClick={() => handleSetDefault(p.id)}
-                            title="Jadikan default"
-                            aria-label="Jadikan provider default"
-                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10"
+                            onClick={() => handleTest(p)}
+                            title="Tes koneksi"
+                            aria-label="Tes koneksi"
+                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10"
                           >
-                            <CheckIcon className="h-4 w-4" />
+                            <BoltIcon className="h-4 w-4" />
                           </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          title="Hapus"
-                          aria-label="Hapus provider"
-                          className="rounded-full p-1.5 text-ink-soft transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
+                          <button
+                            onClick={() => startEdit(p)}
+                            title="Edit"
+                            aria-label="Edit provider"
+                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-sky-50 hover:text-sky-600 dark:hover:bg-sky-500/10"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          {!p.isDefault && (
+                            <button
+                              onClick={() => handleSetDefault(p.id)}
+                              title="Jadikan default"
+                              aria-label="Jadikan provider default"
+                              className="rounded-full p-1.5 text-ink-soft transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10"
+                            >
+                              <CheckIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(p.id)}
+                            title="Hapus"
+                            aria-label="Hapus provider"
+                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
+                      {test && (
+                        <p
+                          className={`mt-1 text-xs ${
+                            test.status === "ok"
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : test.status === "fail"
+                                ? "text-rose-600 dark:text-rose-400"
+                                : "text-ink-soft"
+                          }`}
+                        >
+                          {test.status === "testing"
+                            ? "Menguji..."
+                            : test.status === "ok"
+                              ? `✓ ${test.message}`
+                              : `✗ ${test.message}`}
+                        </p>
+                      )}
                     </div>
-                    {test && (
-                      <p
-                        className={`mt-1.5 text-xs ${
-                          test.status === "ok"
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : test.status === "fail"
-                              ? "text-rose-600 dark:text-rose-400"
-                              : "text-ink-soft"
-                        }`}
-                      >
-                        {test.status === "testing"
-                          ? "Menguji koneksi..."
-                          : test.status === "ok"
-                            ? `✓ ${test.message}`
-                            : `✗ ${test.message}`}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
 
-            {/* Fallback otomatis */}
-            <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-line p-3">
+            <label
+              className="mt-2 flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-2"
+              title="Pindah otomatis ke provider lain saat semua key provider ini gagal."
+            >
               <input
                 type="checkbox"
                 checked={settings.autoFallback}
                 onChange={(e) => onSettingsChange({ ...settings, autoFallback: e.target.checked })}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-line accent-emerald-600"
+                className="h-4 w-4 shrink-0 rounded border-line accent-emerald-600"
               />
-              <span>
-                <span className="block text-sm font-semibold text-ink">Fallback otomatis</span>
-                <span className="block text-xs leading-relaxed text-ink-soft">
-                  Kalau semua key di provider ini kena limit, aplikasi otomatis pindah ke provider
-                  lain yang tersimpan. Kalau dimatikan, aplikasi hanya memakai provider default.
-                </span>
-              </span>
+              <span className="text-sm text-ink-soft">Fallback otomatis</span>
             </label>
           </section>
 
           {/* Form provider */}
-          <form onSubmit={handleSubmit} className="mt-5 space-y-3 border-t border-line pt-4">
+          <form onSubmit={handleSubmit} className="space-y-2.5 border-t border-line pt-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-ink">
-                {editingId ? "Edit provider" : "Tambah provider baru"}
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {editingId ? "Edit provider" : "Tambah provider"}
               </h3>
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="text-xs font-medium text-ink-soft hover:text-ink"
+              <div className="flex items-center gap-3">
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="text-xs font-medium text-ink-soft hover:text-ink"
+                  >
+                    Batal
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Label "Provider" + link ambil API key */}
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-sm font-medium text-ink">Provider</span>
+              {meta.keyUrl && (
+                <a
+                  href={meta.keyUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-xs font-semibold text-brand hover:underline"
                 >
-                  Batal edit
-                </button>
+                  Ambil API key ↗
+                </a>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {(Object.keys(PROVIDER_LABELS) as ProviderType[]).map((t) => (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {PROVIDER_ORDER.map((t) => (
                 <button
                   type="button"
                   key={t}
-                  onClick={() => setType(t)}
-                  className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
+                  onClick={() => chooseType(t)}
+                  className={`rounded-lg border px-2 py-2 text-xs font-medium transition ${
                     type === t
                       ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-emerald-300"
                       : "border-line text-ink-soft hover:bg-surface-2"
                   }`}
                 >
-                  {PROVIDER_LABELS[t]}
+                  {PROVIDER_META[t].name}
                 </button>
               ))}
             </div>
 
-            <p className="text-xs text-ink-soft">{KEY_HELP[type]}</p>
-
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder={`Nama label (contoh: ${PROVIDER_LABELS[type]})`}
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
+              placeholder="Nama label (opsional)"
+              className={FIELD}
             />
 
             {type === "custom" && (
               <input
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder="Base URL (contoh: http://localhost:11434/v1)"
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
+                placeholder="Base URL, mis. http://localhost:11434/v1"
+                className={FIELD}
               />
             )}
 
-            <div className="rounded-xl border border-line p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-                  API key ({1 + backupKeys.length})
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted">
+                  API key{backupKeys.length > 0 ? ` (${1 + backupKeys.length})` : ""}
                 </span>
                 <button
                   type="button"
@@ -508,9 +549,10 @@ export function SettingsPanel({
               <input
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={type === "custom" ? "API key (opsional)" : "API key utama"}
+                placeholder={type === "custom" ? "API key (opsional)" : "API key"}
                 type={showKeys ? "text" : "password"}
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
+                autoComplete="off"
+                className={FIELD}
               />
 
               {backupKeys.map((key, index) => (
@@ -524,7 +566,8 @@ export function SettingsPanel({
                     }
                     placeholder={`Key cadangan ${index + 1}`}
                     type={showKeys ? "text" : "password"}
-                    className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
+                    autoComplete="off"
+                    className={`${FIELD} min-w-0 flex-1`}
                   />
                   <button
                     type="button"
@@ -542,30 +585,96 @@ export function SettingsPanel({
                 onClick={() => setBackupKeys((list) => [...list, ""])}
                 className="mt-2 flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
               >
-                <PlusIcon className="h-3.5 w-3.5" /> Tambah key cadangan
+                <PlusIcon className="h-3.5 w-3.5" /> Key cadangan
               </button>
-              <p className="mt-2 text-[11px] leading-relaxed text-muted">
-                Key dicoba berurutan: utama dulu. Kalau kena limit (429) atau ditolak, key
-                berikutnya dipakai otomatis — satu key bisa dipakai di banyak perangkat sekaligus.
-              </p>
             </div>
 
-            <input
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              placeholder={`Model (default: ${PROVIDER_DEFAULT_MODEL[type] || "isi manual"})`}
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
-            />
+            {/* Model + pemilih model */}
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted">Model</span>
+                <button
+                  type="button"
+                  onClick={() => (showModels ? setShowModels(false) : loadModels())}
+                  disabled={modelsBusy}
+                  className="flex items-center gap-1 text-xs font-semibold text-brand hover:underline disabled:opacity-50"
+                >
+                  {modelsBusy ? "Memuat..." : showModels ? "Tutup" : "Pilih model"}
+                  <ChevronDownIcon className={`h-3.5 w-3.5 transition ${showModels ? "rotate-180" : ""}`} />
+                </button>
+              </div>
 
-            <label className="flex items-center gap-2 text-sm text-ink-soft">
               <input
-                type="checkbox"
-                checked={isDefault}
-                onChange={(e) => setIsDefault(e.target.checked)}
-                className="h-4 w-4 rounded border-line accent-emerald-600"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder={meta.defaultModel || "Nama model"}
+                className={FIELD}
               />
-              Jadikan provider default
-            </label>
+
+              {showModels && (
+                <div className="mt-2 overflow-hidden rounded-xl border border-line bg-surface">
+                  <div className="flex items-center gap-1 border-b border-line px-2 py-1">
+                    <input
+                      value={modelQuery}
+                      onChange={(e) => setModelQuery(e.target.value)}
+                      placeholder="Cari model"
+                      className="min-w-0 flex-1 bg-transparent px-1 py-1.5 text-base text-ink outline-none placeholder:text-muted sm:text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={loadModels}
+                      disabled={modelsBusy}
+                      aria-label="Muat ulang daftar model"
+                      className="rounded-full p-1.5 text-ink-soft transition hover:bg-surface-2 disabled:opacity-50"
+                    >
+                      <RefreshIcon className={`h-4 w-4 ${modelsBusy ? "animate-spin" : ""}`} />
+                    </button>
+                  </div>
+
+                  {modelsError ? (
+                    <p className="px-3 py-3 text-xs text-rose-600 dark:text-rose-400">{modelsError}</p>
+                  ) : sortedModels.length === 0 ? (
+                    <p className="px-3 py-3 text-xs text-muted">Memuat...</p>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto">
+                      {visibleModels.length === 0 && (
+                        <p className="px-3 py-3 text-xs text-muted">Tidak ditemukan.</p>
+                      )}
+                      {visibleModels.map((m) => {
+                        const active = model === m.id;
+                        const isRecommended = recommended.includes(m.id);
+                        return (
+                          <button
+                            type="button"
+                            key={m.id}
+                            onClick={() => {
+                              setModel(m.id);
+                              setShowModels(false);
+                            }}
+                            className={`flex w-full items-center gap-2 px-3 py-2 text-left transition ${
+                              active ? "bg-brand/10" : "hover:bg-surface-2"
+                            }`}
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm text-ink">{m.id}</span>
+                              {m.label && m.label !== m.id && (
+                                <span className="block truncate text-[11px] text-muted">{m.label}</span>
+                              )}
+                            </span>
+                            {isRecommended && (
+                              <span className="shrink-0 rounded-full bg-brand/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand">
+                                disarankan
+                              </span>
+                            )}
+                            {active && <CheckIcon className="h-4 w-4 shrink-0 text-brand" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
@@ -573,43 +682,13 @@ export function SettingsPanel({
               type="submit"
               className="w-full rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition hover:bg-brand-strong active:scale-[0.99]"
             >
-              {editingId ? "Simpan perubahan" : "Simpan provider"}
+              {editingId ? "Simpan perubahan" : "Simpan"}
             </button>
           </form>
 
-          {/* Buka di HP */}
-          <section className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 dark:border-emerald-500/25 dark:bg-emerald-500/10">
-            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-              <PhoneIcon className="h-4 w-4" /> Buka di HP
-            </div>
-            <p className="mt-1 text-xs leading-relaxed text-emerald-700/80 dark:text-emerald-200/70">
-              Buka link yang sama di browser HP — tidak perlu install apa pun.
-            </p>
-            <button
-              onClick={handleCopyLink}
-              className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-left text-sm font-medium text-ink-soft shadow-sm transition hover:shadow"
-              title="Salin link aplikasi"
-            >
-              <span className="truncate">
-                {typeof window !== "undefined" ? window.location.origin : ""}
-              </span>
-              {copied ? (
-                <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                  <CheckIcon className="h-3.5 w-3.5" /> Tersalin
-                </span>
-              ) : (
-                <CopyIcon className="h-4 w-4 shrink-0 text-muted" />
-              )}
-            </button>
-          </section>
-
-          {/* Data & cadangan */}
-          <section className="mt-4 rounded-xl border border-line p-3">
-            <h3 className="text-sm font-semibold text-ink">Data &amp; cadangan</h3>
-            <p className="mt-1 text-xs leading-relaxed text-ink-soft">
-              Karena tidak ada server penyimpanan, chat bisa hilang bila data browser dibersihkan
-              atau kamu ganti perangkat. Unduh cadangan secara berkala.
-            </p>
+          {/* Data */}
+          <section className="mt-5 border-t border-line pt-4">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Data</h3>
             <input
               ref={backupInputRef}
               type="file"
@@ -620,7 +699,7 @@ export function SettingsPanel({
                 if (file) handleImportFile(file);
               }}
             />
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={handleExport}
@@ -644,14 +723,12 @@ export function SettingsPanel({
               disabled={dataBusy !== null}
               className="mt-2 w-full rounded-lg border border-rose-200 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
             >
-              {dataBusy === "wipe" ? "Menghapus..." : "Hapus semua data di perangkat ini"}
+              {dataBusy === "wipe" ? "Menghapus..." : "Hapus semua data"}
             </button>
-            <p className="mt-2 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
-              ⚠️ File cadangan memuat API key-mu. Simpan di tempat aman, jangan dibagikan.
-            </p>
+            <p className="mt-2 text-[11px] text-muted">File cadangan memuat API key.</p>
             {dataNote && (
               <p
-                className={`mt-1.5 text-xs ${
+                className={`mt-1 text-xs ${
                   dataNote.tone === "ok"
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-rose-600 dark:text-rose-400"
@@ -661,10 +738,6 @@ export function SettingsPanel({
               </p>
             )}
           </section>
-
-          <p className="mt-4 pb-2 text-center text-[11px] text-muted">
-            WaiChat · dibuat untuk latihan peran · semua data di perangkatmu
-          </p>
         </div>
       </div>
     </>

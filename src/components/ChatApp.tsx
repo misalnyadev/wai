@@ -179,7 +179,7 @@ export function ChatApp() {
 
     const primary = resolveProvider(character);
     if (!primary) {
-      showToast("Tambahkan API key dulu di Setelan (Gemini atau Groq gratis)");
+      showToast("Atur API key dulu di Setelan.");
       setView("settings");
       return;
     }
@@ -383,7 +383,7 @@ export function ChatApp() {
       ? providers.find((p) => p.id === profileCharacter.providerId)
       : undefined;
     const chosen = owned ?? providers.find((p) => p.isDefault) ?? providers[0] ?? null;
-    if (!chosen) return "Belum ada provider — atur di Setelan";
+    if (!chosen) return "Belum ada provider";
     return `${chosen.label} · ${profileCharacter.model?.trim() || chosen.model}`;
   })();
 
@@ -459,27 +459,7 @@ export function ChatApp() {
                       <h2 className="font-display text-3xl font-extrabold tracking-tight text-ink">
                         WaiChat<span className="text-brand-accent">.</span>
                       </h2>
-                      <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
-                        Chat privat dengan karakter yang terasa nyata — untuk latihan pendalaman
-                        peran, chemistry, dan dialog film.
-                      </p>
-
-                      <div className="mt-6 space-y-2.5 rounded-2xl border border-line bg-surface/80 p-4 text-left shadow-sm backdrop-blur">
-                        {[
-                          { n: "1", t: "Isi profilmu — karakter akan mengenali kamu" },
-                          { n: "2", t: "Tambahkan API key (Gemini/Groq gratis) di Setelan" },
-                          { n: "3", t: "Pilih karakter contoh atau buat sendiri, lalu mulai chat" },
-                        ].map((step) => (
-                          <div key={step.n} className="flex items-center gap-3">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                              {step.n}
-                            </span>
-                            <span className="text-sm text-ink-soft">{step.t}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      <div className="mt-6 flex flex-col gap-2 sm:flex-row">
                         <button
                           onClick={() => setView("settings")}
                           className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-strong active:scale-[0.98]"
@@ -493,10 +473,6 @@ export function ChatApp() {
                           <PlusIcon className="h-4 w-4" /> Buat Karakter
                         </button>
                       </div>
-
-                      <p className="mt-4 text-[11px] text-muted">
-                        🔒 Semua data tersimpan hanya di browser perangkat ini.
-                      </p>
                     </div>
                   </div>
                 )}

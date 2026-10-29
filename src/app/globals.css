@@ -29,24 +29,25 @@
 }
 
 .dark {
-  --app-bg: #0b141a;
-  --surface: #111b21;
-  --surface-2: #16232b;
-  --header-bg: #202c33;
-  --line: #23343d;
-  --ink: #e9edef;
-  --ink-soft: #a7b4bd;
-  --muted: #8696a0;
-  --bubble-in: #202c33;
-  --bubble-in-ink: #e9edef;
-  --bubble-out: #005c4b;
-  --bubble-out-ink: #e9edef;
-  --wallpaper: #0b141a;
+  /* Netral gelap: tanpa tint hijau/biru, hanya abu-abu arang. */
+  --app-bg: #0b0b0d;
+  --surface: #141417;
+  --surface-2: #1d1d21;
+  --header-bg: #17171a;
+  --line: #2a2a30;
+  --ink: #ededf0;
+  --ink-soft: #a8a8b0;
+  --muted: #7e7e88;
+  --bubble-in: #1c1c21;
+  --bubble-in-ink: #ededf0;
+  --bubble-out: #2e2e36;
+  --bubble-out-ink: #ededf0;
+  --wallpaper: #0b0b0d;
   --brand: #00a884;
-  --brand-strong: #06cf9c;
+  --brand-strong: #00c39a;
   --brand-accent: #25d366;
   --wallpaper-ink: %23ffffff;
-  --wallpaper-opacity: 0.035;
+  --wallpaper-opacity: 0.025;
   --shadow-color: 0 0 0;
 }
 
@@ -195,7 +196,7 @@ html {
 }
 
 .dark .chat-wallpaper {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='0.035' stroke-width='2'%3E%3Ccircle cx='22' cy='24' r='7'/%3E%3Cpath d='M104 16l7 12h-14z'/%3E%3Cpath d='M18 100h14M25 93v14'/%3E%3Ccircle cx='112' cy='104' r='5'/%3E%3Cpath d='M66 58c3.5-6 12-2.5 9.5 3.5-1.5 4.5-9.5 8-9.5 8s-8-3.5-9.5-8c-2.5-6 6-9.5 9.5-3.5z'/%3E%3Cpath d='M92 62c4 0 4 6 0 6s-4-6 0-6z'/%3E%3Cpath d='M40 128l5 8h-10z'/%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='0.025' stroke-width='2'%3E%3Ccircle cx='22' cy='24' r='7'/%3E%3Cpath d='M104 16l7 12h-14z'/%3E%3Cpath d='M18 100h14M25 93v14'/%3E%3Ccircle cx='112' cy='104' r='5'/%3E%3Cpath d='M66 58c3.5-6 12-2.5 9.5 3.5-1.5 4.5-9.5 8-9.5 8s-8-3.5-9.5-8c-2.5-6 6-9.5 9.5-3.5z'/%3E%3Cpath d='M92 62c4 0 4 6 0 6s-4-6 0-6z'/%3E%3Cpath d='M40 128l5 8h-10z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* Pola titik halus untuk panel kosong di desktop */
