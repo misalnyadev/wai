@@ -1,4 +1,12 @@
-import type { Character, ChatMessage, Provider } from "@/types/chat";
+import {
+  DEFAULT_SETTINGS,
+  EMPTY_PROFILE,
+  type AppSettings,
+  type Character,
+  type ChatMessage,
+  type Provider,
+  type UserProfile,
+} from "@/types/chat";
 
 /**
  * Penyimpanan lokal di browser (IndexedDB).
@@ -70,8 +78,36 @@ export async function saveCharacters(list: Character[]): Promise<void> {
   await kvSet("characters", list);
 }
 
+/** Data lama belum punya backupKeys — rapikan saat dibaca. */
+function normalizeProvider(p: Provider): Provider {
+  return {
+    ...p,
+    apiKey: p.apiKey ?? "",
+    backupKeys: Array.isArray(p.backupKeys) ? p.backupKeys.filter(Boolean) : [],
+  };
+}
+
 export async function getProviders(): Promise<Provider[]> {
-  return (await kvGet<Provider[]>("providers")) ?? [];
+  const list = (await kvGet<Provider[]>("providers")) ?? [];
+  return list.map(normalizeProvider);
+}
+
+export async function getUserProfile(): Promise<UserProfile> {
+  const saved = await kvGet<Partial<UserProfile>>("user-profile");
+  return saved ? { ...EMPTY_PROFILE, ...saved } : EMPTY_PROFILE;
+}
+
+export async function saveUserProfile(profile: UserProfile): Promise<void> {
+  await kvSet("user-profile", profile);
+}
+
+export async function getSettings(): Promise<AppSettings> {
+  const saved = await kvGet<Partial<AppSettings>>("settings");
+  return { ...DEFAULT_SETTINGS, ...saved };
+}
+
+export async function saveSettings(settings: AppSettings): Promise<void> {
+  await kvSet("settings", settings);
 }
 
 export async function saveProviders(list: Provider[]): Promise<void> {
@@ -131,15 +167,17 @@ Tujuan latihan: Dipakai untuk latihan dialog emosional keluarga, adegan haru dan
 /* Cadangan (backup) & pemulihan data                                  */
 /* ------------------------------------------------------------------ */
 
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 
 export type BackupData = {
-  app: "persona";
+  app: "waichat" | "persona";
   version: number;
   exportedAt: string;
   characters: Character[];
   providers: Provider[];
   messages: Record<string, ChatMessage[]>;
+  profile?: UserProfile;
+  settings?: AppSettings;
 };
 
 /** Kumpulkan seluruh data perangkat menjadi satu objek JSON. */
@@ -151,12 +189,14 @@ export async function buildBackup(): Promise<BackupData> {
     messages[c.id] = await getMessages(c.id);
   }
   return {
-    app: "persona",
+    app: "waichat",
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     characters,
     providers,
     messages,
+    profile: await getUserProfile(),
+    settings: await getSettings(),
   };
 }
 
@@ -164,7 +204,7 @@ export function isBackupData(value: unknown): value is BackupData {
   if (!value || typeof value !== "object") return false;
   const v = value as Partial<BackupData>;
   return (
-    v.app === "persona" &&
+    (v.app === "waichat" || v.app === "persona") &&
     Array.isArray(v.characters) &&
     Array.isArray(v.providers) &&
     typeof v.messages === "object" &&
@@ -175,7 +215,9 @@ export function isBackupData(value: unknown): value is BackupData {
 /** Timpa seluruh data perangkat dengan isi file cadangan. */
 export async function restoreBackup(data: BackupData): Promise<void> {
   await saveCharacters(data.characters);
-  await saveProviders(data.providers);
+  await saveProviders(data.providers.map(normalizeProvider));
+  if (data.profile) await saveUserProfile({ ...EMPTY_PROFILE, ...data.profile });
+  if (data.settings) await saveSettings({ ...DEFAULT_SETTINGS, ...data.settings });
   for (const character of data.characters) {
     const list = data.messages[character.id] ?? [];
     if (list.length) await saveMessages(character.id, list);

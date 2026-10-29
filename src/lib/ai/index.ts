@@ -4,9 +4,10 @@ import { generateOpenAICompatibleReply } from "./openaiCompatible";
 import { PROVIDER_META } from "./providerDefaults";
 import { AiProviderError, toUserFacingError, type GenerateReplyInput } from "./types";
 
-export { AiProviderError, toUserFacingError } from "./types";
+export { AiProviderError, toUserFacingError, isRotatableError } from "./types";
 export { buildSystemPrompt, splitIntoBubbles, BUBBLE_DELIMITER } from "./promptBuilder";
 export type { ChatTurn } from "./types";
+export type { UserContext } from "./promptBuilder";
 
 export async function generateCharacterReply(
   providerType: ProviderType,
@@ -15,6 +16,12 @@ export async function generateCharacterReply(
   switch (providerType) {
     case "gemini":
       return generateGeminiReply(input);
+    case "groq":
+      return generateOpenAICompatibleReply({
+        ...input,
+        baseUrl: input.baseUrl || PROVIDER_META.groq.baseUrl!,
+        providerLabel: "Groq",
+      });
     case "grok":
       return generateOpenAICompatibleReply({
         ...input,
@@ -30,7 +37,7 @@ export async function generateCharacterReply(
         providerLabel: "OpenRouter",
         extraHeaders: {
           "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://waichat.vercel.app",
-          "X-Title": "Persona Chat",
+          "X-Title": "WaiChat",
         },
       });
     case "custom": {
@@ -47,4 +54,3 @@ export async function generateCharacterReply(
       throw new AiProviderError(`Provider tidak dikenal: ${providerType}`);
   }
 }
-

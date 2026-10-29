@@ -1,5 +1,87 @@
 @import "tailwindcss";
 
+/* Dark mode berbasis kelas .dark pada <html> (di-set skrip sebelum paint). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Token warna — dipakai lewat utility seperti bg-surface / text-ink    */
+/* ------------------------------------------------------------------ */
+:root {
+  --app-bg: #efeae2;
+  --surface: #ffffff;
+  --surface-2: #f5f2ec;
+  --header-bg: #f0f2f5;
+  --line: #e3e8ec;
+  --ink: #0f172a;
+  --ink-soft: #526270;
+  --muted: #94a3b8;
+  --bubble-in: #ffffff;
+  --bubble-in-ink: #111827;
+  --bubble-out: #d9fdd3;
+  --bubble-out-ink: #10281a;
+  --wallpaper: #efeae2;
+  --brand: #00a884;
+  --brand-strong: #008069;
+  --brand-accent: #25d366;
+  --wallpaper-ink: %23000000;
+  --wallpaper-opacity: 0.05;
+  --shadow-color: 15 23 42;
+}
+
+.dark {
+  --app-bg: #0b141a;
+  --surface: #111b21;
+  --surface-2: #16232b;
+  --header-bg: #202c33;
+  --line: #23343d;
+  --ink: #e9edef;
+  --ink-soft: #a7b4bd;
+  --muted: #8696a0;
+  --bubble-in: #202c33;
+  --bubble-in-ink: #e9edef;
+  --bubble-out: #005c4b;
+  --bubble-out-ink: #e9edef;
+  --wallpaper: #0b141a;
+  --brand: #00a884;
+  --brand-strong: #06cf9c;
+  --brand-accent: #25d366;
+  --wallpaper-ink: %23ffffff;
+  --wallpaper-opacity: 0.035;
+  --shadow-color: 0 0 0;
+}
+
+/* Aksen hijau WhatsApp (menimpa palet emerald bawaan Tailwind) */
+@theme {
+  --color-emerald-50: #e7f8f3;
+  --color-emerald-100: #d1f4e9;
+  --color-emerald-200: #a7ebd5;
+  --color-emerald-300: #7be0c1;
+  --color-emerald-400: #25d366;
+  --color-emerald-500: #00a884;
+  --color-emerald-600: #008f72;
+  --color-emerald-700: #007a62;
+  --color-emerald-800: #00654f;
+  --color-emerald-950: #003b30;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-accent: var(--brand-accent);
+  --color-app: var(--app-bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-header: var(--header-bg);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-bubble-in: var(--bubble-in);
+  --color-bubble-in-ink: var(--bubble-in-ink);
+  --color-bubble-out: var(--bubble-out);
+  --color-bubble-out-ink: var(--bubble-out-ink);
+}
+
 html,
 body {
   height: 100%;
@@ -9,10 +91,13 @@ body {
 body {
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+  background-color: var(--app-bg);
+  color: var(--ink);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .font-display {
-  font-family: var(--font-display), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 /* Pakai tinggi viewport dinamis supaya address bar HP tidak memotong composer */
@@ -23,7 +108,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  scrollbar-color: rgba(120, 130, 140, 0.35) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -32,14 +117,30 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.18);
+  background-color: rgba(120, 130, 140, 0.35);
   border-radius: 999px;
 }
 
-/* Wallpaper chat ala WhatsApp: doodle halus di atas krem hangat */
+:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* Wallpaper chat ala WhatsApp: doodle halus di atas krem hangat (versi gelap ikut tema) */
 .chat-wallpaper {
-  background-color: #efeae2;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23000000' stroke-opacity='0.05' stroke-width='2'%3E%3Ccircle cx='22' cy='24' r='7'/%3E%3Cpath d='M104 16l7 12h-14z'/%3E%3Cpath d='M18 100h14M25 93v14'/%3E%3Ccircle cx='112' cy='104' r='5'/%3E%3Cpath d='M66 58c3.5-6 12-2.5 9.5 3.5-1.5 4.5-9.5 8-9.5 8s-8-3.5-9.5-8c-2.5-6 6-9.5 9.5-3.5z'/%3E%3Cpath d='M92 62c4 0 4 6 0 6s-4-6 0-6z'/%3E%3Cpath d='M40 128l5 8h-10z'/%3E%3C/g%3E%3C/svg%3E");
+  background-color: var(--wallpaper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='0.05' stroke-width='2'%3E%3Ccircle cx='22' cy='24' r='7'/%3E%3Cpath d='M104 16l7 12h-14z'/%3E%3Cpath d='M18 100h14M25 93v14'/%3E%3Ccircle cx='112' cy='104' r='5'/%3E%3Cpath d='M66 58c3.5-6 12-2.5 9.5 3.5-1.5 4.5-9.5 8-9.5 8s-8-3.5-9.5-8c-2.5-6 6-9.5 9.5-3.5z'/%3E%3Cpath d='M92 62c4 0 4 6 0 6s-4-6 0-6z'/%3E%3Cpath d='M40 128l5 8h-10z'/%3E%3C/g%3E%3C/svg%3E");
+  transition: background-color 0.2s ease;
+}
+
+.dark .chat-wallpaper {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='0.035' stroke-width='2'%3E%3Ccircle cx='22' cy='24' r='7'/%3E%3Cpath d='M104 16l7 12h-14z'/%3E%3Cpath d='M18 100h14M25 93v14'/%3E%3Ccircle cx='112' cy='104' r='5'/%3E%3Cpath d='M66 58c3.5-6 12-2.5 9.5 3.5-1.5 4.5-9.5 8-9.5 8s-8-3.5-9.5-8c-2.5-6 6-9.5 9.5-3.5z'/%3E%3Cpath d='M92 62c4 0 4 6 0 6s-4-6 0-6z'/%3E%3Cpath d='M40 128l5 8h-10z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Pola titik halus untuk panel kosong di desktop */
+.dot-grid {
+  background-image: radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0);
+  background-size: 22px 22px;
 }
 
 @keyframes bubble-in {
@@ -70,9 +171,28 @@ body {
   animation: fade-in 0.22s ease-out both;
 }
 
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pop-in {
+  animation: pop-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bubble-in,
-  .fade-in {
+  .fade-in,
+  .pop-in {
     animation: none;
+  }
+  body {
+    transition: none;
   }
 }

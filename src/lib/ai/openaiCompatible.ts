@@ -81,15 +81,19 @@ export async function generateOpenAICompatibleReply(options: Options): Promise<s
     const detail = text.slice(0, 400) || res.statusText;
     if (res.status === 401 || res.status === 403) {
       throw new AiProviderError(
-        `${providerLabel}: API key ditolak (${res.status}). Periksa key di Pengaturan. ${detail}`
+        `${providerLabel}: API key ditolak (${res.status}). Periksa key di Setelan. ${detail}`,
+        { status: res.status }
       );
     }
     if (res.status === 429) {
       throw new AiProviderError(
-        `${providerLabel}: kuota/limit tercapai (429). Tunggu sebentar atau ganti provider/key.`
+        `${providerLabel}: kuota/limit tercapai (429). Tunggu sebentar atau ganti provider/key.`,
+        { status: 429 }
       );
     }
-    throw new AiProviderError(`${providerLabel} API error (${res.status}): ${detail}`);
+    throw new AiProviderError(`${providerLabel} API error (${res.status}): ${detail}`, {
+      status: res.status,
+    });
   }
 
   const data = await res.json();

@@ -155,3 +155,83 @@ export function LockIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function SunIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <circle cx={12} cy={12} r={4} />
+      <path
+        d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function MoonIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <path
+        d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function MonitorIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <rect x={2.5} y={4} width={19} height={13} rx={2} />
+      <path d="M8 21h8m-4-4v4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function PaletteIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <path
+        d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.9 2-2 0-.6-.2-1-.6-1.4-.4-.4-.6-.9-.6-1.4 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-3.9-4-7.2-9-7.2Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={7.5} cy={11.5} r={1.2} fill="currentColor" stroke="none" />
+      <circle cx={10.5} cy={7.5} r={1.2} fill="currentColor" stroke="none" />
+      <circle cx={15.5} cy={8.5} r={1.2} fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function UserIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <circle cx={12} cy={8} r={4} />
+      <path d="M4.5 20a7.5 7.5 0 0 1 15 0" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ChatsIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <path
+        d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.3 9.3 0 0 1-3.8-.8L3 21l1.9-4.9A8.2 8.2 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function GridIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <rect x={3} y={3} width={7.5} height={7.5} rx={2} />
+      <rect x={13.5} y={3} width={7.5} height={7.5} rx={2} />
+      <rect x={3} y={13.5} width={7.5} height={7.5} rx={2} />
+      <rect x={13.5} y={13.5} width={7.5} height={7.5} rx={2} />
+    </svg>
+  );
+}

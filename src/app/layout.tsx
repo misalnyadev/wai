@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 /**
@@ -18,7 +19,7 @@ const displayFont = localFont({
       style: "normal",
     },
   ],
-  variable: "--font-display",
+  variable: "--font-jakarta",
   display: "swap",
   fallback: ["ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
 });
@@ -28,12 +29,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://waichat.vercel.app"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Persona — Chat Karakter Privat",
-    template: "%s · Persona",
+    default: "WaiChat — Chat Karakter Privat",
+    template: "%s · WaiChat",
   },
   description:
-    "Aplikasi chat privat untuk latihan pendalaman karakter dan peran film. Tanpa database — semua data tersimpan di perangkatmu.",
-  applicationName: "Persona",
+    "WaiChat — aplikasi chat privat untuk latihan pendalaman karakter dan peran film. Tanpa database, semua data tersimpan di perangkatmu.",
+  applicationName: "WaiChat",
   keywords: [
     "chat karakter",
     "roleplay",
@@ -46,8 +47,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "id_ID",
     url: siteUrl,
-    siteName: "Persona",
-    title: "Persona — Chat Karakter Privat",
+    siteName: "WaiChat",
+    title: "WaiChat — Chat Karakter Privat",
     description:
       "Chat privat dengan karakter yang terasa nyata — untuk latihan pendalaman peran, chemistry, dan dialog film.",
     images: [
@@ -55,13 +56,13 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Persona — Chat Karakter Privat",
+        alt: "WaiChat — Chat Karakter Privat",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Persona — Chat Karakter Privat",
+    title: "WaiChat — Chat Karakter Privat",
     description:
       "Chat privat dengan karakter yang terasa nyata — untuk latihan pendalaman peran, chemistry, dan dialog film.",
     images: ["/og.png"],
@@ -75,7 +76,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Persona",
+    title: "WaiChat",
     statusBarStyle: "default",
   },
   manifest: "/manifest.webmanifest",
@@ -87,15 +88,22 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // Zoom tetap diizinkan (aksesibilitas); input sudah 16px agar iOS tidak auto-zoom.
   viewportFit: "cover",
-  themeColor: "#f0f2f5",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#00a884" },
+    { media: "(prefers-color-scheme: dark)", color: "#111b21" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="id" className={displayFont.variable}>
-      <body className="bg-slate-100 text-slate-900 antialiased">{children}</body>
+    <html lang="id" className={displayFont.variable} suppressHydrationWarning>
+      <head>
+        {/* Terapkan tema tersimpan sebelum paint supaya tidak ada kilatan putih. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="bg-app text-ink antialiased">{children}</body>
     </html>
   );
 }

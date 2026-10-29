@@ -1,6 +1,7 @@
 "use client";
 
 import type { Character } from "@/types/chat";
+import { useEscape } from "@/lib/useEscape";
 import { Avatar } from "./Avatar";
 import { PencilIcon, TrashIcon, XIcon } from "./icons";
 
@@ -19,23 +20,25 @@ export function CharacterProfileModal({
   onClearChat: () => void;
   onDelete: () => void;
 }) {
+  useEscape(onClose);
+
   return (
     <div
-      className="fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl bg-white shadow-2xl"
+        className="pop-in flex max-h-[85vh] w-full max-w-md flex-col rounded-3xl bg-surface shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label={`Profil ${character.name}`}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 className="font-display text-lg font-bold text-slate-900">Profil Karakter</h2>
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <h2 className="font-display text-lg font-bold text-ink">Profil Karakter</h2>
           <button
             onClick={onClose}
-            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100"
+            className="rounded-full p-1.5 text-ink-soft transition hover:bg-surface-2"
             aria-label="Tutup profil"
           >
             <XIcon className="h-5 w-5" />
@@ -44,18 +47,18 @@ export function CharacterProfileModal({
         <div className="flex-1 overflow-y-auto px-5 py-5">
           <div className="flex flex-col items-center gap-2">
             <Avatar name={character.name} src={character.avatarUrl} size={110} ring />
-            <h3 className="font-display mt-2 text-xl font-bold text-slate-900">{character.name}</h3>
-            {character.shortBio && <p className="text-sm text-slate-500">{character.shortBio}</p>}
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-500">
+            <h3 className="font-display mt-2 text-xl font-bold text-ink">{character.name}</h3>
+            {character.shortBio && <p className="text-sm text-ink-soft">{character.shortBio}</p>}
+            <span className="rounded-full bg-surface-2 px-3 py-1 text-[11px] font-medium text-ink-soft">
               {providerLabel}
             </span>
           </div>
 
           <div className="mt-5">
-            <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
               Tentang karakter
             </h4>
-            <p className="max-h-52 overflow-y-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-sm leading-relaxed text-slate-700">
+            <p className="max-h-52 overflow-y-auto whitespace-pre-wrap rounded-xl bg-surface-2 p-3 text-sm leading-relaxed text-ink-soft">
               {character.personality}
             </p>
           </div>
@@ -69,14 +72,14 @@ export function CharacterProfileModal({
             </button>
             <button
               onClick={onClearChat}
-              className="rounded-lg border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-lg border border-line py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-surface-2"
             >
               Hapus Riwayat Chat
             </button>
           </div>
           <button
             onClick={onDelete}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-rose-200 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-rose-200 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
           >
             <TrashIcon className="h-4 w-4" /> Hapus Karakter
           </button>
