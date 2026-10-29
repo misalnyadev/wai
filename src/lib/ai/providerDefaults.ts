@@ -1,4 +1,4 @@
-import type { ProviderType } from "@/db/schema";
+import type { ProviderType } from "@/types/chat";
 
 export const PROVIDER_META: Record<
   ProviderType,

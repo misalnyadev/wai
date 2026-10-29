@@ -38,17 +38,18 @@ export function splitIntoBubbles(raw: string): string[] {
   const text = raw.trim();
   if (!text) return [];
 
-  if (text.includes(BUBBLE_DELIMITER)) {
+  if (/\[\[\s*NEXT\s*\]\]/i.test(text)) {
     return text
-      .split(BUBBLE_DELIMITER)
-      .map((part) => part.trim())
-      .filter(Boolean);
+      .split(/\[\[\s*NEXT\s*\]\]/i)
+      .map((part) => cleanBubble(part))
+      .filter(Boolean)
+      .slice(0, 6);
   }
 
   // Fallback heuristic: if the model ignored the delimiter and produced a
   // long block of text, break it into natural WhatsApp-like bursts so it
   // still doesn't read like an essay.
-  if (text.length <= 170) return [text];
+  if (text.length <= 170) return [cleanBubble(text)];
 
   const sentences = text.match(/[^.!?\n]+[.!?]?(\s|$)/g) ?? [text];
   const bubbles: string[] = [];
@@ -66,5 +67,13 @@ export function splitIntoBubbles(raw: string): string[] {
   }
   if (current) bubbles.push(current.trim());
 
-  return bubbles.slice(0, 5).length ? bubbles.slice(0, 5) : [text];
+  return bubbles.slice(0, 5).length ? bubbles.slice(0, 5) : [cleanBubble(text)];
+}
+
+/** Buang sisa pembungkus markdown atau tanda kutip yang tidak perlu di chat. */
+export function cleanBubble(part: string): string {
+  return part
+    .replace(/^\s*[*_]{1,3}([\s\S]*)[*_]{1,3}\s*$/, "$1")
+    .replace(/^["“”']([\s\S]*)["“”']$/, "$1")
+    .trim();
 }

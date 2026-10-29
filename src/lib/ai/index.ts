@@ -1,10 +1,10 @@
-import type { ProviderType } from "@/db/schema";
+import type { ProviderType } from "@/types/chat";
 import { generateGeminiReply } from "./gemini";
 import { generateOpenAICompatibleReply } from "./openaiCompatible";
 import { PROVIDER_META } from "./providerDefaults";
-import { AiProviderError, type GenerateReplyInput } from "./types";
+import { AiProviderError, toUserFacingError, type GenerateReplyInput } from "./types";
 
-export { AiProviderError };
+export { AiProviderError, toUserFacingError } from "./types";
 export { buildSystemPrompt, splitIntoBubbles, BUBBLE_DELIMITER } from "./promptBuilder";
 export type { ChatTurn } from "./types";
 
@@ -20,6 +20,8 @@ export async function generateCharacterReply(
         ...input,
         baseUrl: input.baseUrl || PROVIDER_META.grok.baseUrl!,
         providerLabel: "Grok (xAI)",
+        // Grok 4 adalah model reasoning; effort rendah = balasan chat jauh lebih cepat.
+        extraBody: { reasoning_effort: "low" },
       });
     case "openrouter":
       return generateOpenAICompatibleReply({
@@ -27,7 +29,7 @@ export async function generateCharacterReply(
         baseUrl: input.baseUrl || PROVIDER_META.openrouter.baseUrl!,
         providerLabel: "OpenRouter",
         extraHeaders: {
-          "HTTP-Referer": "http://localhost",
+          "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://waichat.vercel.app",
           "X-Title": "Persona Chat",
         },
       });
@@ -45,3 +47,4 @@ export async function generateCharacterReply(
       throw new AiProviderError(`Provider tidak dikenal: ${providerType}`);
   }
 }
+

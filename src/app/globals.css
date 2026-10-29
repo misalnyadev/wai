@@ -5,8 +5,20 @@ body {
   height: 100%;
 }
 
+/* Area aplikasi full-screen tanpa "bounce" scroll di iOS */
+body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .font-display {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* Pakai tinggi viewport dinamis supaya address bar HP tidak memotong composer */
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
 }
 
 * {

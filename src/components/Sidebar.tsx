@@ -37,7 +37,7 @@ export function Sidebar({
 
   return (
     <div className="flex h-full w-full flex-col border-r border-slate-200 bg-white md:w-[380px]">
-      <div className="flex items-center justify-between bg-[#f0f2f5] px-4 py-3">
+      <div className="flex items-center justify-between bg-[#f0f2f5] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3">
         <div>
           <h1 className="font-display text-lg font-extrabold tracking-tight text-slate-900">
             Persona

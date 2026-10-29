@@ -127,6 +127,74 @@ Tujuan latihan: Dipakai untuk latihan dialog emosional keluarga, adegan haru dan
   },
 ];
 
+/* ------------------------------------------------------------------ */
+/* Cadangan (backup) & pemulihan data                                  */
+/* ------------------------------------------------------------------ */
+
+export const BACKUP_VERSION = 1;
+
+export type BackupData = {
+  app: "persona";
+  version: number;
+  exportedAt: string;
+  characters: Character[];
+  providers: Provider[];
+  messages: Record<string, ChatMessage[]>;
+};
+
+/** Kumpulkan seluruh data perangkat menjadi satu objek JSON. */
+export async function buildBackup(): Promise<BackupData> {
+  const characters = await getCharacters();
+  const providers = await getProviders();
+  const messages: Record<string, ChatMessage[]> = {};
+  for (const c of characters) {
+    messages[c.id] = await getMessages(c.id);
+  }
+  return {
+    app: "persona",
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    characters,
+    providers,
+    messages,
+  };
+}
+
+export function isBackupData(value: unknown): value is BackupData {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Partial<BackupData>;
+  return (
+    v.app === "persona" &&
+    Array.isArray(v.characters) &&
+    Array.isArray(v.providers) &&
+    typeof v.messages === "object" &&
+    v.messages !== null
+  );
+}
+
+/** Timpa seluruh data perangkat dengan isi file cadangan. */
+export async function restoreBackup(data: BackupData): Promise<void> {
+  await saveCharacters(data.characters);
+  await saveProviders(data.providers);
+  for (const character of data.characters) {
+    const list = data.messages[character.id] ?? [];
+    if (list.length) await saveMessages(character.id, list);
+    else await kvDel(`messages:${character.id}`);
+  }
+  await kvSet("initialized", true);
+}
+
+/** Hapus semua data aplikasi di perangkat ini (chat, karakter, API key). */
+export async function wipeAll(): Promise<void> {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 /** Muat semua data; isi karakter contoh saat pertama kali dibuka. */
 export async function loadAll(): Promise<{ characters: Character[]; providers: Provider[] }> {
   const initialized = await kvGet<boolean>("initialized");

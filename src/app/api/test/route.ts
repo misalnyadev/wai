@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { providerTypeValues, type ProviderType } from "@/db/schema";
-import { AiProviderError, generateCharacterReply } from "@/lib/ai";
+import { providerTypeValues, type ProviderType } from "@/types/chat";
+import { generateCharacterReply, toUserFacingError } from "@/lib/ai";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -32,10 +32,8 @@ export async function POST(req: Request) {
       userText: 'Tes koneksi. Balas hanya dengan satu kata: "siap".',
       image: null,
     });
-    return NextResponse.json({ ok: true, sample: reply.slice(0, 60) });
+    return NextResponse.json({ ok: true, sample: reply.replace(/\s+/g, " ").slice(0, 60) });
   } catch (err) {
-    const message =
-      err instanceof AiProviderError ? err.message : "Gagal terhubung ke provider.";
-    return NextResponse.json({ ok: false, error: message });
+    return NextResponse.json({ ok: false, error: toUserFacingError(err, "Gagal terhubung ke provider.") });
   }
 }

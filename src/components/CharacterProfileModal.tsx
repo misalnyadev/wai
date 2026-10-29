@@ -20,8 +20,17 @@ export function CharacterProfileModal({
   onDelete: () => void;
 }) {
   return (
-    <div className="fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl bg-white shadow-2xl">
+    <div
+      className="fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Profil ${character.name}`}
+      >
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 className="font-display text-lg font-bold text-slate-900">Profil Karakter</h2>
           <button
@@ -46,7 +55,7 @@ export function CharacterProfileModal({
             <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Tentang karakter
             </h4>
-            <p className="whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-sm leading-relaxed text-slate-700">
+            <p className="max-h-52 overflow-y-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-sm leading-relaxed text-slate-700">
               {character.personality}
             </p>
           </div>

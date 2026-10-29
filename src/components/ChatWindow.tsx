@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Character, ChatMessage } from "@/types/chat";
 import { Avatar } from "./Avatar";
-import { BackIcon, LockIcon } from "./icons";
+import { BackIcon, DoubleCheckIcon, LockIcon } from "./icons";
 
 function formatTime(iso: string) {
   const d = new Date(iso);
@@ -20,6 +20,25 @@ function TypingBubble() {
       </div>
     </div>
   );
+}
+
+/** Tanda centang gaya WhatsApp: satu centang saat terkirim, dua saat diproses. */
+function Ticks({ pending }: { pending?: boolean }) {
+  if (pending) {
+    return (
+      <svg viewBox="0 0 16 11" className="h-3 w-3 text-slate-400" aria-label="mengirim">
+        <path
+          d="M1 6.5l3 3L11 2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  return <DoubleCheckIcon className="h-3 w-3 text-sky-500" />;
 }
 
 export function ChatWindow({
@@ -49,7 +68,7 @@ export function ChatWindow({
   return (
     <div className="chat-wallpaper flex h-full min-h-0 flex-1 flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-[#f0f2f5] px-4 py-2.5 shadow-sm">
+      <div className="flex items-center gap-3 border-b border-slate-200 bg-[#f0f2f5] px-2 py-2.5 shadow-sm sm:px-4">
         <button
           onClick={onBack}
           className="rounded-full p-1.5 text-slate-600 transition hover:bg-slate-200 md:hidden"
@@ -70,6 +89,13 @@ export function ChatWindow({
             </p>
           </div>
         </button>
+        <button
+          onClick={onOpenProfile}
+          className="rounded-full px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+          aria-label="Buka profil dan opsi karakter"
+        >
+          ⋯
+        </button>
       </div>
 
       {/* Messages */}
@@ -79,7 +105,7 @@ export function ChatWindow({
           const el = e.currentTarget;
           setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 120);
         }}
-        className="flex-1 space-y-1.5 overflow-y-auto px-4 py-4 md:px-10"
+        className="flex-1 space-y-1.5 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 md:px-10"
       >
         <div className="mb-3 flex justify-center">
           <span className="flex items-center gap-1.5 rounded-full bg-[#fdf4c5] px-3 py-1.5 text-center text-[11px] text-slate-600 shadow-sm">
@@ -91,7 +117,7 @@ export function ChatWindow({
         {messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
-              className={`bubble-in relative max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
+              className={`bubble-in relative max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[78%] ${
                 m.role === "user"
                   ? "rounded-br-sm bg-[#d9fdd3] text-slate-800"
                   : "rounded-bl-sm bg-white text-slate-800"
@@ -106,8 +132,9 @@ export function ChatWindow({
                 />
               )}
               {m.content && <p className="whitespace-pre-wrap break-words">{m.content}</p>}
-              <span className="float-right ml-2 mt-1 select-none text-[10px] text-slate-400">
+              <span className="float-right ml-2 mt-1 flex translate-y-0.5 items-center gap-1 select-none text-[10px] text-slate-400">
                 {formatTime(m.createdAt)}
+                {m.role === "user" && <Ticks pending={m.pending} />}
               </span>
             </div>
           </div>

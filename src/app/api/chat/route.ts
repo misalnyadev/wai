@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { providerTypeValues, type ProviderType } from "@/db/schema";
+import { providerTypeValues, type ProviderType } from "@/types/chat";
 import {
-  AiProviderError,
   buildSystemPrompt,
   generateCharacterReply,
   splitIntoBubbles,
+  toUserFacingError,
   type ChatTurn,
 } from "@/lib/ai";
 
@@ -71,11 +71,11 @@ export async function POST(req: Request) {
       image: image?.data && image?.mimeType ? { base64: image.data, mimeType: image.mimeType } : null,
     });
 
-    const bubbles = splitIntoBubbles(rawReply);
-    return NextResponse.json({ bubbles: bubbles.length ? bubbles : [rawReply.trim() || "..."] });
+    // Bersihkan penanda internal yang kadang ikut terbawa model.
+    const cleaned = rawReply.replace(/\*?\[\[NEXT\]\]\*?/g, "[[NEXT]]");
+    const bubbles = splitIntoBubbles(cleaned);
+    return NextResponse.json({ bubbles: bubbles.length ? bubbles : [cleaned.trim() || "..."] });
   } catch (err) {
-    const message =
-      err instanceof AiProviderError ? err.message : "Gagal menghubungi penyedia AI. Coba lagi.";
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: toUserFacingError(err) }, { status: 502 });
   }
 }

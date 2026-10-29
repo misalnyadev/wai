@@ -1,4 +1,6 @@
-export type ProviderType = "gemini" | "grok" | "openrouter" | "custom";
+export const providerTypeValues = ["gemini", "grok", "openrouter", "custom"] as const;
+
+export type ProviderType = (typeof providerTypeValues)[number];
 
 export type Provider = {
   id: string;
