@@ -13,8 +13,8 @@ const ITEMS: {
   Icon: (p: { className?: string }) => React.JSX.Element;
 }[] = [
   { view: "chats", label: "Chat", Icon: ChatsIcon },
-  { view: "characters", label: "Karakter", Icon: GridIcon },
   { view: "voice", label: "Suara", Icon: PhoneCallIcon },
+  { view: "characters", label: "Karakter", Icon: GridIcon },
   { view: "profile", label: "Profil", Icon: UserIcon },
   { view: "settings", label: "Setelan", Icon: SettingsIcon },
 ];
