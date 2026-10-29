@@ -6,12 +6,14 @@ import {
   VOICE_PRESETS,
   VOICE_TEST_TEXT,
   getVoicesSnapshot,
+  isNaturalVoice,
   isSpeechSupported,
+  sortVoices,
   speak,
   stopSpeaking,
   subscribeVoices,
 } from "@/lib/voice";
-import { CheckIcon, PhoneIcon } from "./icons";
+import { CheckIcon, SpeakerIcon } from "./icons";
 
 function Slider({
   label,
@@ -64,12 +66,9 @@ export function VoiceView({
   // Hentikan suara yang sedang berjalan saat halaman ditinggalkan.
   useEffect(() => () => stopSpeaking(), []);
 
-  const sorted = useMemo(() => {
-    const score = (v: SpeechSynthesisVoice) => (v.lang?.toLowerCase().startsWith("id") ? 0 : 1);
-    return [...voices].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name));
-  }, [voices]);
-
+  const sorted = useMemo(() => sortVoices(voices), [voices]);
   const indonesianCount = sorted.filter((v) => v.lang?.toLowerCase().startsWith("id")).length;
+  const bestVoice = sorted[0] ?? null;
 
   function update(patch: Partial<VoiceSettings>) {
     onChange({ ...settings, ...patch });
@@ -86,7 +85,7 @@ export function VoiceView({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
-      <div className="flex items-center justify-between border-b border-line bg-header px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between bg-header px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
         <h2 className="font-display text-lg font-bold text-ink">Suara</h2>
         {supported && (
           <button
@@ -111,7 +110,7 @@ export function VoiceView({
           {/* Aktifkan */}
           <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-line px-3 py-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-soft ring-1 ring-line">
-              <PhoneIcon className="h-4 w-4" />
+              <SpeakerIcon className="h-4 w-4" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold text-ink">Bacakan balasan</span>
@@ -124,6 +123,48 @@ export function VoiceView({
               className="h-4 w-4 shrink-0 rounded border-line accent-ink"
             />
           </label>
+
+          {/* Saran suara paling natural */}
+          {supported && bestVoice && (
+            <div className="rounded-xl border border-line bg-surface-2 px-3 py-2.5">
+              <p className="text-xs text-ink-soft">
+                Paling natural di perangkat ini:{" "}
+                <span className="font-semibold text-ink">{bestVoice.name}</span>
+                {isNaturalVoice(bestVoice) ? " (enhanced)" : ""}
+              </p>
+              {(settings.voiceURI !== bestVoice.voiceURI || settings.voiceURI === "") && (
+                <button
+                  type="button"
+                  onClick={() => update({ voiceURI: bestVoice.voiceURI, rate: 0.95, pitch: 1, pause: 150 })}
+                  className="mt-2 rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-brand-ink transition hover:bg-brand-strong"
+                >
+                  Pakai suara ini
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Tips */}
+          <details className="rounded-xl border border-line px-3 py-2">
+            <summary className="cursor-pointer text-xs font-semibold text-ink-soft">
+              Cara bikin suara lebih natural
+            </summary>
+            <div className="mt-2 space-y-1.5 text-xs leading-relaxed text-ink-soft">
+              <p>
+                <b>iPhone:</b> Pengaturan → Aksesibilitas → Konten Terbaca → Suara → Indonesia, lalu
+                unduh suara bertanda <i>Enhanced</i>/<i>Premium</i>. Setelah terunduh, suara itu
+                muncul di daftar ini dan jauh lebih halus.
+              </p>
+              <p>
+                <b>Android:</b> Pengaturan → Aksesibilitas → Output teks-ke-suara → pasang suara
+                bahasa Indonesia dari Google TTS.
+              </p>
+              <p>
+                Lalu: pilih suara berlabel <b>natural</b>, pakai preset <b>Natural</b>, kecepatan
+                ±0.95×, dan jeda kalimat 120–180 ms.
+              </p>
+            </div>
+          </details>
 
           {/* Pilihan suara */}
           <section>
@@ -164,11 +205,18 @@ export function VoiceView({
                           active ? "bg-ink/[0.06]" : "hover:bg-surface-2"
                         }`}
                       >
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm text-ink">{voice.name}</span>
-                          <span className="block truncate text-xs uppercase text-muted">
-                            {voice.lang}
+                        <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm text-ink">{voice.name}</span>
+                            <span className="block truncate text-xs uppercase text-muted">
+                              {voice.lang}
+                            </span>
                           </span>
+                          {isNaturalVoice(voice) && (
+                            <span className="shrink-0 rounded-full bg-ink/10 px-1.5 py-0.5 text-[12px] font-semibold text-ink">
+                              natural
+                            </span>
+                          )}
                         </span>
                         {active && <CheckIcon className="h-4 w-4 shrink-0 text-ink" />}
                       </button>
@@ -193,6 +241,7 @@ export function VoiceView({
                     key={preset.id}
                     type="button"
                     onClick={() => update({ rate: preset.rate, pitch: preset.pitch })}
+                    title={preset.hint}
                     aria-pressed={active}
                     className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                       active
@@ -233,6 +282,15 @@ export function VoiceView({
                 step={0.05}
                 display={`${Math.round(settings.volume * 100)}%`}
                 onChange={(volume) => update({ volume })}
+              />
+              <Slider
+                label="Jeda antar kalimat"
+                value={settings.pause}
+                min={0}
+                max={500}
+                step={20}
+                display={`${settings.pause} ms`}
+                onChange={(pause) => update({ pause })}
               />
             </div>
 

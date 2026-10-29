@@ -21,9 +21,12 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
 - 🖼️ **Latar chat custom** — pilih salah satu warna bawaan (punya versi terang & gelap) atau
   unggah gambar sendiri, lengkap dengan pengatur keredupan agar tulisan tetap terbaca.
   Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat menu ⋯ di percakapan
-- 🔊 **Suara lokal** (Web Speech API) — karakter bisa membacakan balasannya, dengan pilihan
-  suara perangkat, preset "Natural/Kalem/Ceria/Jelas", serta pengatur kecepatan, nada, dan volume.
+- 🔊 **Suara lokal** (Web Speech API) — karakter bisa membacakan balasannya. Teks dipecah per
+  kalimat dengan jeda alami, suara "Enhanced/Premium" diprioritaskan otomatis, ada preset
+  "Natural/Hangat/Santai/Ceria/Jelas" plus pengatur kecepatan, nada, volume, dan jeda kalimat.
   Gratis, tanpa API key, dan tidak dikirim ke mana pun
+  - iPhone: unduh suara Indonesia kualitas *Enhanced* di Pengaturan → Aksesibilitas →
+    Konten Terbaca → Suara agar suaranya jauh lebih halus
 - 📷 Kirim foto (dikompres otomatis di browser)
 - 💾 **Cadangan & pemulihan** data (JSON) + hapus semua data perangkat
 - 🔒 Tanpa database: semua chat, foto, profil, dan API key tersimpan **di browser perangkat**

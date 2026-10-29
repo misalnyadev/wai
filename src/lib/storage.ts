@@ -154,6 +154,7 @@ function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings
     rate: clamp(rawVoice.rate, 0.5, 1.6, DEFAULT_VOICE.rate),
     pitch: clamp(rawVoice.pitch, 0.5, 1.6, DEFAULT_VOICE.pitch),
     volume: clamp(rawVoice.volume, 0, 1, DEFAULT_VOICE.volume),
+    pause: clamp(rawVoice.pause, 0, 600, DEFAULT_VOICE.pause),
   };
 
   return { ...merged, chatBackground: safe, voice };

@@ -3,7 +3,7 @@
 import type { UserProfile } from "@/types/chat";
 import { Avatar } from "./Avatar";
 import { ThemeQuickToggle } from "./ThemeToggle";
-import { ChatsIcon, GridIcon, PhoneIcon, SettingsIcon, UserIcon } from "./icons";
+import { ChatsIcon, GridIcon, PhoneCallIcon, SettingsIcon, UserIcon } from "./icons";
 
 export type AppView = "chats" | "characters" | "voice" | "profile" | "settings";
 
@@ -14,7 +14,7 @@ const ITEMS: {
 }[] = [
   { view: "chats", label: "Chat", Icon: ChatsIcon },
   { view: "characters", label: "Karakter", Icon: GridIcon },
-  { view: "voice", label: "Suara", Icon: PhoneIcon },
+  { view: "voice", label: "Suara", Icon: PhoneCallIcon },
   { view: "profile", label: "Profil", Icon: UserIcon },
   { view: "settings", label: "Setelan", Icon: SettingsIcon },
 ];
@@ -30,7 +30,7 @@ export function NavRail({
   profile: UserProfile;
 }) {
   return (
-    <nav className="hidden w-[74px] shrink-0 flex-col items-center gap-1 border-r border-line bg-header py-3 md:flex">
+    <nav className="hidden w-[74px] shrink-0 flex-col items-center gap-1 bg-header py-3 md:flex">
       <button
         onClick={() => onChange("profile")}
         className="mb-2 rounded-full ring-2 ring-transparent transition hover:ring-ink/15"

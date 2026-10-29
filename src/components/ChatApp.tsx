@@ -295,7 +295,7 @@ export function ChatApp() {
         };
         updateMessages(activeId, (l) => [...l, reply]);
         touchCharacter(activeId, bubbles[i]);
-        if (settings.voice.enabled) speak(bubbles[i], settings.voice);
+        if (settings.voice.enabled) speak(bubbles[i], settings.voice, { append: i > 0 });
         if (i < bubbles.length - 1) await sleep(350);
       }
       setTypingFor(null);
