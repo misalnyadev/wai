@@ -77,7 +77,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "WaiChat",
-    statusBarStyle: "default",
+    // "black-translucent" = konten boleh masuk ke area status bar. Tiap layar
+    // sudah menjaga jarak sendiri lewat env(safe-area-inset-*) di globals.css,
+    // dan layar panggilan memakai ini supaya video benar-benar penuh ke atas.
+    statusBarStyle: "black-translucent",
   },
   manifest: "/manifest.webmanifest",
   formatDetection: {
@@ -106,7 +109,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Terapkan tema tersimpan sebelum paint supaya tidak ada kilatan putih. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="text-ink antialiased">{children}</body>
+      <body className="text-ink antialiased">
+        <div className="status-scrim" aria-hidden="true" />
+        {children}
+      </body>
     </html>
   );
 }
