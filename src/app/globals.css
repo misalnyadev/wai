@@ -38,21 +38,33 @@
   --surface-2: #1d1d21;
   --header-bg: #17171a;
   --line: #2a2a30;
-  --ink: #ededf0;
-  --ink-soft: #a8a8b0;
-  --muted: #7e7e88;
+  --ink: #d4d5da;
+  --ink-soft: #a1a2aa;
+  --muted: #7c7d86;
   --bubble-in: #1c1c21;
-  --bubble-in-ink: #ededf0;
+  --bubble-in-ink: #d4d5da;
   --bubble-out: #2e2e36;
-  --bubble-out-ink: #ededf0;
+  --bubble-out-ink: #d4d5da;
   --wallpaper: #0b0b0d;
-  --brand: #ededf0;
-  --brand-strong: #ffffff;
-  --brand-accent: #ededf0;
+  /* Abu muda kalem, bukan putih menyilaukan. */
+  --brand: #c3c4cb;
+  --brand-strong: #d6d7dd;
+  --brand-accent: #c3c4cb;
   --brand-ink: #0b0b0d;
   --wallpaper-ink: %23ffffff;
   --wallpaper-opacity: 0.02;
   --shadow-color: 0 0 0;
+}
+
+/*
+ * Skala teks: dinaikkan sedikit dari default Tailwind supaya lebih nyaman
+ * dibaca (keluhan: teks terasa kecil). Line-height tetap memakai rasio bawaan.
+ */
+@theme {
+  --text-xs: 0.8125rem; /* 13px */
+  --text-sm: 0.9375rem; /* 15px */
+  --text-lg: 1.1875rem; /* 19px */
+  --text-xl: 1.3125rem; /* 21px */
 }
 
 @theme inline {
@@ -151,6 +163,14 @@ textarea,
 select {
   min-width: 0;
   max-width: 100%;
+}
+
+/* Di layar HP teks dinaikkan satu tingkat lagi agar mudah dibaca. */
+@media (max-width: 767px) {
+  :root {
+    --text-xs: 0.875rem; /* 14px */
+    --text-sm: 1rem; /* 16px */
+  }
 }
 
 /* Cegah pembesaran teks otomatis saat iPhone diputar ke landscape */

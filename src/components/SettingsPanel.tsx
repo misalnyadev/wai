@@ -379,12 +379,12 @@ export function SettingsPanel({
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="truncate text-sm font-medium text-ink">{p.label}</span>
                             {p.isDefault && (
-                              <span className="rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] font-semibold text-ink">
+                              <span className="rounded-full bg-ink/10 px-1.5 py-0.5 text-[12px] font-semibold text-ink">
                                 default
                               </span>
                             )}
                             {keyCount > 1 && (
-                              <span className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-ink-soft ring-1 ring-line">
+                              <span className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[12px] font-medium text-ink-soft ring-1 ring-line">
                                 {keyCount} key
                               </span>
                             )}
@@ -422,7 +422,7 @@ export function SettingsPanel({
                             onClick={() => handleDelete(p.id)}
                             title="Hapus"
                             aria-label="Hapus provider"
-                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-surface-2 hover:text-ink"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
@@ -540,7 +540,7 @@ export function SettingsPanel({
                 <button
                   type="button"
                   onClick={() => setShowKeys((v) => !v)}
-                  className="text-[11px] font-medium text-ink-soft hover:text-ink"
+                  className="text-[12px] font-medium text-ink-soft hover:text-ink"
                 >
                   {showKeys ? "Sembunyikan" : "Tampilkan"}
                 </button>
@@ -572,7 +572,7 @@ export function SettingsPanel({
                   <button
                     type="button"
                     onClick={() => setBackupKeys((list) => list.filter((_, i) => i !== index))}
-                    className="rounded-full p-1.5 text-ink-soft transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                    className="rounded-full p-1.5 text-ink-soft transition hover:bg-surface-2 hover:text-ink"
                     aria-label={`Hapus key cadangan ${index + 1}`}
                   >
                     <TrashIcon className="h-4 w-4" />
@@ -658,11 +658,11 @@ export function SettingsPanel({
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-sm text-ink">{m.id}</span>
                               {m.label && m.label !== m.id && (
-                                <span className="block truncate text-[11px] text-muted">{m.label}</span>
+                                <span className="block truncate text-[12px] text-muted">{m.label}</span>
                               )}
                             </span>
                             {isRecommended && (
-                              <span className="shrink-0 rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] font-semibold text-ink">
+                              <span className="shrink-0 rounded-full bg-ink/10 px-1.5 py-0.5 text-[12px] font-semibold text-ink">
                                 disarankan
                               </span>
                             )}
@@ -721,11 +721,11 @@ export function SettingsPanel({
               type="button"
               onClick={handleWipe}
               disabled={dataBusy !== null}
-              className="mt-2 w-full rounded-lg border border-rose-200 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+              className="mt-2 w-full rounded-lg border border-line py-2 text-xs font-semibold text-ink-soft transition hover:bg-surface-2 hover:text-ink disabled:opacity-50"
             >
               {dataBusy === "wipe" ? "Menghapus..." : "Hapus semua data"}
             </button>
-            <p className="mt-2 text-[11px] text-muted">File cadangan memuat API key.</p>
+            <p className="mt-2 text-[12px] text-muted">File cadangan memuat API key.</p>
             {dataNote && (
               <p
                 className={`mt-1 text-xs ${

@@ -64,7 +64,7 @@ export function Sidebar({
             <h1 className="font-display truncate text-lg font-extrabold tracking-tight text-ink">
               WaiChat<span className="text-muted">.</span>
             </h1>
-            <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted">
+            <p className="truncate text-[12px] font-semibold uppercase tracking-wider text-muted">
               {profile.nickname?.trim()
                 ? `hai, ${profile.nickname.trim()}`
                 : "privat · di perangkatmu"}
@@ -152,7 +152,7 @@ export function Sidebar({
             <div className="min-w-0 flex-1 border-b border-line/70 pb-3 pt-0.5">
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-semibold text-ink">{c.name}</p>
-                <span className="shrink-0 text-[11px] text-muted">
+                <span className="shrink-0 text-[12px] text-muted">
                   {formatListTime(c.updatedAt)}
                 </span>
               </div>

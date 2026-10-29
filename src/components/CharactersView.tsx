@@ -79,7 +79,7 @@ export function CharactersView({
                   </button>
                   <button
                     onClick={() => onDelete(c.id)}
-                    className="rounded-full border border-line p-2 text-ink-soft transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                    className="rounded-full border border-line p-2 text-ink-soft transition hover:bg-surface-2 hover:text-ink"
                     title="Hapus karakter"
                     aria-label={`Hapus ${c.name}`}
                   >

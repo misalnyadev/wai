@@ -143,7 +143,7 @@ export function ChatWindow({
               <div key={m.id}>
                 {divider && (
                   <div className="my-3 flex justify-center">
-                    <span className="rounded-lg bg-surface/80 px-2.5 py-1 text-[11px] font-medium text-ink-soft shadow-sm ring-1 ring-line/60 backdrop-blur">
+                    <span className="rounded-lg bg-surface/80 px-2.5 py-1 text-[12px] font-medium text-ink-soft shadow-sm ring-1 ring-line/60 backdrop-blur">
                       {divider}
                     </span>
                   </div>
@@ -167,7 +167,7 @@ export function ChatWindow({
                       />
                     )}
                     {m.content && <p className="whitespace-pre-wrap break-words">{m.content}</p>}
-                    <span className="float-right ml-2 mt-1 flex translate-y-0.5 items-center gap-1 select-none text-[10px] text-ink-soft/80">
+                    <span className="float-right ml-2 mt-1 flex translate-y-0.5 items-center gap-1 select-none text-[12px] text-ink-soft/80">
                       {formatTime(m.createdAt)}
                       {m.role === "user" && <Ticks pending={m.pending} />}
                     </span>
