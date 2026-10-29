@@ -7,24 +7,27 @@
 /* Token warna — dipakai lewat utility seperti bg-surface / text-ink    */
 /* ------------------------------------------------------------------ */
 :root {
-  --app-bg: #efeae2;
+  /* Netral terang: abu sejuk, tanpa tint hijau/krem. */
+  --app-bg: #f2f3f5;
   --surface: #ffffff;
-  --surface-2: #f5f2ec;
+  --surface-2: #f4f5f7;
   --header-bg: #f0f2f5;
-  --line: #e3e8ec;
-  --ink: #0f172a;
-  --ink-soft: #526270;
-  --muted: #94a3b8;
+  --line: #e4e6ea;
+  --ink: #101114;
+  --ink-soft: #565a61;
+  --muted: #9096a0;
   --bubble-in: #ffffff;
-  --bubble-in-ink: #111827;
-  --bubble-out: #d9fdd3;
-  --bubble-out-ink: #10281a;
-  --wallpaper: #efeae2;
-  --brand: #00a884;
-  --brand-strong: #008069;
-  --brand-accent: #25d366;
+  --bubble-in-ink: #101114;
+  --bubble-out: #e9ebee;
+  --bubble-out-ink: #101114;
+  --wallpaper: #f7f8fa;
+  /* Aksen netral: tombol utama gelap, teks putih. */
+  --brand: #17181c;
+  --brand-strong: #000000;
+  --brand-accent: #17181c;
+  --brand-ink: #ffffff;
   --wallpaper-ink: %23000000;
-  --wallpaper-opacity: 0.05;
+  --wallpaper-opacity: 0.035;
   --shadow-color: 15 23 42;
 }
 
@@ -43,32 +46,20 @@
   --bubble-out: #2e2e36;
   --bubble-out-ink: #ededf0;
   --wallpaper: #0b0b0d;
-  --brand: #00a884;
-  --brand-strong: #00c39a;
-  --brand-accent: #25d366;
+  --brand: #ededf0;
+  --brand-strong: #ffffff;
+  --brand-accent: #ededf0;
+  --brand-ink: #0b0b0d;
   --wallpaper-ink: %23ffffff;
-  --wallpaper-opacity: 0.025;
+  --wallpaper-opacity: 0.02;
   --shadow-color: 0 0 0;
-}
-
-/* Aksen hijau WhatsApp (menimpa palet emerald bawaan Tailwind) */
-@theme {
-  --color-emerald-50: #e7f8f3;
-  --color-emerald-100: #d1f4e9;
-  --color-emerald-200: #a7ebd5;
-  --color-emerald-300: #7be0c1;
-  --color-emerald-400: #25d366;
-  --color-emerald-500: #00a884;
-  --color-emerald-600: #008f72;
-  --color-emerald-700: #007a62;
-  --color-emerald-800: #00654f;
-  --color-emerald-950: #003b30;
 }
 
 @theme inline {
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-accent: var(--brand-accent);
+  --color-brand-ink: var(--brand-ink);
   --color-app: var(--app-bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
@@ -183,8 +174,9 @@ html {
   border-radius: 999px;
 }
 
+/* Cincin fokus netral (tanpa warna aksen) */
 :focus-visible {
-  outline: 2px solid #10b981;
+  outline: 2px solid var(--ink-soft);
   outline-offset: 2px;
 }
 

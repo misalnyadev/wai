@@ -23,7 +23,7 @@ type ModelOption = { id: string; label?: string };
 type TestState = { status: "testing" | "ok" | "fail"; message?: string };
 
 const FIELD =
-  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink outline-none transition placeholder:text-muted focus:border-emerald-400 sm:py-2 sm:text-sm";
+  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink outline-none transition placeholder:text-muted focus:border-ink-soft focus:ring-2 focus:ring-ink/10 sm:py-2 sm:text-sm";
 
 /** Versi angka dari nama model, untuk mengurutkan yang terbaru di atas. */
 function versionScore(id: string): number[] {
@@ -342,7 +342,7 @@ export function SettingsPanel({
             onClick={onOpenProfile}
             className="mb-4 flex w-full items-center gap-3 rounded-xl border border-line bg-surface-2 p-2.5 text-left transition hover:bg-line/30"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-soft ring-1 ring-line">
               <UserIcon className="h-4 w-4" />
             </span>
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
@@ -379,7 +379,7 @@ export function SettingsPanel({
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="truncate text-sm font-medium text-ink">{p.label}</span>
                             {p.isDefault && (
-                              <span className="rounded-full bg-brand/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand">
+                              <span className="rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] font-semibold text-ink">
                                 default
                               </span>
                             )}
@@ -396,7 +396,7 @@ export function SettingsPanel({
                             onClick={() => handleTest(p)}
                             title="Tes koneksi"
                             aria-label="Tes koneksi"
-                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10"
+                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-surface-2 hover:text-ink"
                           >
                             <BoltIcon className="h-4 w-4" />
                           </button>
@@ -404,7 +404,7 @@ export function SettingsPanel({
                             onClick={() => startEdit(p)}
                             title="Edit"
                             aria-label="Edit provider"
-                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-sky-50 hover:text-sky-600 dark:hover:bg-sky-500/10"
+                            className="rounded-full p-1.5 text-ink-soft transition hover:bg-surface-2 hover:text-ink"
                           >
                             <PencilIcon className="h-4 w-4" />
                           </button>
@@ -413,7 +413,7 @@ export function SettingsPanel({
                               onClick={() => handleSetDefault(p.id)}
                               title="Jadikan default"
                               aria-label="Jadikan provider default"
-                              className="rounded-full p-1.5 text-ink-soft transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10"
+                              className="rounded-full p-1.5 text-ink-soft transition hover:bg-surface-2 hover:text-ink"
                             >
                               <CheckIcon className="h-4 w-4" />
                             </button>
@@ -432,7 +432,7 @@ export function SettingsPanel({
                         <p
                           className={`mt-1 text-xs ${
                             test.status === "ok"
-                              ? "text-emerald-600 dark:text-emerald-400"
+                              ? "text-ink"
                               : test.status === "fail"
                                 ? "text-rose-600 dark:text-rose-400"
                                 : "text-ink-soft"
@@ -459,7 +459,7 @@ export function SettingsPanel({
                 type="checkbox"
                 checked={settings.autoFallback}
                 onChange={(e) => onSettingsChange({ ...settings, autoFallback: e.target.checked })}
-                className="h-4 w-4 shrink-0 rounded border-line accent-emerald-600"
+                className="h-4 w-4 shrink-0 rounded border-line accent-ink"
               />
               <span className="text-sm text-ink-soft">Fallback otomatis</span>
             </label>
@@ -492,7 +492,7 @@ export function SettingsPanel({
                   href={meta.keyUrl}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-xs font-semibold text-brand hover:underline"
+                  className="text-xs font-semibold text-ink-soft underline-offset-2 transition hover:text-ink hover:underline"
                 >
                   Ambil API key ↗
                 </a>
@@ -507,7 +507,7 @@ export function SettingsPanel({
                   onClick={() => chooseType(t)}
                   className={`rounded-lg border px-2 py-2 text-xs font-medium transition ${
                     type === t
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-emerald-300"
+                      ? "border-ink bg-surface-2 text-ink"
                       : "border-line text-ink-soft hover:bg-surface-2"
                   }`}
                 >
@@ -583,7 +583,7 @@ export function SettingsPanel({
               <button
                 type="button"
                 onClick={() => setBackupKeys((list) => [...list, ""])}
-                className="mt-2 flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                className="mt-2 flex items-center gap-1 text-xs font-semibold text-ink-soft transition hover:text-ink"
               >
                 <PlusIcon className="h-3.5 w-3.5" /> Key cadangan
               </button>
@@ -597,7 +597,7 @@ export function SettingsPanel({
                   type="button"
                   onClick={() => (showModels ? setShowModels(false) : loadModels())}
                   disabled={modelsBusy}
-                  className="flex items-center gap-1 text-xs font-semibold text-brand hover:underline disabled:opacity-50"
+                  className="flex items-center gap-1 text-xs font-semibold text-ink-soft transition hover:text-ink disabled:opacity-50"
                 >
                   {modelsBusy ? "Memuat..." : showModels ? "Tutup" : "Pilih model"}
                   <ChevronDownIcon className={`h-3.5 w-3.5 transition ${showModels ? "rotate-180" : ""}`} />
@@ -652,7 +652,7 @@ export function SettingsPanel({
                               setShowModels(false);
                             }}
                             className={`flex w-full items-center gap-2 px-3 py-2 text-left transition ${
-                              active ? "bg-brand/10" : "hover:bg-surface-2"
+                              active ? "bg-ink/[0.06]" : "hover:bg-surface-2"
                             }`}
                           >
                             <span className="min-w-0 flex-1">
@@ -662,11 +662,11 @@ export function SettingsPanel({
                               )}
                             </span>
                             {isRecommended && (
-                              <span className="shrink-0 rounded-full bg-brand/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand">
+                              <span className="shrink-0 rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] font-semibold text-ink">
                                 disarankan
                               </span>
                             )}
-                            {active && <CheckIcon className="h-4 w-4 shrink-0 text-brand" />}
+                            {active && <CheckIcon className="h-4 w-4 shrink-0 text-ink" />}
                           </button>
                         );
                       })}
@@ -680,7 +680,7 @@ export function SettingsPanel({
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition hover:bg-brand-strong active:scale-[0.99]"
+              className="w-full rounded-lg bg-brand py-2.5 text-sm font-semibold text-brand-ink transition hover:bg-brand-strong active:scale-[0.99]"
             >
               {editingId ? "Simpan perubahan" : "Simpan"}
             </button>
@@ -730,7 +730,7 @@ export function SettingsPanel({
               <p
                 className={`mt-1 text-xs ${
                   dataNote.tone === "ok"
-                    ? "text-emerald-600 dark:text-emerald-400"
+                    ? "text-ink"
                     : "text-rose-600 dark:text-rose-400"
                 }`}
               >

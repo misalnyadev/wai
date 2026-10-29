@@ -128,12 +128,12 @@ export function UserProfileView({
           <div className="flex items-center gap-2">
             <button
               type="submit"
-              className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-strong active:scale-[0.99]"
+              className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-ink transition hover:bg-brand-strong active:scale-[0.99]"
             >
               Simpan profil
             </button>
             {saved && (
-              <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="flex items-center gap-1 text-xs font-semibold text-ink">
                 <CheckIcon className="h-3.5 w-3.5" /> Tersimpan
               </span>
             )}
@@ -145,7 +145,7 @@ export function UserProfileView({
 }
 
 const inputClass =
-  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400";
+  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-ink-soft focus:ring-2 focus:ring-ink/10";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

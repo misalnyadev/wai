@@ -26,7 +26,7 @@ export function CharactersView({
         </div>
         <button
           onClick={onNew}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-accent text-white shadow-sm transition hover:brightness-95 active:scale-95"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-brand-ink shadow-sm transition hover:bg-brand-strong active:scale-95"
           title="Buat karakter baru"
           aria-label="Buat karakter baru"
         >
@@ -40,7 +40,7 @@ export function CharactersView({
             <p className="text-sm text-ink-soft">Belum ada karakter.</p>
             <button
               onClick={onNew}
-              className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-strong"
+              className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-ink transition hover:bg-brand-strong"
             >
               <PlusIcon className="h-4 w-4" /> Buat karakter pertama
             </button>
@@ -65,7 +65,7 @@ export function CharactersView({
                 <div className="mt-auto flex items-center gap-2">
                   <button
                     onClick={() => onChat(c.id)}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand py-2 text-xs font-semibold text-white transition hover:bg-brand-strong"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand py-2 text-xs font-semibold text-brand-ink transition hover:bg-brand-strong"
                   >
                     <ChatsIcon className="h-4 w-4" /> Chat
                   </button>

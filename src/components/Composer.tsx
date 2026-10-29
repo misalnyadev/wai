@@ -101,12 +101,12 @@ export function Composer({
             autoComplete="off"
             enterKeyHint="send"
             aria-label="Tulis pesan"
-            className="max-h-[120px] min-w-0 w-full flex-1 resize-none rounded-full border-none bg-surface px-4 py-2.5 text-base text-ink outline-none ring-1 ring-line placeholder:text-muted focus:ring-2 focus:ring-emerald-400 disabled:opacity-60 sm:text-sm"
+            className="max-h-[120px] min-w-0 w-full flex-1 resize-none rounded-full border-none bg-surface px-4 py-2.5 text-base text-ink outline-none ring-1 ring-line placeholder:text-muted focus:ring-2 focus:ring-ink/20 disabled:opacity-60 sm:text-sm"
           />
           <button
             onClick={handleSubmit}
             disabled={disabled || (!text.trim() && !imageFile)}
-            className="mb-0.5 shrink-0 rounded-full bg-emerald-600 p-2.5 text-white transition hover:bg-emerald-700 disabled:opacity-40 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400"
+            className="mb-0.5 shrink-0 rounded-full bg-brand p-2.5 text-brand-ink transition hover:bg-brand-strong disabled:opacity-40"
             title="Kirim"
             aria-label="Kirim pesan"
           >

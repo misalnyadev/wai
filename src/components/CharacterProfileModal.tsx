@@ -66,7 +66,7 @@ export function CharacterProfileModal({
           <div className="mt-5 grid grid-cols-2 gap-2">
             <button
               onClick={onEdit}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-brand py-2.5 text-sm font-semibold text-brand-ink transition hover:bg-brand-strong"
             >
               <PencilIcon className="h-4 w-4" /> Edit Karakter
             </button>

@@ -390,7 +390,7 @@ export function ChatApp() {
   if (!loaded) {
     return (
       <div className="app-shell flex flex-col items-center justify-center gap-3 bg-app">
-        <div className="font-display animate-pulse text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">
+        <div className="font-display animate-pulse text-2xl font-extrabold tracking-tight text-ink">
           WaiChat
         </div>
         <p className="text-sm text-muted">Memuat percakapanmu...</p>
@@ -453,16 +453,16 @@ export function ChatApp() {
                         <img
                           src="/images/logo-wai-128.png"
                           alt="Maskot WaiChat"
-                          className="h-20 w-20 rounded-2xl shadow-lg shadow-emerald-900/10"
+                          className="h-20 w-20 rounded-2xl shadow-lg shadow-black/10"
                         />
                       </div>
                       <h2 className="font-display text-3xl font-extrabold tracking-tight text-ink">
-                        WaiChat<span className="text-brand-accent">.</span>
+                        WaiChat<span className="text-muted">.</span>
                       </h2>
                       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
                         <button
                           onClick={() => setView("settings")}
-                          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-strong active:scale-[0.98]"
+                          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-ink transition hover:bg-brand-strong active:scale-[0.98]"
                         >
                           <SettingsIcon className="h-4 w-4" /> Atur API Key
                         </button>

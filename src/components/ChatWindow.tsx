@@ -51,7 +51,7 @@ function Ticks({ pending }: { pending?: boolean }) {
       </svg>
     );
   }
-  return <DoubleCheckIcon className="h-3 w-3 text-sky-500 dark:text-sky-400" />;
+  return <DoubleCheckIcon className="h-3 w-3 text-ink-soft" />;
 }
 
 export function ChatWindow({
@@ -111,7 +111,7 @@ export function ChatWindow({
             <p className="truncate text-sm font-semibold text-ink">{character.name}</p>
             <p
               className={`truncate text-xs ${
-                isTyping ? "text-emerald-600 dark:text-emerald-400" : "text-ink-soft"
+                isTyping ? "text-ink" : "text-ink-soft"
               }`}
             >
               {isTyping ? "sedang mengetik..." : character.shortBio || "online"}
