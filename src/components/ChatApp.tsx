@@ -12,6 +12,7 @@ import {
   saveProviders,
 } from "@/lib/storage";
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
+import { Avatar } from "./Avatar";
 import { Sidebar } from "./Sidebar";
 import { ChatWindow } from "./ChatWindow";
 import { Composer } from "./Composer";
@@ -284,17 +285,17 @@ export function ChatApp() {
 
   if (!loaded) {
     return (
-      <div className="app-shell flex flex-col items-center justify-center gap-3 bg-[#f0f2f5]">
-        <div className="font-display animate-pulse text-2xl font-extrabold tracking-tight text-emerald-700">
+      <div className="app-shell flex flex-col items-center justify-center gap-3 bg-app">
+        <div className="font-display animate-pulse text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">
           Persona
         </div>
-        <p className="text-sm text-slate-400">Memuat percakapanmu...</p>
+        <p className="text-sm text-muted">Memuat percakapanmu...</p>
       </div>
     );
   }
 
   return (
-    <div className="app-shell flex w-full overflow-hidden bg-slate-100">
+    <div className="app-shell flex w-full overflow-hidden bg-app">
       <div className={`${mobileShowChat ? "hidden" : "flex"} w-full md:flex md:w-auto`}>
         <Sidebar
           characters={sorted}
@@ -320,47 +321,59 @@ export function ChatApp() {
             <Composer onSend={handleSend} disabled={typingFor === activeId} />
           </>
         ) : (
-          <div className="chat-wallpaper flex h-full flex-1 flex-col items-center justify-center px-6 text-center">
-            <div className="fade-in max-w-md rounded-3xl bg-white/85 p-8 shadow-xl backdrop-blur-sm">
-              <div className="font-display text-4xl font-extrabold tracking-tight text-slate-900">
-                Persona<span className="text-emerald-600">.</span>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                Chat privat dengan karakter yang terasa nyata — untuk latihan pendalaman peran,
-                chemistry, dan dialog film.
-              </p>
-
-              <div className="mt-6 space-y-2.5 text-left">
-                {[
-                  { n: "1", t: "Tambahkan API key (Gemini gratis) di Pengaturan" },
-                  { n: "2", t: "Pilih karakter contoh, atau buat karaktermu sendiri" },
-                  { n: "3", t: "Mulai chat — bisa kirim foto juga, dia bisa melihatnya" },
-                ].map((s) => (
-                  <div key={s.n} className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
-                      {s.n}
-                    </span>
-                    <span className="text-sm text-slate-600">{s.t}</span>
+          <div className="dot-grid relative flex h-full flex-1 flex-col items-center justify-center overflow-y-auto bg-app px-5 py-10 text-center">
+            <div className="fade-in w-full max-w-md">
+              <div className="mb-5 flex justify-center -space-x-3">
+                {characters.slice(0, 3).map((c, i) => (
+                  <div
+                    key={c.id}
+                    style={{ zIndex: 3 - i }}
+                    className="rounded-full ring-4 ring-app"
+                  >
+                    <Avatar name={c.name} src={c.avatarUrl} size={56} />
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              <h2 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+                Persona<span className="text-emerald-500">.</span>
+              </h2>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
+                Chat privat dengan karakter yang terasa nyata — untuk latihan pendalaman peran,
+                chemistry, dan dialog film.
+              </p>
+
+              <div className="mt-6 space-y-2.5 rounded-2xl border border-line bg-surface/80 p-4 text-left shadow-sm backdrop-blur">
+                {[
+                  { n: "1", t: "Tambahkan API key (Gemini gratis) di Pengaturan" },
+                  { n: "2", t: "Pilih karakter contoh, atau buat karaktermu sendiri" },
+                  { n: "3", t: "Mulai chat — bisa kirim foto juga, dia bisa melihatnya" },
+                ].map((step) => (
+                  <div key={step.n} className="flex items-center gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                      {step.n}
+                    </span>
+                    <span className="text-sm text-ink-soft">{step.t}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <button
                   onClick={() => setShowSettings(true)}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98]"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98] dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400"
                 >
                   <SettingsIcon className="h-4 w-4" /> Atur API Key
                 </button>
                 <button
                   onClick={() => setShowCreate(true)}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.98]"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-line bg-surface px-5 py-2.5 text-sm font-semibold text-ink transition hover:bg-surface-2 active:scale-[0.98]"
                 >
                   <PlusIcon className="h-4 w-4" /> Buat Karakter
                 </button>
               </div>
 
-              <p className="mt-4 text-[11px] text-slate-400">
+              <p className="mt-4 text-[11px] text-muted">
                 🔒 Semua data tersimpan hanya di browser perangkat ini.
               </p>
             </div>
@@ -409,11 +422,11 @@ export function ChatApp() {
 
       {lightbox && (
         <div
-          className="fade-in fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4"
+          className="fade-in fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
           onClick={() => setLightbox(null)}
         >
           <button
-            className="absolute right-5 top-5 text-white"
+            className="absolute right-5 top-5 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"
             onClick={() => setLightbox(null)}
             aria-label="Tutup gambar"
           >

@@ -38,7 +38,7 @@ export function Avatar({
         src={src}
         alt={name}
         style={style}
-        className={`shrink-0 rounded-full object-cover ${ring ? "ring-2 ring-emerald-400 ring-offset-2" : ""}`}
+        className={`shrink-0 rounded-full object-cover ${ring ? "ring-2 ring-emerald-400 ring-offset-2 ring-offset-surface" : ""}`}
       />
     );
   }
@@ -48,7 +48,7 @@ export function Avatar({
       style={style}
       className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${colorFor(
         name || "?"
-      )} font-semibold text-white ${ring ? "ring-2 ring-emerald-400 ring-offset-2" : ""}`}
+      )} font-semibold text-white ${ring ? "ring-2 ring-emerald-400 ring-offset-2 ring-offset-surface" : ""}`}
     >
       <span style={{ fontSize: size * 0.38 }}>{initials || "?"}</span>
     </div>

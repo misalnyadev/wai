@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 /**
@@ -18,7 +19,7 @@ const displayFont = localFont({
       style: "normal",
     },
   ],
-  variable: "--font-display",
+  variable: "--font-jakarta",
   display: "swap",
   fallback: ["ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
 });
@@ -87,15 +88,22 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // Zoom tetap diizinkan (aksesibilitas); input sudah 16px agar iOS tidak auto-zoom.
   viewportFit: "cover",
-  themeColor: "#f0f2f5",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f0f2f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b141a" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="id" className={displayFont.variable}>
-      <body className="bg-slate-100 text-slate-900 antialiased">{children}</body>
+    <html lang="id" className={displayFont.variable} suppressHydrationWarning>
+      <head>
+        {/* Terapkan tema tersimpan sebelum paint supaya tidak ada kilatan putih. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="bg-app text-ink antialiased">{children}</body>
     </html>
   );
 }

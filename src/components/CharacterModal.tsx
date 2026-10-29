@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import type { Character, Provider } from "@/types/chat";
 import { fileToDataUrl } from "@/lib/imageClient";
 import { genId } from "@/lib/storage";
+import { useEscape } from "@/lib/useEscape";
 import { Avatar } from "./Avatar";
 import { CameraIcon, XIcon } from "./icons";
 
@@ -36,6 +37,8 @@ export function CharacterModal({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEscape(onClose);
 
   async function handleAvatarPick(file: File) {
     setUploading(true);
@@ -74,15 +77,24 @@ export function CharacterModal({
   }
 
   return (
-    <div className="fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 className="font-display text-lg font-bold text-slate-900">
+    <div
+      className="fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="pop-in flex max-h-[90vh] w-full max-w-lg flex-col rounded-3xl bg-surface shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={initial ? "Edit karakter" : "Buat karakter baru"}
+      >
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <h2 className="font-display text-lg font-bold text-ink">
             {initial ? "Edit Karakter" : "Buat Karakter Baru"}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100"
+            className="rounded-full p-1.5 text-ink-soft transition hover:bg-surface-2"
             aria-label="Tutup"
           >
             <XIcon className="h-5 w-5" />
@@ -112,35 +124,35 @@ export function CharacterModal({
                 if (file) handleAvatarPick(file);
               }}
             />
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-muted">
               {uploading ? "Memproses foto..." : "Ketuk untuk pilih foto (opsional)"}
             </span>
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Nama Karakter</label>
+            <label className="mb-1 block text-xs font-medium text-ink-soft">Nama Karakter</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Mis. Alya Rahmadhani"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-emerald-400"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-ink-soft">
               Status singkat (tampil di bawah nama)
             </label>
             <input
               value={shortBio}
               onChange={(e) => setShortBio(e.target.value)}
               placeholder="Mis. sedang syuting di Bandung 🎬"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-emerald-400"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-ink-soft">
               Kepribadian & latar belakang karakter
             </label>
             <textarea
@@ -148,15 +160,15 @@ export function CharacterModal({
               onChange={(e) => setPersonality(e.target.value)}
               placeholder={PERSONALITY_PLACEHOLDER}
               rows={7}
-              className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-emerald-400"
+              className="w-full resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
-            <p className="mt-1 text-[11px] text-slate-400">
+            <p className="mt-1 text-[11px] text-muted">
               Makin detail & spesifik, makin konsisten dan nyata karakter ini saat diajak chat.
             </p>
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-ink-soft">
               Pesan pembuka pertama (opsional)
             </label>
             <textarea
@@ -164,17 +176,17 @@ export function CharacterModal({
               onChange={(e) => setGreeting(e.target.value)}
               placeholder="Mis. Heyy udah lama ga chat, kangen tau 😄"
               rows={2}
-              className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-emerald-400"
+              className="w-full resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Provider AI</label>
+              <label className="mb-1 block text-xs font-medium text-ink-soft">Provider AI</label>
               <select
                 value={providerId}
                 onChange={(e) => setProviderId(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-emerald-400"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
               >
                 <option value="">Gunakan default</option>
                 {providers.map((p) => (
@@ -185,17 +197,17 @@ export function CharacterModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Model (opsional)</label>
+              <label className="mb-1 block text-xs font-medium text-ink-soft">Model (opsional)</label>
               <input
                 value={model ?? ""}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="override model"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-emerald-400"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
               />
             </div>
           </div>
 
-          {error && <p className="text-sm text-rose-600">{error}</p>}
+          {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
           <button
             type="submit"
