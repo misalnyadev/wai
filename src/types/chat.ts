@@ -57,6 +57,9 @@ export type ChatBackground =
       dim: number;
       /** `full` = memenuhi area chat, `tile` = panel 16:9 di atas pesan. */
       layout?: "full" | "tile";
+      /** Klip pengganti saat karakter "bicara" (mengetik / suaranya dibacakan). */
+      talkingVideoId?: string;
+      talkingPosterUrl?: string;
     };
 
 export type AppSettings = {
@@ -64,6 +67,8 @@ export type AppSettings = {
   autoFallback: boolean;
   /** Latar area percakapan. */
   chatBackground: ChatBackground;
+  /** Gelembung pesan tembus pandang supaya latar (video/gambar) terlihat di baliknya. */
+  glassBubbles: boolean;
   /** Suara untuk membacakan balasan. */
   voice: VoiceSettings;
 };
@@ -115,5 +120,6 @@ export const DEFAULT_VOICE: VoiceSettings = {
 export const DEFAULT_SETTINGS: AppSettings = {
   autoFallback: true,
   chatBackground: { kind: "default" },
+  glassBubbles: false,
   voice: DEFAULT_VOICE,
 };
