@@ -85,6 +85,19 @@
 html,
 body {
   height: 100%;
+  width: 100%;
+  max-width: 100%;
+  /* Kunci lebar halaman: tidak ada lagi geser/melebar ke samping di iOS */
+  overflow-x: clip;
+  position: relative;
+}
+
+/* Fallback untuk browser lama (iOS < 16) yang belum mengenal overflow: clip */
+@supports not (overflow: clip) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
 }
 
 /*
@@ -95,11 +108,15 @@ html {
   background-color: var(--header-bg);
 }
 
-/* Area aplikasi full-screen tanpa "bounce" scroll di iOS */
+/*
+ * Area aplikasi full-screen tanpa "bounce" scroll di iOS.
+ * Latar body sengaja memakai warna HEADER (bukan krem aplikasi) supaya area
+ * status bar / home indicator tidak pernah terlihat sebagai strip warna lain.
+ */
 body {
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
-  background-color: var(--app-bg);
+  background-color: var(--header-bg);
   color: var(--ink);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -112,6 +129,9 @@ body {
 .app-shell {
   height: 100vh;
   height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /*
@@ -127,6 +147,18 @@ body {
     font-size: 16px;
     line-height: 1.4;
   }
+}
+
+/*
+ * Kontrol form di iOS punya lebar intrinsik (default "size"/"cols") yang bisa
+ * melebihi layar dan membuat halaman bisa digeser ke samping. Paksa selalu
+ * mengikuti wadahnya.
+ */
+input,
+textarea,
+select {
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Cegah pembesaran teks otomatis saat iPhone diputar ke landscape */

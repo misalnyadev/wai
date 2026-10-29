@@ -58,7 +58,7 @@ export function CharacterProfileModal({
             <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
               Tentang karakter
             </h4>
-            <p className="max-h-52 overflow-y-auto whitespace-pre-wrap rounded-xl bg-surface-2 p-3 text-sm leading-relaxed text-ink-soft">
+            <p className="max-h-52 overflow-y-auto whitespace-pre-wrap break-words rounded-xl bg-surface-2 p-3 text-sm leading-relaxed text-ink-soft">
               {character.personality}
             </p>
           </div>

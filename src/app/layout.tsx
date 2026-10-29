@@ -106,7 +106,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Terapkan tema tersimpan sebelum paint supaya tidak ada kilatan putih. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="bg-app text-ink antialiased">{children}</body>
+      <body className="text-ink antialiased">{children}</body>
     </html>
   );
 }

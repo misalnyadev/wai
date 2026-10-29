@@ -61,7 +61,7 @@ export function CharactersView({
                     <p className="truncate text-xs text-ink-soft">{c.shortBio || "online"}</p>
                   </div>
                 </div>
-                <p className="line-clamp-3 text-xs leading-relaxed text-ink-soft">
+                <p className="line-clamp-3 break-words text-xs leading-relaxed text-ink-soft">
                   {c.personality}
                 </p>
                 <div className="mt-auto flex items-center gap-2">
