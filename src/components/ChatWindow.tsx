@@ -31,9 +31,7 @@ function TypingBubble({ glass = false, glassOpacity = 70 }: { glass?: boolean; g
   return (
     <div className="bubble-in flex justify-start">
       <div
-        className={`flex items-center gap-1 rounded-2xl rounded-bl-sm bg-bubble-in px-4 py-3 shadow-sm ${
-          glass ? "backdrop-blur-sm" : ""
-        }`}
+        className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-bubble-in px-4 py-3 shadow-sm"
         style={
           glass
             ? { backgroundColor: `color-mix(in oklab, var(--bubble-in) ${glassOpacity}%, transparent)` }
@@ -101,6 +99,10 @@ export function ChatWindow({
   const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
   const backdrop = chatBackgroundProps(background, isDark);
   const video = background?.kind === "video" ? background : null;
+  const chatMedia = character.media;
+  const chatVideo = chatMedia?.chatVideoId
+    ? { videoId: chatMedia.chatVideoId, posterUrl: chatMedia.chatVideoPosterUrl ?? "" }
+    : null;
   // Karakter dianggap "bicara" saat mengetik atau saat suaranya dibacakan —
   // dipakai untuk berganti ke klip video bicara bila pengguna memasangnya.
   const speaking = useIsSpeaking();
@@ -189,37 +191,46 @@ export function ChatWindow({
         {onVideoCall && (
           <button
             onClick={onVideoCall}
-            className="rounded-full p-2 text-ink-soft transition hover:bg-line/60 hover:text-ink"
+            className="rounded-full p-2.5 text-ink-soft transition hover:bg-line/60 hover:text-ink"
             aria-label={`Video call dengan ${character.name}`}
             title="Video call"
           >
-            <VideoCallIcon className="h-5 w-5" />
+            <VideoCallIcon className="h-6 w-6" />
           </button>
         )}
         {onAudioCall && (
           <button
             onClick={onAudioCall}
-            className="rounded-full p-2 text-ink-soft transition hover:bg-line/60 hover:text-ink"
+            className="rounded-full p-2.5 text-ink-soft transition hover:bg-line/60 hover:text-ink"
             aria-label={`Panggilan suara dengan ${character.name}`}
             title="Panggilan suara"
           >
-            <PhoneCallIcon className="h-5 w-5" />
+            <PhoneCallIcon className="h-6 w-6" />
           </button>
         )}
       </div>
 
-      {video?.layout === "tile" && (
+      {(chatVideo || video?.layout === "tile") && (
         <div className="px-3 pt-3 sm:px-4">
           <div className="mx-auto w-full max-w-lg">
-            <ChatVideoPanel
-              videoId={video.videoId}
-              posterUrl={video.posterUrl}
-              dim={video.dim}
-              name={character.name}
-              talkingVideoId={video.talkingVideoId}
-              talkingPosterUrl={video.talkingPosterUrl}
-              talking={talking}
-            />
+            {chatVideo ? (
+              <ChatVideoPanel
+                videoId={chatVideo.videoId}
+                posterUrl={chatVideo.posterUrl}
+                dim={0.05}
+                name={character.name}
+              />
+            ) : video && video.layout === "tile" ? (
+              <ChatVideoPanel
+                videoId={video.videoId}
+                posterUrl={video.posterUrl}
+                dim={video.dim}
+                name={character.name}
+                talkingVideoId={video.talkingVideoId}
+                talkingPosterUrl={video.talkingPosterUrl}
+                talking={talking}
+              />
+            ) : null}
           </div>
         </div>
       )}
@@ -252,7 +263,7 @@ export function ChatWindow({
                       m.role === "user"
                         ? "rounded-br-sm bg-bubble-out text-bubble-out-ink"
                         : "rounded-bl-sm bg-bubble-in text-bubble-in-ink"
-                    } ${glass ? "backdrop-blur-sm" : ""} ${m.pending ? "opacity-60" : ""}`}
+                    } ${m.pending ? "opacity-60" : ""}`}
                     style={
                       glass
                         ? {

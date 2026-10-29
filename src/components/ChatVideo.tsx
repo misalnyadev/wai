@@ -14,6 +14,8 @@ type VideoBackgroundProps = {
   talkingPosterUrl?: string;
   /** true saat karakter mengetik atau suaranya sedang dibacakan. */
   talking?: boolean;
+  /** Izinkan suara video (bawaan: senyap, mengikuti aturan autoplay browser). */
+  sound?: boolean;
 };
 
 /**
@@ -24,7 +26,8 @@ type VideoBackgroundProps = {
 function useVideoPlayback(
   ref: RefObject<HTMLVideoElement | null>,
   videoId: string | null,
-  shouldPlay: boolean
+  shouldPlay: boolean,
+  sound = false
 ): string | null {
   const url = useChatVideoUrl(videoId);
 
@@ -35,20 +38,38 @@ function useVideoPlayback(
   useEffect(() => {
     const el = ref.current;
     if (!el || !url) return;
-    if (shouldPlay) void el.play().catch(() => {});
-    else el.pause();
-  }, [ref, url, shouldPlay]);
+    if (!shouldPlay) {
+      el.pause();
+      return;
+    }
+    el.muted = !sound;
+    void el.play().catch(() => {
+      // Browser menolak autoplay bersuara → coba lagi tanpa suara.
+      if (sound) {
+        el.muted = true;
+        void el.play().catch(() => {});
+      }
+    });
+  }, [ref, url, shouldPlay, sound]);
 
   useEffect(() => {
     function onVisibilityChange() {
       const el = ref.current;
       if (!el) return;
       if (document.hidden) el.pause();
-      else if (shouldPlay) void el.play().catch(() => {});
+      else if (shouldPlay) {
+        el.muted = !sound;
+        void el.play().catch(() => {
+          if (sound) {
+            el.muted = true;
+            void el.play().catch(() => {});
+          }
+        });
+      }
     }
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [ref, shouldPlay]);
+  }, [ref, shouldPlay, sound]);
 
   return url;
 }
@@ -61,6 +82,7 @@ export function ChatVideoBackground({
   talkingVideoId,
   talkingPosterUrl,
   talking = false,
+  sound = false,
 }: VideoBackgroundProps) {
   const reduced = usePrefersReducedMotion();
   const baseRef = useRef<HTMLVideoElement>(null);
@@ -73,8 +95,8 @@ export function ChatVideoBackground({
   const talkingActive = Boolean(
     talking && talkingVideoId && !reduced && talkingStatus !== "missing"
   );
-  const baseUrl = useVideoPlayback(baseRef, videoId, !reduced && !talkingActive);
-  const talkUrl = useVideoPlayback(talkRef, talkingVideoId ?? null, talkingActive);
+  const baseUrl = useVideoPlayback(baseRef, videoId, !reduced && !talkingActive, sound);
+  const talkUrl = useVideoPlayback(talkRef, talkingVideoId ?? null, talkingActive, sound);
 
   return (
     <div
@@ -94,7 +116,7 @@ export function ChatVideoBackground({
             ref={baseRef}
             src={baseUrl}
             poster={posterUrl || undefined}
-            muted
+            muted={!sound}
             loop
             playsInline
             autoPlay
@@ -120,7 +142,7 @@ export function ChatVideoBackground({
               ref={talkRef}
               src={talkUrl}
               poster={talkingPosterUrl || undefined}
-              muted
+              muted={!sound}
               loop
               playsInline
               autoPlay
@@ -160,8 +182,8 @@ export function ChatVideoPanel({
     talking && talkingVideoId && !reduced && talkingStatus !== "missing"
   );
   const shouldPlay = !reduced || forcePlay;
-  const baseUrl = useVideoPlayback(baseRef, videoId, shouldPlay && !talkingActive);
-  const talkUrl = useVideoPlayback(talkRef, talkingVideoId ?? null, shouldPlay && talkingActive);
+  const baseUrl = useVideoPlayback(baseRef, videoId, shouldPlay && !talkingActive, sound);
+  const talkUrl = useVideoPlayback(talkRef, talkingVideoId ?? null, shouldPlay && talkingActive, sound);
   const status = useChatVideoStatus(videoId);
 
   return (

@@ -6,6 +6,7 @@ import {
   providerTypeValues,
   type AppSettings,
   type Character,
+  type CharacterMedia,
   type ChatBackground,
   type ChatMessage,
   type Provider,
@@ -123,9 +124,30 @@ function sanitizeBackground(background: ChatBackground | null | undefined): Chat
   return { kind: "default" };
 }
 
+/** Rapikan media karakter: id harus string terisi, poster harus data:image. */
+function sanitizeMedia(media: CharacterMedia | null | undefined): CharacterMedia | null {
+  if (!media) return null;
+  const id = (value: unknown) => (typeof value === "string" && value ? value : undefined);
+  const poster = (value: unknown) =>
+    typeof value === "string" && value.startsWith("data:image/") ? value : undefined;
+  const next: CharacterMedia = {
+    chatVideoId: id(media.chatVideoId),
+    chatVideoPosterUrl: poster(media.chatVideoPosterUrl),
+    callVideoId: id(media.callVideoId),
+    callVideoPosterUrl: poster(media.callVideoPosterUrl),
+    callAudioId: id(media.callAudioId),
+    callAudioName: id(media.callAudioName),
+  };
+  return Object.values(next).some(Boolean) ? next : null;
+}
+
 /** Karakter lama belum punya latar sendiri — anggap ikut setelan. */
 function normalizeCharacter(c: Character): Character {
-  return { ...c, chatBackground: sanitizeBackground(c.chatBackground) };
+  return {
+    ...c,
+    chatBackground: sanitizeBackground(c.chatBackground),
+    media: sanitizeMedia(c.media),
+  };
 }
 
 export async function getCharacters(): Promise<Character[]> {
@@ -194,7 +216,7 @@ function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings
     ...merged,
     chatBackground: safe,
     glassBubbles: Boolean(merged.glassBubbles),
-    bubbleOpacity: clamp(merged.bubbleOpacity, 40, 95, 70),
+    bubbleOpacity: clamp(merged.bubbleOpacity, 30, 95, 55),
     voice,
   };
 }
@@ -239,6 +261,18 @@ export async function getVideoBlob(videoId: string): Promise<Blob | undefined> {
 
 export async function deleteVideoBlob(videoId: string): Promise<void> {
   await kvDel(`video:${videoId}`);
+}
+
+export async function saveAudioBlob(audioId: string, blob: Blob): Promise<void> {
+  await kvSet(`audio:${audioId}`, blob);
+}
+
+export async function getAudioBlob(audioId: string): Promise<Blob | undefined> {
+  return kvGet<Blob>(`audio:${audioId}`);
+}
+
+export async function deleteAudioBlob(audioId: string): Promise<void> {
+  await kvDel(`audio:${audioId}`);
 }
 
 const SEED = [

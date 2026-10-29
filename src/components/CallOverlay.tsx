@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Character, ChatBackground, VoiceSettings } from "@/types/chat";
+import { useEffect, useRef, useState } from "react";
+import type { Character, CharacterMedia, ChatBackground, VoiceSettings } from "@/types/chat";
+import { ensureCallAudio, useCallAudioUrl } from "@/lib/callAudio";
 import { speak, stopSpeaking, useIsSpeaking } from "@/lib/voice";
 import { useEscape } from "@/lib/useEscape";
 import { Avatar } from "./Avatar";
@@ -20,42 +21,69 @@ function formatDuration(total: number) {
 
 /**
  * Layar panggilan ala WhatsApp.
- * - `video`: memakai latar video karakter (kalau ada), klip "bicara" ikut aktif
- *   saat karakter bersuara.
- * - `audio`: avatar besar dengan denyut halus.
- * Suara memakai mesin TTS yang sama dengan tombol "bacakan pesan".
+ * - `video`: memutar klip "video video call" milik karakter (kalau ada), dengan
+ *   suara video aktif bila browser mengizinkan.
+ * - `audio`: memutar rekaman MP3 karakter (kalau ada); tanpa MP3 memakai TTS.
  */
 export function CallOverlay({
   character,
   mode,
   background,
+  media,
   voice,
   onClose,
 }: {
   character: Character;
   mode: "video" | "audio";
   background?: ChatBackground;
+  media?: CharacterMedia | null;
   voice: VoiceSettings;
   onClose: () => void;
 }) {
   const [connected, setConnected] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
+  /** true bila browser menolak memutar audio tanpa ketukan pengguna. */
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const speaking = useIsSpeaking();
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  const video = background?.kind === "video" ? background : null;
+  // Klip video call khusus karakter, atau jatuh ke latar video lama.
+  const video = media?.callVideoId
+    ? { videoId: media.callVideoId, posterUrl: media.callVideoPosterUrl ?? "" }
+    : background?.kind === "video"
+      ? { videoId: background.videoId, posterUrl: background.posterUrl }
+      : null;
+
+  const audioId = media?.callAudioId ?? null;
+  const audioUrl = useCallAudioUrl(audioId);
+  const hasRecording = Boolean(audioId);
+
   const greeting = (character.greeting?.trim() || `Halo, ini ${character.name}.`).slice(0, 220);
 
   useEscape(onClose);
 
-  // "Menyambungkan" panggilan sebentar, lalu karakter menyapa dengan suara.
+  useEffect(() => {
+    if (audioId) ensureCallAudio(audioId);
+  }, [audioId]);
+
+  // "Menyambungkan" panggilan sebentar, lalu karakter menyapa.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setConnected(true);
-      speak(greeting, voice);
+      // Rekaman MP3 diputar oleh <audio>; tanpa rekaman pakai suara perangkat.
+      if (!hasRecording) speak(greeting, voice);
     }, CONNECT_DELAY);
     return () => window.clearTimeout(timer);
-  }, [greeting, voice]);
+  }, [greeting, voice, hasRecording]);
+
+  // Putar rekaman suara telepon begitu tersambung (dan ikuti tombol bisukan).
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!connected || !audioUrl || !el) return;
+    el.muted = muted;
+    void el.play().catch(() => setAudioBlocked(true));
+  }, [connected, audioUrl, muted]);
 
   // Penghitung durasi panggilan.
   useEffect(() => {
@@ -64,22 +92,30 @@ export function CallOverlay({
     return () => window.clearInterval(id);
   }, [connected]);
 
-  // Pastikan suara berhenti saat panggilan ditutup.
+  // Pastikan semua suara berhenti saat panggilan ditutup.
   useEffect(() => () => stopSpeaking(), []);
 
   function toggleMute() {
-    if (muted) {
-      setMuted(false);
-    } else {
-      stopSpeaking();
-      setMuted(true);
+    const next = !muted;
+    setMuted(next);
+    setAudioBlocked(false);
+    const el = audioRef.current;
+    if (el) {
+      el.muted = next;
+      // Dipanggil dari ketukan pengguna → browser mengizinkan suara.
+      if (!next) void el.play().catch(() => setAudioBlocked(true));
     }
+    if (next) stopSpeaking();
   }
 
   function endCall() {
     stopSpeaking();
+    const el = audioRef.current;
+    if (el) el.pause();
     onClose();
   }
+
+  const showWave = connected && !muted && (speaking || (hasRecording && mode === "audio"));
 
   return (
     <div
@@ -88,16 +124,16 @@ export function CallOverlay({
       aria-label={`${mode === "video" ? "Video call" : "Panggilan suara"} dengan ${character.name}`}
       className="fade-in fixed inset-0 z-[65] overflow-hidden bg-[#0a0a0c] text-white"
     >
-      {/* Latar: video karakter, atau gradasi gelap + avatar */}
+      {/* Latar: klip video call karakter, atau gradasi gelap */}
       <div className="absolute inset-0 isolate overflow-hidden">
         {video && mode === "video" ? (
           <ChatVideoBackground
             videoId={video.videoId}
             posterUrl={video.posterUrl}
-            dim={Math.max(video.dim ?? 0, 0.12)}
-            talkingVideoId={video.talkingVideoId}
-            talkingPosterUrl={video.talkingPosterUrl}
+            dim={0.08}
+            talkingVideoId={media?.callVideoId ? undefined : media?.chatVideoId}
             talking={speaking}
+            sound={!muted}
           />
         ) : (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,#1d1d24,#0a0a0c_72%)]" />
@@ -113,6 +149,11 @@ export function CallOverlay({
           <p className="mt-0.5 text-[13px] text-white/65">
             {connected ? `Tersambung · ${formatDuration(seconds)}` : "Memanggil..."}
           </p>
+          {audioBlocked && (
+            <p className="mt-1 text-[12px] text-white/55">
+              Ketuk ikon suara untuk menyalakan audio.
+            </p>
+          )}
         </div>
 
         {mode === "audio" ? (
@@ -123,7 +164,7 @@ export function CallOverlay({
               )}
               <Avatar name={character.name} src={character.avatarUrl} size={140} />
             </div>
-            {speaking && (
+            {showWave && (
               <div className="flex items-end gap-1" aria-hidden="true">
                 {[0, 1, 2, 3, 4].map((i) => (
                   <span
@@ -154,7 +195,7 @@ export function CallOverlay({
               type="button"
               onClick={toggleMute}
               aria-pressed={muted}
-              aria-label={muted ? "Nyalakan suara karakter" : "Bisukan suara karakter"}
+              aria-label={muted ? "Nyalakan suara panggilan" : "Bisukan panggilan"}
               className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/25 active:scale-95"
             >
               {muted ? <SpeakerOffIcon className="h-6 w-6" /> : <SpeakerIcon className="h-6 w-6" />}
@@ -175,6 +216,10 @@ export function CallOverlay({
           </div>
         </div>
       </div>
+
+      {audioUrl && (
+        <audio ref={audioRef} src={audioUrl} preload="auto" className="hidden" />
+      )}
     </div>
   );
 }
