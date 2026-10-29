@@ -91,13 +91,17 @@ body {
   height: 100%;
   width: 100%;
   max-width: 100%;
-  /*
-   * Dokumen tidak boleh ikut bergeser: semua area scroll ada di dalam shell.
-   * Dulu halaman bisa ter-scroll sedikit (selisih tinggi layout vs viewport di
-   * Android) sehingga terlihat naik dan menyisakan pita abu di bawah.
-   */
-  overflow: hidden;
+  /* Kunci lebar halaman: tidak ada lagi geser/melebar ke samping di iOS */
+  overflow-x: clip;
   position: relative;
+}
+
+/* Fallback untuk browser lama (iOS < 16) yang belum mengenal overflow: clip */
+@supports not (overflow: clip) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
 }
 
 /*
@@ -146,19 +150,10 @@ body {
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-/*
- * Shell mengisi seluruh area halaman (100%), tapi tidak pernah lebih pendek
- * dari 100dvh. Dengan begitu tidak ada pita kosong di bawah pada perangkat
- * yang viewport CSS-nya (dvh) lebih tinggi daripada tinggi dokumen, dan sisi
- * sebaliknya pun tetap aman karena 100% selalu mengikuti viewport browser.
- *
- * `overflow: hidden` di html/body membuat dokumen tidak bisa digeser sama
- * sekali — inilah yang dulu bikin halaman "naik ke atas" dan hanya rapi
- * setelah digeser (lihat catatan di aturan html, body di atas).
- */
+/* Pakai tinggi viewport dinamis supaya address bar HP tidak memotong composer */
 .app-shell {
-  height: 100%;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   width: 100%;
   max-width: 100%;
   overflow: hidden;
