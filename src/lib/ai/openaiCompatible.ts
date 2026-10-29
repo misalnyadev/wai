@@ -4,7 +4,7 @@ type Options = GenerateReplyInput & {
   baseUrl: string;
   providerLabel: string;
   extraHeaders?: Record<string, string>;
-  /** Parameter opsional khusus per provider (mis. reasoning_effort untuk Grok). */
+  /** Parameter opsional khusus per provider. */
   extraBody?: Record<string, unknown>;
 };
 
@@ -12,9 +12,8 @@ type OpenAIContentPart = Record<string, unknown>;
 type OpenAIMessage = { role: string; content: string | OpenAIContentPart[] };
 
 /**
- * Works for any OpenAI "chat/completions"-compatible endpoint: xAI (Grok),
- * OpenRouter, and arbitrary custom/self-hosted endpoints (LM Studio, Ollama
- * OpenAI shim, Groq-cloud, etc.)
+ * Endpoint "chat/completions" bergaya OpenAI: Groq, OpenRouter, dan
+ * endpoint custom milik sendiri (Ollama, LM Studio, gateway lain).
  */
 export async function generateOpenAICompatibleReply(options: Options): Promise<string> {
   const {

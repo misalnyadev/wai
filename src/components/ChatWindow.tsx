@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character, ChatMessage } from "@/types/chat";
 import { Avatar } from "./Avatar";
-import { BackIcon, DoubleCheckIcon, LockIcon } from "./icons";
+import { BackIcon, DoubleCheckIcon } from "./icons";
 
 function formatTime(iso: string) {
   const d = new Date(iso);
@@ -138,13 +138,6 @@ export function ChatWindow({
         className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4"
       >
         <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-3 flex justify-center">
-            <span className="flex items-center gap-1.5 rounded-full bg-amber-100/90 px-3 py-1.5 text-center text-[11px] text-amber-900 shadow-sm dark:bg-amber-500/15 dark:text-amber-200">
-              <LockIcon className="h-3 w-3 shrink-0" />
-              Percakapan & foto tersimpan hanya di perangkat ini
-            </span>
-          </div>
-
           {items.map(({ message: m, divider }) => {
             return (
               <div key={m.id}>

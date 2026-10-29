@@ -20,21 +20,13 @@ export async function generateCharacterReply(
       return generateOpenAICompatibleReply({
         ...input,
         baseUrl: input.baseUrl || PROVIDER_META.groq.baseUrl!,
-        providerLabel: "Groq",
-      });
-    case "grok":
-      return generateOpenAICompatibleReply({
-        ...input,
-        baseUrl: input.baseUrl || PROVIDER_META.grok.baseUrl!,
-        providerLabel: "Grok (xAI)",
-        // Grok 4 adalah model reasoning; effort rendah = balasan chat jauh lebih cepat.
-        extraBody: { reasoning_effort: "low" },
+        providerLabel: PROVIDER_META.groq.name,
       });
     case "openrouter":
       return generateOpenAICompatibleReply({
         ...input,
         baseUrl: input.baseUrl || PROVIDER_META.openrouter.baseUrl!,
-        providerLabel: "OpenRouter",
+        providerLabel: PROVIDER_META.openrouter.name,
         extraHeaders: {
           "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://waichat.vercel.app",
           "X-Title": "WaiChat",

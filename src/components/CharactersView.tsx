@@ -22,9 +22,7 @@ export function CharactersView({
       <header className="flex items-center justify-between gap-2 border-b border-line bg-header px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <div>
           <h2 className="font-display text-lg font-bold text-ink">Karakter</h2>
-          <p className="text-xs text-ink-soft">
-            {characters.length} karakter · buat sendiri atau pakai contoh
-          </p>
+          <p className="text-xs text-ink-soft">{characters.length} karakter</p>
         </div>
         <button
           onClick={onNew}

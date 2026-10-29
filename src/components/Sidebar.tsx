@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { Character, UserProfile } from "@/types/chat";
 import { Avatar } from "./Avatar";
 import { ThemeQuickToggle } from "./ThemeToggle";
-import { LockIcon, PlusIcon, SearchIcon, SettingsIcon } from "./icons";
+import { PlusIcon, SearchIcon, SettingsIcon } from "./icons";
 
 function formatListTime(iso: string) {
   const d = new Date(iso);
@@ -124,7 +124,7 @@ export function Sidebar({
           onClick={onOpenSettings}
           className="mx-3 mb-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-left text-xs font-medium text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/15"
         >
-          ⚠️ Belum ada API key — ketuk di sini untuk menambahkan (Gemini/Groq gratis)
+          Belum ada API key · atur di sini
         </button>
       )}
 
@@ -160,11 +160,6 @@ export function Sidebar({
             </div>
           </button>
         ))}
-      </div>
-
-      <div className="hidden items-center justify-center gap-1.5 border-t border-line px-4 py-2.5 text-[11px] text-muted md:flex">
-        <LockIcon className="h-3 w-3" />
-        Tidak ada server penyimpanan · data di browser ini
       </div>
     </div>
   );

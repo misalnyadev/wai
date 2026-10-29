@@ -7,7 +7,7 @@ const STORAGE_KEY = "persona-theme";
  * Disimpan di sini karena <meta name="theme-color"> harus diubah lewat JS supaya
  * ikut tema yang dipilih pengguna, bukan hanya preferensi sistem.
  */
-export const HEADER_STATUS_COLORS = { light: "#f0f2f5", dark: "#202c33" } as const;
+export const HEADER_STATUS_COLORS = { light: "#f0f2f5", dark: "#17171a" } as const;
 
 function syncStatusBarColor(resolved: "light" | "dark") {
   if (typeof document === "undefined") return;
@@ -111,4 +111,4 @@ export function watchSystemTheme(onChange: () => void): () => void {
 }
 
 /** Skrip kecil yang dijalankan sebelum paint agar tidak ada kilatan tema terang. */
-export const THEME_INIT_SCRIPT = `(function(){try{var key="persona-theme";var saved=localStorage.getItem(key);var mq=window.matchMedia("(prefers-color-scheme: dark)").matches;var dark=saved==="dark"||((!saved||saved==="system")&&mq);var r=document.documentElement;r.classList.toggle("dark",dark);r.style.colorScheme=dark?"dark":"light";r.dataset.theme=saved||"system";var c=dark?"#202c33":"#f0f2f5";var ms=document.querySelectorAll('meta[name="theme-color"]');for(var i=0;i<ms.length;i++){ms[i].setAttribute("content",c);}}catch(e){}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var key="persona-theme";var saved=localStorage.getItem(key);var mq=window.matchMedia("(prefers-color-scheme: dark)").matches;var dark=saved==="dark"||((!saved||saved==="system")&&mq);var r=document.documentElement;r.classList.toggle("dark",dark);r.style.colorScheme=dark?"dark":"light";r.dataset.theme=saved||"system";var c=dark?"#17171a":"#f0f2f5";var ms=document.querySelectorAll('meta[name="theme-color"]');for(var i=0;i<ms.length;i++){ms[i].setAttribute("content",c);}}catch(e){}})();`;

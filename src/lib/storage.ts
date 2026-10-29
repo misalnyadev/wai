@@ -1,6 +1,7 @@
 import {
   DEFAULT_SETTINGS,
   EMPTY_PROFILE,
+  providerTypeValues,
   type AppSettings,
   type Character,
   type ChatMessage,
@@ -78,8 +79,12 @@ export async function saveCharacters(list: Character[]): Promise<void> {
   await kvSet("characters", list);
 }
 
-/** Data lama belum punya backupKeys — rapikan saat dibaca. */
-function normalizeProvider(p: Provider): Provider {
+/**
+ * Data lama belum punya backupKeys — rapikan saat dibaca.
+ * Provider dengan tipe yang sudah tidak didukung (mis. Grok/xAI) dibuang.
+ */
+function normalizeProvider(p: Provider): Provider | null {
+  if (!p || !providerTypeValues.includes(p.type)) return null;
   return {
     ...p,
     apiKey: p.apiKey ?? "",
@@ -87,9 +92,17 @@ function normalizeProvider(p: Provider): Provider {
   };
 }
 
+function cleanProviders(list: Provider[]): Provider[] {
+  const normalized = list.map(normalizeProvider).filter((p): p is Provider => p !== null);
+  if (!normalized.length) return [];
+  const found = normalized.findIndex((p) => p.isDefault);
+  const defaultIndex = found >= 0 ? found : 0;
+  return normalized.map((p, i) => ({ ...p, isDefault: i === defaultIndex }));
+}
+
 export async function getProviders(): Promise<Provider[]> {
   const list = (await kvGet<Provider[]>("providers")) ?? [];
-  return list.map(normalizeProvider);
+  return cleanProviders(list);
 }
 
 export async function getUserProfile(): Promise<UserProfile> {
@@ -215,7 +228,7 @@ export function isBackupData(value: unknown): value is BackupData {
 /** Timpa seluruh data perangkat dengan isi file cadangan. */
 export async function restoreBackup(data: BackupData): Promise<void> {
   await saveCharacters(data.characters);
-  await saveProviders(data.providers.map(normalizeProvider));
+  await saveProviders(cleanProviders(data.providers));
   if (data.profile) await saveUserProfile({ ...EMPTY_PROFILE, ...data.profile });
   if (data.settings) await saveSettings({ ...DEFAULT_SETTINGS, ...data.settings });
   for (const character of data.characters) {

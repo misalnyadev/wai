@@ -1,4 +1,4 @@
-export const providerTypeValues = ["gemini", "groq", "grok", "openrouter", "custom"] as const;
+export const providerTypeValues = ["gemini", "groq", "openrouter", "custom"] as const;
 
 export type ProviderType = (typeof providerTypeValues)[number];
 

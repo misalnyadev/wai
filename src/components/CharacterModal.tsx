@@ -162,9 +162,6 @@ export function CharacterModal({
               rows={7}
               className="w-full resize-none rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
-            <p className="mt-1 text-[11px] text-muted">
-              Makin detail & spesifik, makin konsisten dan nyata karakter ini saat diajak chat.
-            </p>
           </div>
 
           <div>

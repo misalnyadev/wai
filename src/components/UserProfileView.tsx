@@ -48,9 +48,6 @@ export function UserProfileView({
     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
       <header className="border-b border-line bg-header px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <h2 className="font-display text-lg font-bold text-ink">Profil saya</h2>
-        <p className="text-xs text-ink-soft">
-          Karakter membaca profil ini supaya tahu sedang chat dengan siapa
-        </p>
       </header>
 
       <div className="flex-1 overflow-y-auto px-5 py-5 pb-[calc(var(--tabbar-space)+0.5rem)]">
@@ -78,7 +75,7 @@ export function UserProfileView({
               }}
             />
             <span className="text-xs text-muted">
-              {busy ? "Memproses foto..." : "Ketuk untuk pilih foto profil"}
+              {busy ? "Memproses..." : "Ubah foto"}
             </span>
           </div>
 
@@ -123,13 +120,9 @@ export function UserProfileView({
               value={form.bio}
               onChange={(e) => update("bio", e.target.value)}
               rows={5}
-              placeholder="Ceritakan singkat siapa kamu, sifatmu, hobi, atau konteks hubungan dengan karakter — mis. mahasiswa teater yang sedang latihan adegan drama keluarga."
+              placeholder="Ceritakan singkat tentangmu"
               className={`${inputClass} resize-none`}
             />
-            <p className="mt-1 text-[11px] text-muted">
-              Makin detail, makin natural karakter memperlakukanmu — mereka akan memanggil namamu
-              dan mengingat hal-hal ini.
-            </p>
           </Field>
 
           <div className="flex items-center gap-2">
@@ -145,12 +138,6 @@ export function UserProfileView({
               </span>
             )}
           </div>
-
-          <p className="rounded-xl bg-surface-2 p-3 text-[11px] leading-relaxed text-ink-soft">
-            🔒 Profil ini hanya tersimpan di perangkatmu dan ikut tersimpan di file cadangan.
-            Karakter memakainya untuk menyesuaikan panggilan, topik, dan cara bicara — bukan untuk
-            dikirim ke mana pun selain provider AI pilihanmu saat kamu chat.
-          </p>
         </form>
       </div>
     </div>

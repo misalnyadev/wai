@@ -2,7 +2,7 @@
 
 Chat bergaya WhatsApp dengan karakter yang terasa nyata — untuk latihan pendalaman peran film.
 Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukung
-**Gemini, Groq, Grok (xAI), OpenRouter, serta endpoint custom** (Ollama/LM Studio, dll).
+**Gemini, Groq, OpenRouter, serta endpoint custom** (Ollama/LM Studio, dll).
 
 🔗 **Versi online:** https://waichat.vercel.app
 
@@ -14,7 +14,7 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
 - 🔑 **Multi API key + auto-fallback** — beberapa key per provider dicoba berurutan; kalau kena
   limit (429) key berikutnya dipakai otomatis, dan bila semua key habis aplikasi bisa pindah ke
   provider lain (bisa dimatikan di Setelan)
-- 🎨 **Tema terang / gelap / ikut sistem**, warna khas WhatsApp
+- 🎨 **Tema terang / gelap / ikut sistem** — tema gelap netral (abu arang) tanpa tint hijau
 - 📱 **Navigasi ala WhatsApp**: rail di desktop, tab bawah di HP (Chat · Karakter · Profil · Setelan)
 - 📷 Kirim foto (dikompres otomatis di browser)
 - 💾 **Cadangan & pemulihan** data (JSON) + hapus semua data perangkat
@@ -30,6 +30,7 @@ src/
 ├─ app/
 │  ├─ api/chat/route.ts    # proxy ke provider AI + rotasi key & fallback provider
 │  ├─ api/test/route.ts    # tes koneksi (ikut mencoba key cadangan)
+│  ├─ api/models/route.ts  # daftar model aktif untuk sebuah API key
 │  ├─ api/health/route.ts
 │  ├─ fonts/               # font Plus Jakarta Sans (self-host, di-preload)
 │  ├─ globals.css          # token warna tema + palet hijau WhatsApp
@@ -42,7 +43,7 @@ src/
 │  ├─ CharactersView.tsx · UserProfileView.tsx · SettingsPanel.tsx
 │  └─ CharacterModal.tsx · CharacterProfileModal.tsx · ThemeToggle.tsx
 ├─ lib/
-│  ├─ ai/                  # gemini, openai-compatible, promptBuilder (profil user), error mapping
+│  ├─ ai/                  # gemini, openai-compatible, daftar model, promptBuilder, error mapping
 │  ├─ imageClient.ts       # kompres foto di browser sebelum dikirim
 │  ├─ storage.ts           # IndexedDB + profil + setelan + cadangan
 │  └─ theme.ts             # mode tema & sinkronisasi preferensi sistem
@@ -63,12 +64,15 @@ public/
 |---|---|---|---|
 | Google Gemini | `gemini-2.5-flash` | ✅ aistudio.google.com/apikey | Paling gampang, bisa baca gambar |
 | Groq | `llama-3.3-70b-versatile` | ✅ console.groq.com/keys | Paling cepat (LPU) |
-| Grok (xAI) | `grok-4` | ❌ berbayar | Mode reasoning disetel rendah agar cepat |
 | OpenRouter | `openai/gpt-4o-mini` | sebagian (`:free`) | Banyak pilihan model |
 | Custom | — | — | Endpoint OpenAI-compatible (Ollama/LM Studio) |
 
+**Pilih model otomatis:** tempel API key di Setelan → tombol **Pilih model** akan mengambil daftar
+model yang benar-benar aktif untuk key itu (langsung dari provider), diurutkan dari yang terbaru,
+dengan model "disarankan" di paling atas. Klik satu model untuk memakainya.
+
 **Cara kerja multi-key:** di Setelan → tambah provider → isi key utama lalu
-**+ Tambah key cadangan** sebanyak yang kamu mau. Saat chat, server mencoba key secara berurutan
+**+ Key cadangan** sebanyak yang kamu mau. Saat chat, server mencoba key secara berurutan
 (maksimal 4 key per pesan). Key yang berhasil otomatis dinaikkan ke posisi utama. Kalau semua key
 provider itu gagal dan **Fallback otomatis** aktif, aplikasi lanjut ke provider lain yang tersimpan.
 
