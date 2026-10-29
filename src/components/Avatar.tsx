@@ -1,9 +1,9 @@
 const PALETTE = [
-  "from-rose-400 to-orange-300",
-  "from-violet-400 to-indigo-300",
-  "from-slate-400 to-slate-300",
-  "from-amber-400 to-pink-300",
-  "from-sky-400 to-cyan-300",
+  "from-neutral-500 to-neutral-400",
+  "from-stone-500 to-stone-400",
+  "from-zinc-500 to-zinc-400",
+  "from-slate-500 to-slate-400",
+  "from-gray-500 to-gray-400",
 ];
 
 function colorFor(name: string) {

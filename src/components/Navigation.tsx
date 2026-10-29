@@ -59,7 +59,7 @@ export function NavRail({
             >
               <Icon className="h-5 w-5" />
             </span>
-            <span className={`text-[10px] font-medium ${active ? "text-ink" : "text-ink-soft"}`}>
+            <span className={`text-[12px] font-medium ${active ? "text-ink" : "text-ink-soft"}`}>
               {label}
             </span>
           </button>
@@ -87,7 +87,7 @@ export function MobileTabBar({
   onChange: (view: AppView) => void;
 }) {
   return (
-    <div className="mobile-tabbar pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
+    <div className="mobile-tabbar pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.7rem))] md:hidden">
       <nav
         aria-label="Navigasi utama"
         className="glass-capsule pointer-events-auto flex w-full max-w-[420px] items-center gap-0.5 rounded-full p-1.5"
@@ -106,7 +106,7 @@ export function MobileTabBar({
             >
               <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
               <span
-                className={`truncate text-[10px] leading-none ${
+                className={`truncate text-[12px] leading-none ${
                   active ? "font-semibold" : "font-medium"
                 }`}
               >

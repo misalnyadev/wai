@@ -49,7 +49,7 @@ export function CharacterProfileModal({
             <Avatar name={character.name} src={character.avatarUrl} size={110} ring />
             <h3 className="font-display mt-2 text-xl font-bold text-ink">{character.name}</h3>
             {character.shortBio && <p className="text-sm text-ink-soft">{character.shortBio}</p>}
-            <span className="rounded-full bg-surface-2 px-3 py-1 text-[11px] font-medium text-ink-soft">
+            <span className="rounded-full bg-surface-2 px-3 py-1 text-[12px] font-medium text-ink-soft">
               {providerLabel}
             </span>
           </div>
@@ -79,7 +79,7 @@ export function CharacterProfileModal({
           </div>
           <button
             onClick={onDelete}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-rose-200 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-line py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-surface-2 hover:text-ink"
           >
             <TrashIcon className="h-4 w-4" /> Hapus Karakter
           </button>
