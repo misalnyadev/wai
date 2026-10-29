@@ -2,7 +2,14 @@
 
 import { useRef, useState, useSyncExternalStore } from "react";
 import type { ChatBackground } from "@/types/chat";
-import { CHAT_COLOR_PRESETS, getPreset, presetSwatch } from "@/lib/chatBackground";
+import {
+  CHAT_ANIMATED_PRESETS,
+  CHAT_COLOR_PRESETS,
+  animatedSwatch,
+  getAnimatedPreset,
+  getPreset,
+  presetSwatch,
+} from "@/lib/chatBackground";
 import { fileToDataUrl } from "@/lib/imageClient";
 import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { CameraIcon } from "./icons";
@@ -61,8 +68,10 @@ export function ChatBackgroundPicker({
   const idle = "border-line hover:border-ink/40";
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-3">
+      <div>
+        <p className="mb-1.5 text-[12px] font-medium text-muted">Warna &amp; gambar</p>
+        <div className="flex flex-wrap items-center gap-2">
         {allowInherit && (
           <button
             type="button"
@@ -140,6 +149,35 @@ export function ChatBackgroundPicker({
           {!(value !== null && current.kind === "image") && <CameraIcon className="h-4 w-4" />}
           <span className="sr-only">Pilih gambar latar</span>
         </button>
+        </div>
+      </div>
+
+      {/* Animasi */}
+      <div>
+        <p className="mb-1.5 text-[12px] font-medium text-muted">Animasi</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {CHAT_ANIMATED_PRESETS.map((preset) => {
+            const active = value !== null && current.kind === "animated" && current.id === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => onChange({ kind: "animated", id: preset.id })}
+                aria-pressed={active}
+                title={`${preset.label} · ${preset.hint}`}
+                className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full border transition ${
+                  active ? ring : idle
+                }`}
+                style={{ backgroundImage: animatedSwatch(preset, isDark) }}
+              >
+                <span aria-hidden="true" className="absolute inset-0 grid place-items-center text-[11px] font-bold text-ink-soft">
+                  ▶
+                </span>
+                <span className="sr-only">{preset.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <input
@@ -185,7 +223,13 @@ export function ChatBackgroundPicker({
       )}
 
       {value !== null && current.kind === "preset" && (
-        <p className="mt-2 text-xs text-muted">{getPreset(current.id).label}</p>
+        <p className="text-xs text-muted">{getPreset(current.id).label}</p>
+      )}
+
+      {value !== null && current.kind === "animated" && (
+        <p className="text-xs text-muted">
+          {getAnimatedPreset(current.id).label} · {getAnimatedPreset(current.id).hint}
+        </p>
       )}
     </div>
   );

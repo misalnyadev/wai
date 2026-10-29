@@ -20,7 +20,9 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   (Chat · Karakter · Suara · Profil · Setelan)
 - 🖼️ **Latar chat custom** — pilih salah satu warna bawaan (punya versi terang & gelap) atau
   unggah gambar sendiri, lengkap dengan pengatur keredupan agar tulisan tetap terbaca.
-  Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat menu ⋯ di percakapan
+  Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat menu ⋯ di percakapan.
+  Ada juga **5 latar animasi** halus (Bokeh, Aurora, Gelombang, Bintang, Kabut) bergaya
+  virtual background video call — otomatis berhenti bila perangkat memakai mode "kurangi gerakan"
 - 🔊 **Suara lokal** (Web Speech API) — karakter bisa membacakan balasannya. Teks dipecah per
   kalimat dengan jeda alami, suara "Enhanced/Premium" diprioritaskan otomatis, ada preset
   "Natural/Hangat/Santai/Ceria/Jelas" plus pengatur kecepatan, nada, volume, dan jeda kalimat.

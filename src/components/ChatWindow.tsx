@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Character, ChatBackground, ChatMessage } from "@/types/chat";
-import { chatBackgroundStyle } from "@/lib/chatBackground";
+import { chatBackgroundProps } from "@/lib/chatBackground";
 import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { Avatar } from "./Avatar";
 import { BackIcon, DoubleCheckIcon, SpeakerIcon } from "./icons";
@@ -78,6 +78,7 @@ export function ChatWindow({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
+  const backdrop = chatBackgroundProps(background, isDark);
 
   useEffect(() => {
     if (atBottom && scrollRef.current) {
@@ -106,8 +107,8 @@ export function ChatWindow({
 
   return (
     <div
-      className="chat-wallpaper flex h-full min-h-0 flex-1 flex-col"
-      style={chatBackgroundStyle(background, isDark)}
+      className={`chat-wallpaper flex h-full min-h-0 flex-1 flex-col ${backdrop.className}`}
+      style={backdrop.style}
     >
       {/* Header */}
       <div className="z-10 flex items-center gap-3 bg-header px-2 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4">
