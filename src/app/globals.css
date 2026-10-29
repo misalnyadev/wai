@@ -91,17 +91,13 @@ body {
   height: 100%;
   width: 100%;
   max-width: 100%;
-  /* Kunci lebar halaman: tidak ada lagi geser/melebar ke samping di iOS */
-  overflow-x: clip;
+  /*
+   * Dokumen tidak boleh ikut bergeser: semua area scroll ada di dalam shell.
+   * Dulu halaman bisa ter-scroll sedikit (selisih tinggi layout vs viewport di
+   * Android) sehingga terlihat naik dan menyisakan pita abu di bawah.
+   */
+  overflow: hidden;
   position: relative;
-}
-
-/* Fallback untuk browser lama (iOS < 16) yang belum mengenal overflow: clip */
-@supports not (overflow: clip) {
-  html,
-  body {
-    overflow-x: hidden;
-  }
 }
 
 /*
@@ -141,6 +137,8 @@ html {
 body {
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+  /* Tinggi dikunci ke viewport yang benar-benar terlihat (lihat lib/viewport.ts). */
+  height: var(--app-height, 100%);
   background-color: var(--header-bg);
   color: var(--ink);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -150,10 +148,13 @@ body {
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-/* Pakai tinggi viewport dinamis supaya address bar HP tidak memotong composer */
+/*
+ * Shell mengikuti tinggi <body> yang sudah dikunci ke viewport terlihat,
+ * jadi composer dan tab bar tidak pernah terpotong address bar maupun bar
+ * navigasi Android. Fallback 100dvh dipakai bila JS belum sempat berjalan.
+ */
 .app-shell {
-  height: 100vh;
-  height: 100dvh;
+  height: var(--app-height, 100dvh);
   width: 100%;
   max-width: 100%;
   overflow: hidden;
