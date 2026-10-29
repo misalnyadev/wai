@@ -7,7 +7,7 @@ import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { Avatar } from "./Avatar";
 import { useIsSpeaking } from "@/lib/voice";
 import { ChatVideoBackground, ChatVideoPanel } from "./ChatVideo";
-import { BackIcon, DoubleCheckIcon, SpeakerIcon } from "./icons";
+import { BackIcon, DoubleCheckIcon, PhoneCallIcon, SpeakerIcon, VideoCallIcon } from "./icons";
 
 function formatTime(iso: string) {
   const d = new Date(iso);
@@ -27,13 +27,18 @@ function dayLabel(iso: string) {
   return d.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" });
 }
 
-function TypingBubble({ glass = false }: { glass?: boolean }) {
+function TypingBubble({ glass = false, glassOpacity = 70 }: { glass?: boolean; glassOpacity?: number }) {
   return (
     <div className="bubble-in flex justify-start">
       <div
-        className={`flex items-center gap-1 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm ${
-          glass ? "bg-bubble-in/75 backdrop-blur-sm" : "bg-bubble-in"
+        className={`flex items-center gap-1 rounded-2xl rounded-bl-sm bg-bubble-in px-4 py-3 shadow-sm ${
+          glass ? "backdrop-blur-sm" : ""
         }`}
+        style={
+          glass
+            ? { backgroundColor: `color-mix(in oklab, var(--bubble-in) ${glassOpacity}%, transparent)` }
+            : undefined
+        }
       >
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.3s]" />
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.15s]" />
@@ -68,10 +73,13 @@ export function ChatWindow({
   isTyping,
   background,
   glass = false,
+  glassOpacity = 70,
   onBack,
   onOpenProfile,
   onImageClick,
   onSpeak,
+  onVideoCall,
+  onAudioCall,
 }: {
   character: Character;
   messages: ChatMessage[];
@@ -79,10 +87,14 @@ export function ChatWindow({
   background?: ChatBackground;
   /** Gelembung tembus pandang agar latar video/gambar terlihat di baliknya. */
   glass?: boolean;
+  /** Kepekatan gelembung tembus pandang (40–95%). */
+  glassOpacity?: number;
   onBack: () => void;
   onOpenProfile: () => void;
   onImageClick: (url: string) => void;
   onSpeak?: (text: string) => void;
+  onVideoCall?: () => void;
+  onAudioCall?: () => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -162,6 +174,7 @@ export function ChatWindow({
           </div>
         </button>
         {onSpeak && (
+          <span className="hidden sm:block">
           <button
             onClick={() => onSpeak(lastReply)}
             disabled={!lastReply}
@@ -171,15 +184,28 @@ export function ChatWindow({
           >
             <SpeakerIcon className="h-5 w-5" />
           </button>
+          </span>
         )}
-        <button
-          onClick={onOpenProfile}
-          className="rounded-full px-2.5 py-1.5 text-lg leading-none text-ink-soft transition hover:bg-line/60 hover:text-ink"
-          aria-label="Buka profil dan opsi karakter"
-          title="Profil & opsi karakter"
-        >
-          ⋯
-        </button>
+        {onVideoCall && (
+          <button
+            onClick={onVideoCall}
+            className="rounded-full p-2 text-ink-soft transition hover:bg-line/60 hover:text-ink"
+            aria-label={`Video call dengan ${character.name}`}
+            title="Video call"
+          >
+            <VideoCallIcon className="h-5 w-5" />
+          </button>
+        )}
+        {onAudioCall && (
+          <button
+            onClick={onAudioCall}
+            className="rounded-full p-2 text-ink-soft transition hover:bg-line/60 hover:text-ink"
+            aria-label={`Panggilan suara dengan ${character.name}`}
+            title="Panggilan suara"
+          >
+            <PhoneCallIcon className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {video?.layout === "tile" && (
@@ -223,16 +249,19 @@ export function ChatWindow({
                 >
                   <div
                     className={`bubble-in relative max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[75%] ${
-                      m.role === "user" ? "rounded-br-sm text-bubble-out-ink" : "rounded-bl-sm text-bubble-in-ink"
-                    } ${
+                      m.role === "user"
+                        ? "rounded-br-sm bg-bubble-out text-bubble-out-ink"
+                        : "rounded-bl-sm bg-bubble-in text-bubble-in-ink"
+                    } ${glass ? "backdrop-blur-sm" : ""} ${m.pending ? "opacity-60" : ""}`}
+                    style={
                       glass
-                        ? `backdrop-blur-sm ${
-                            m.role === "user" ? "bg-bubble-out/75" : "bg-bubble-in/75"
-                          }`
-                        : m.role === "user"
-                          ? "bg-bubble-out"
-                          : "bg-bubble-in"
-                    } ${m.pending ? "opacity-60" : ""}`}
+                        ? {
+                            backgroundColor: `color-mix(in oklab, var(--bubble-${
+                              m.role === "user" ? "out" : "in"
+                            }) ${glassOpacity}%, transparent)`,
+                          }
+                        : undefined
+                    }
                   >
                     {m.imageUrl && (
                       <img
@@ -252,7 +281,7 @@ export function ChatWindow({
               </div>
             );
           })}
-          {isTyping && <TypingBubble glass={glass} />}
+          {isTyping && <TypingBubble glass={glass} glassOpacity={glassOpacity} />}
         </div>
       </div>
     </div>

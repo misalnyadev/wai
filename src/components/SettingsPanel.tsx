@@ -80,9 +80,18 @@ export function SettingsPanel({
   const [tests, setTests] = useState<Record<string, TestState>>({});
   const [dataBusy, setDataBusy] = useState<"export" | "import" | "wipe" | null>(null);
   const [dataNote, setDataNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+  /** Nilai sementara slider kepekatan gelembung — disimpan saat jari dilepas. */
+  const [opacityDraft, setOpacityDraft] = useState<number | null>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
   function setBackground(next: ChatBackground) {
     onSettingsChange({ ...settings, chatBackground: next });
+  }
+
+  const glassOpacity = opacityDraft ?? settings.bubbleOpacity ?? 70;
+
+  function commitOpacity(percent: number) {
+    setOpacityDraft(null);
+    onSettingsChange({ ...settings, bubbleOpacity: percent });
   }
 
   // Pemilih model
@@ -389,6 +398,31 @@ export function SettingsPanel({
                 className="mt-0.5 h-5 w-5 shrink-0 accent-ink"
               />
             </label>
+
+            {settings.glassBubbles && (
+              <div className="mt-2 rounded-xl border border-line px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-ink-soft">Kepekatan gelembung</span>
+                  <span className="text-xs font-semibold text-ink">{glassOpacity}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={40}
+                  max={95}
+                  step={5}
+                  value={glassOpacity}
+                  onChange={(e) => setOpacityDraft(Number(e.target.value))}
+                  onPointerUp={(e) => commitOpacity(Number(e.currentTarget.value))}
+                  onKeyUp={(e) => commitOpacity(Number(e.currentTarget.value))}
+                  onBlur={(e) => commitOpacity(Number(e.currentTarget.value))}
+                  aria-label="Kepekatan gelembung pesan"
+                  className="mt-1 w-full accent-ink"
+                />
+                <p className="mt-1 text-[12px] leading-snug text-muted">
+                  Makin kecil, video di belakang pesan makin kelihatan.
+                </p>
+              </div>
+            )}
           </section>
 
           {/* Provider tersimpan */}

@@ -190,7 +190,13 @@ function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings
     pause: clamp(rawVoice.pause, 0, 600, DEFAULT_VOICE.pause),
   };
 
-  return { ...merged, chatBackground: safe, glassBubbles: Boolean(merged.glassBubbles), voice };
+  return {
+    ...merged,
+    chatBackground: safe,
+    glassBubbles: Boolean(merged.glassBubbles),
+    bubbleOpacity: clamp(merged.bubbleOpacity, 40, 95, 70),
+    voice,
+  };
 }
 
 export async function getSettings(): Promise<AppSettings> {
