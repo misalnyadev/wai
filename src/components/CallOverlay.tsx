@@ -155,8 +155,7 @@ export function CallOverlay({
       role="dialog"
       aria-modal="true"
       aria-label={`${mode === "video" ? "Video call" : "Panggilan suara"} dengan ${character.name}`}
-      className="fade-in fixed inset-0 z-[80] w-full overflow-hidden bg-[#0a0a0c] text-white"
-      style={{ height: "var(--app-height, 100dvh)" }}
+      className="fade-in fixed inset-0 z-[80] h-[100dvh] w-full overflow-hidden bg-[#0a0a0c] text-white"
     >
       {/* Latar: klip video call karakter, atau gradasi gelap */}
       <div className="absolute inset-0 isolate overflow-hidden">

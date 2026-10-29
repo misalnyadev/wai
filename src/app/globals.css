@@ -137,8 +137,6 @@ html {
 body {
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
-  /* Tinggi dikunci ke viewport yang benar-benar terlihat (lihat lib/viewport.ts). */
-  height: var(--app-height, 100%);
   background-color: var(--header-bg);
   color: var(--ink);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -149,12 +147,18 @@ body {
 }
 
 /*
- * Shell mengikuti tinggi <body> yang sudah dikunci ke viewport terlihat,
- * jadi composer dan tab bar tidak pernah terpotong address bar maupun bar
- * navigasi Android. Fallback 100dvh dipakai bila JS belum sempat berjalan.
+ * Shell mengisi seluruh area halaman (100%), tapi tidak pernah lebih pendek
+ * dari 100dvh. Dengan begitu tidak ada pita kosong di bawah pada perangkat
+ * yang viewport CSS-nya (dvh) lebih tinggi daripada tinggi dokumen, dan sisi
+ * sebaliknya pun tetap aman karena 100% selalu mengikuti viewport browser.
+ *
+ * `overflow: hidden` di html/body membuat dokumen tidak bisa digeser sama
+ * sekali — inilah yang dulu bikin halaman "naik ke atas" dan hanya rapi
+ * setelah digeser (lihat catatan di aturan html, body di atas).
  */
 .app-shell {
-  height: var(--app-height, 100dvh);
+  height: 100%;
+  min-height: 100dvh;
   width: 100%;
   max-width: 100%;
   overflow: hidden;
