@@ -59,7 +59,7 @@ export function Composer({
   }
 
   return (
-    <div className="border-t border-line bg-header px-2.5 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-3 sm:py-2.5">
+    <div className="bg-header px-2.5 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-3 sm:py-2.5">
       <div className="mx-auto w-full max-w-3xl">
         {imagePreview && (
           <div className="mb-2 flex items-center gap-2">
@@ -119,7 +119,7 @@ export function Composer({
             autoComplete="off"
             enterKeyHint="send"
             aria-label="Tulis pesan"
-            className={`max-h-[120px] min-w-0 w-full flex-1 resize-none border-none bg-surface px-4 py-2.5 text-base text-ink outline-none ring-1 ring-line transition-[border-radius] duration-150 placeholder:text-muted disabled:opacity-60 sm:text-sm ${
+            className={`max-h-[120px] min-w-0 w-full flex-1 resize-none border-none bg-surface px-4 py-2.5 text-base text-ink outline-none transition-[border-radius] duration-150 placeholder:text-muted disabled:opacity-60 sm:text-sm ${
               multiline ? "rounded-2xl" : "rounded-full"
             }`}
           />
