@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Character } from "@/types/chat";
+import type { Character, UserProfile } from "@/types/chat";
 import { Avatar } from "./Avatar";
 import { ThemeQuickToggle } from "./ThemeToggle";
 import { LockIcon, PlusIcon, SearchIcon, SettingsIcon } from "./icons";
@@ -17,16 +17,20 @@ function formatListTime(iso: string) {
 export function Sidebar({
   characters,
   activeId,
+  profile,
   onSelect,
   onNewCharacter,
   onOpenSettings,
+  onOpenProfile,
   hasProviders,
 }: {
   characters: Character[];
   activeId: string | null;
+  profile: UserProfile;
   onSelect: (id: string) => void;
   onNewCharacter: () => void;
   onOpenSettings: () => void;
+  onOpenProfile: () => void;
   hasProviders: boolean;
 }) {
   const [query, setQuery] = useState("");
@@ -39,21 +43,43 @@ export function Sidebar({
   return (
     <div className="flex h-full w-full flex-col border-r border-line bg-surface md:w-[380px] lg:w-[400px]">
       <div className="flex items-center justify-between gap-2 border-b border-line bg-header px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3">
-        <div className="min-w-0">
-          <h1 className="font-display truncate text-lg font-extrabold tracking-tight text-ink">
-            Persona<span className="text-emerald-500">.</span>
-          </h1>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-            privat · di perangkatmu
-          </p>
-        </div>
+        <button
+          onClick={onOpenProfile}
+          className="flex min-w-0 items-center gap-2 text-left md:pointer-events-none"
+          title={profile.name ? `Profil: ${profile.name}` : "Isi profil kamu"}
+        >
+          <span className="md:hidden">
+            <Avatar
+              name={profile.nickname || profile.name || "Kamu"}
+              src={profile.avatarUrl}
+              size={34}
+            />
+          </span>
+          <img
+            src="/images/logo-wai-128.png"
+            alt=""
+            className="hidden h-7 w-7 shrink-0 rounded-lg md:block"
+          />
+          <span className="min-w-0">
+            <h1 className="font-display truncate text-lg font-extrabold tracking-tight text-ink">
+              WaiChat<span className="text-brand-accent">.</span>
+            </h1>
+            <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              {profile.nickname?.trim()
+                ? `hai, ${profile.nickname.trim()}`
+                : "privat · di perangkatmu"}
+            </p>
+          </span>
+        </button>
         <div className="flex shrink-0 items-center gap-1">
-          <ThemeQuickToggle />
+          <span className="hidden md:block">
+            <ThemeQuickToggle />
+          </span>
           <button
             onClick={onOpenSettings}
             className="relative rounded-full p-2 text-ink-soft transition hover:bg-line/60"
-            title="Pengaturan"
-            aria-label="Pengaturan"
+            title="Setelan"
+            aria-label="Setelan"
           >
             <SettingsIcon className="h-5 w-5" />
             {!hasProviders && (
@@ -62,10 +88,11 @@ export function Sidebar({
           </button>
           <button
             onClick={onNewCharacter}
-            className="flex items-center gap-1 rounded-full bg-emerald-600 py-1.5 pl-2.5 pr-3 text-xs font-semibold text-white transition hover:bg-emerald-700 active:scale-95 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-emerald-950"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-accent text-white shadow-sm transition hover:brightness-95 active:scale-95"
             title="Buat karakter baru"
+            aria-label="Buat karakter baru"
           >
-            <PlusIcon className="h-4 w-4" /> Baru
+            <PlusIcon className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -97,7 +124,7 @@ export function Sidebar({
           onClick={onOpenSettings}
           className="mx-3 mb-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-left text-xs font-medium text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/15"
         >
-          ⚠️ Belum ada API key — ketuk di sini untuk menambahkan (Gemini gratis)
+          ⚠️ Belum ada API key — ketuk di sini untuk menambahkan (Gemini/Groq gratis)
         </button>
       )}
 

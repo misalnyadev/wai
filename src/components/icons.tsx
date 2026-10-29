@@ -203,3 +203,35 @@ export function PaletteIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function UserIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <circle cx={12} cy={8} r={4} />
+      <path d="M4.5 20a7.5 7.5 0 0 1 15 0" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ChatsIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <path
+        d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.3 9.3 0 0 1-3.8-.8L3 21l1.9-4.9A8.2 8.2 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function GridIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <rect x={3} y={3} width={7.5} height={7.5} rx={2} />
+      <rect x={13.5} y={3} width={7.5} height={7.5} rx={2} />
+      <rect x={3} y={13.5} width={7.5} height={7.5} rx={2} />
+      <rect x={13.5} y={13.5} width={7.5} height={7.5} rx={2} />
+    </svg>
+  );
+}

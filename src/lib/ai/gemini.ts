@@ -27,7 +27,7 @@ export async function generateGeminiReply(input: GenerateReplyInput): Promise<st
   const model = fallbackModel(input.model);
 
   if (!apiKey) {
-    throw new AiProviderError("API key Gemini belum diisi. Buka Pengaturan untuk menambahkannya.");
+    throw new AiProviderError("API key Gemini belum diisi. Buka Setelan untuk menambahkannya.", { status: 401, retryable: true });
   }
   if (!model) {
     throw new AiProviderError("Model Gemini belum diisi (contoh: gemini-2.5-flash).");
@@ -84,7 +84,7 @@ export async function generateGeminiReply(input: GenerateReplyInput): Promise<st
 
   if (!res.ok) {
     const raw = await res.text().catch(() => "");
-    throw new AiProviderError(describeGeminiError(res.status, raw || res.statusText));
+    throw new AiProviderError(describeGeminiError(res.status, raw || res.statusText), { status: res.status });
   }
 
   const data = await res.json();

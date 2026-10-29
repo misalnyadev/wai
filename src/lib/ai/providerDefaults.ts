@@ -10,6 +10,13 @@ export const PROVIDER_META: Record<
     needsBaseUrl: false,
     keyHelpUrl: "https://aistudio.google.com/apikey",
   },
+  groq: {
+    name: "Groq",
+    defaultModel: "llama-3.3-70b-versatile",
+    baseUrl: "https://api.groq.com/openai/v1",
+    needsBaseUrl: false,
+    keyHelpUrl: "https://console.groq.com/keys",
+  },
   grok: {
     name: "Grok (xAI)",
     defaultModel: "grok-4",
@@ -32,4 +39,4 @@ export const PROVIDER_META: Record<
   },
 };
 
-export const PROVIDER_ORDER: ProviderType[] = ["gemini", "grok", "openrouter", "custom"];
+export const PROVIDER_ORDER: ProviderType[] = ["gemini", "groq", "grok", "openrouter", "custom"];

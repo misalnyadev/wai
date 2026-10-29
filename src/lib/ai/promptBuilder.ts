@@ -2,6 +2,28 @@ export const BUBBLE_DELIMITER = "[[NEXT]]";
 
 type Character = { name: string; personality: string | null };
 
+export type UserContext = {
+  name?: string;
+  nickname?: string;
+  age?: string;
+  occupation?: string;
+  bio?: string;
+};
+
+function describeUser(user?: UserContext | null): string {
+  if (!user) return "";
+  const rows: string[] = [];
+  const name = user.name?.trim();
+  const nickname = user.nickname?.trim();
+  if (name) rows.push(`Nama lengkap: ${name}`);
+  if (nickname) rows.push(`Panggilan akrab: ${nickname}`);
+  if (user.age?.trim()) rows.push(`Usia: ${user.age.trim()}`);
+  if (user.occupation?.trim()) rows.push(`Kesibukan/pekerjaan: ${user.occupation.trim()}`);
+  if (user.bio?.trim()) rows.push(`Tentang dia: ${user.bio.trim()}`);
+  if (!rows.length) return "";
+  return rows.join("\n");
+}
+
 /**
  * Builds the hidden "method acting" master instruction that is always
  * prepended to every character. It forces the model to fully embody a human
@@ -9,8 +31,10 @@ type Character = { name: string; personality: string | null };
  * character, never mention being an AI/model/tool, and to text like a real
  * person on a messaging app instead of writing essays.
  */
-export function buildSystemPrompt(character: Character): string {
+export function buildSystemPrompt(character: Character, user?: UserContext | null): string {
   const name = character.name?.trim() || "Karakter";
+  const userBlock = describeUser(user);
+  const callName = user?.nickname?.trim() || user?.name?.trim() || "";
 
   return `Kamu sepenuhnya MENJADI karakter manusia bernama "${name}" di dalam aplikasi latihan pendalaman peran (method acting) yang bersifat privat, dipakai aktor untuk berlatih chemistry, emosi, dan dialog sebelum syuting film/teater.
 
@@ -26,6 +50,16 @@ ATURAN MUTLAK (jangan pernah dilanggar):
 7. Jawab dalam bahasa yang sama dengan lawan bicara (default Bahasa Indonesia santai jika tidak ditentukan lain).
 8. Jika dikirimi gambar/foto, tanggapi seperti manusia asli yang benar-benar melihat foto itu — beri reaksi spontan, komentar personal, jangan menjelaskan gambar secara teknis/formal seperti laporan analisis.
 9. Tetap konsisten dengan identitas, kepribadian, latar belakang, dan hubungan dengan lawan bicara yang dijabarkan di bawah ini — itu adalah dirimu yang sebenarnya dalam latihan peran ini.
+
+${
+    userBlock
+      ? `=== LAWAN BICARAMU (orang yang sedang chat denganmu) ===
+${userBlock}
+=== AKHIR PROFIL LAWAN BICARAMU ===
+${callName ? `Panggil dia "${callName}" seperti orang yang sudah mengenalnya.` : ""} Kamu SUDAH mengenalnya: jangan bertanya "ini siapa?", jangan mengaku tidak tahu namanya, dan jangan mengarang fakta yang bertentangan dengan profil di atas. Kalau ada hal yang belum kamu ketahui tentang dia, tanyakan dengan wajar seperti orang asli yang penasaran.`
+      : `=== LAWAN BICARAMU ===
+Dia belum mengisi profil. Anggap dia orang yang sudah kamu kenal sesuai peranmu, jangan menyebut aplikasi atau profil, dan sesekali tanyakan hal personal dengan wajar.`
+  }
 
 === PROFIL KARAKTER: ${name} ===
 ${character.personality?.trim() || "Karakter ramah, hangat, dan suportif."}

@@ -1,14 +1,14 @@
 {
-  "name": "Persona — Chat Karakter Privat",
-  "short_name": "Persona",
-  "description": "Chat privat dengan karakter yang terasa nyata — untuk latihan pendalaman peran, chemistry, dan dialog film.",
+  "name": "WaiChat — Chat Karakter Privat",
+  "short_name": "WaiChat",
+  "description": "WaiChat — chat privat dengan karakter yang terasa nyata untuk latihan pendalaman peran, chemistry, dan dialog film.",
   "lang": "id",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f0f2f5",
-  "theme_color": "#f0f2f5",
+  "background_color": "#efeae2",
+  "theme_color": "#00a884",
   "icons": [
     {
       "src": "/icon-192.png",

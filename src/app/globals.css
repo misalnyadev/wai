@@ -7,9 +7,9 @@
 /* Token warna — dipakai lewat utility seperti bg-surface / text-ink    */
 /* ------------------------------------------------------------------ */
 :root {
-  --app-bg: #f0f2f5;
+  --app-bg: #efeae2;
   --surface: #ffffff;
-  --surface-2: #f6f8f9;
+  --surface-2: #f5f2ec;
   --header-bg: #f0f2f5;
   --line: #e3e8ec;
   --ink: #0f172a;
@@ -20,6 +20,9 @@
   --bubble-out: #d9fdd3;
   --bubble-out-ink: #10281a;
   --wallpaper: #efeae2;
+  --brand: #00a884;
+  --brand-strong: #008069;
+  --brand-accent: #25d366;
   --wallpaper-ink: %23000000;
   --wallpaper-opacity: 0.05;
   --shadow-color: 15 23 42;
@@ -39,12 +42,32 @@
   --bubble-out: #005c4b;
   --bubble-out-ink: #e9edef;
   --wallpaper: #0b141a;
+  --brand: #00a884;
+  --brand-strong: #06cf9c;
+  --brand-accent: #25d366;
   --wallpaper-ink: %23ffffff;
   --wallpaper-opacity: 0.035;
   --shadow-color: 0 0 0;
 }
 
+/* Aksen hijau WhatsApp (menimpa palet emerald bawaan Tailwind) */
+@theme {
+  --color-emerald-50: #e7f8f3;
+  --color-emerald-100: #d1f4e9;
+  --color-emerald-200: #a7ebd5;
+  --color-emerald-300: #7be0c1;
+  --color-emerald-400: #25d366;
+  --color-emerald-500: #00a884;
+  --color-emerald-600: #008f72;
+  --color-emerald-700: #007a62;
+  --color-emerald-800: #00654f;
+  --color-emerald-950: #003b30;
+}
+
 @theme inline {
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-accent: var(--brand-accent);
   --color-app: var(--app-bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
