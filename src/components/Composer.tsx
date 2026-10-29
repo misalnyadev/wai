@@ -11,10 +11,26 @@ export function Composer({
   disabled?: boolean;
 }) {
   const [text, setText] = useState("");
+  const [multiline, setMultiline] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  /**
+   * Sesuaikan tinggi textarea dengan isinya, sekaligus deteksi apakah tulisan
+   * sudah turun ke baris kedua. Kalau iya, kotak berubah jadi petak (rounded-2xl)
+   * supaya teks tidak terpotong lengkungan kapsul.
+   */
+  function syncSize(el: HTMLTextAreaElement) {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    const styles = window.getComputedStyle(el);
+    const lineHeight = parseFloat(styles.lineHeight) || 24;
+    const padding =
+      (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+    setMultiline(el.scrollHeight - padding > lineHeight * 1.3);
+  }
 
   function handlePickFile(file: File) {
     if (!file.type.startsWith("image/")) return;
@@ -36,7 +52,10 @@ export function Composer({
     onSend(trimmed, imageFile);
     setText("");
     clearImage();
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      setMultiline(false);
+    }
   }
 
   return (
@@ -86,8 +105,7 @@ export function Composer({
             value={text}
             onChange={(e) => {
               setText(e.target.value);
-              e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+              syncSize(e.target);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -101,7 +119,9 @@ export function Composer({
             autoComplete="off"
             enterKeyHint="send"
             aria-label="Tulis pesan"
-            className="max-h-[120px] min-w-0 w-full flex-1 resize-none rounded-full border-none bg-surface px-4 py-2.5 text-base text-ink outline-none ring-1 ring-line placeholder:text-muted focus:ring-2 focus:ring-ink/20 disabled:opacity-60 sm:text-sm"
+            className={`max-h-[120px] min-w-0 w-full flex-1 resize-none border-none bg-surface px-4 py-2.5 text-base text-ink outline-none ring-1 ring-line transition-[border-radius] duration-150 placeholder:text-muted disabled:opacity-60 sm:text-sm ${
+              multiline ? "rounded-2xl" : "rounded-full"
+            }`}
           />
           <button
             onClick={handleSubmit}

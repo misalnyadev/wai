@@ -98,7 +98,7 @@ export function Sidebar({
       </div>
 
       <div className="px-3 py-2.5">
-        <div className="flex items-center gap-2 rounded-full bg-surface-2 px-3 py-2 ring-1 ring-line transition focus-within:ring-2 focus-within:ring-ink/20">
+        <div className="flex items-center gap-2 rounded-full bg-surface-2 px-3 py-2 ring-1 ring-line transition">
           <SearchIcon className="h-4 w-4 shrink-0 text-muted" />
           <input
             value={query}
