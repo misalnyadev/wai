@@ -26,9 +26,17 @@ export type UserProfile = {
   updatedAt: string;
 };
 
+/** Latar area chat: bawaan tema, warna pilihan, atau gambar sendiri. */
+export type ChatBackground =
+  | { kind: "default" }
+  | { kind: "preset"; id: string }
+  | { kind: "image"; imageUrl: string; dim: number };
+
 export type AppSettings = {
   /** Pindah otomatis ke provider lain saat semua key provider ini gagal. */
   autoFallback: boolean;
+  /** Latar area percakapan. */
+  chatBackground: ChatBackground;
 };
 
 export type Character = {
@@ -66,4 +74,5 @@ export const EMPTY_PROFILE: UserProfile = {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   autoFallback: true,
+  chatBackground: { kind: "default" },
 };

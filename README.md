@@ -17,6 +17,8 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
 - 🎨 **Tema terang / gelap / ikut sistem** — tampilan monokrom netral (abu), tanpa aksen hijau;
   tema gelap abu arang, tombol utama otomatis kontras di kedua tema
 - 📱 **Navigasi ala WhatsApp**: rail di desktop, tab bawah di HP (Chat · Karakter · Profil · Setelan)
+- 🖼️ **Latar chat custom** — pilih salah satu warna bawaan (punya versi terang & gelap) atau
+  unggah gambar sendiri, lengkap dengan pengatur keredupan agar tulisan tetap terbaca
 - 📷 Kirim foto (dikompres otomatis di browser)
 - 💾 **Cadangan & pemulihan** data (JSON) + hapus semua data perangkat
 - 🔒 Tanpa database: semua chat, foto, profil, dan API key tersimpan **di browser perangkat**
@@ -45,6 +47,7 @@ src/
 │  └─ CharacterModal.tsx · CharacterProfileModal.tsx · ThemeToggle.tsx
 ├─ lib/
 │  ├─ ai/                  # gemini, openai-compatible, daftar model, promptBuilder, error mapping
+│  ├─ chatBackground.ts    # preset warna & gaya latar chat
 │  ├─ imageClient.ts       # kompres foto di browser sebelum dikirim
 │  ├─ storage.ts           # IndexedDB + profil + setelan + cadangan
 │  └─ theme.ts             # mode tema & sinkronisasi preferensi sistem

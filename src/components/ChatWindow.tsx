@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { Character, ChatMessage } from "@/types/chat";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { Character, ChatBackground, ChatMessage } from "@/types/chat";
+import { chatBackgroundStyle } from "@/lib/chatBackground";
+import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { Avatar } from "./Avatar";
 import { BackIcon, DoubleCheckIcon } from "./icons";
 
@@ -58,6 +60,7 @@ export function ChatWindow({
   character,
   messages,
   isTyping,
+  background,
   onBack,
   onOpenProfile,
   onImageClick,
@@ -65,12 +68,14 @@ export function ChatWindow({
   character: Character;
   messages: ChatMessage[];
   isTyping: boolean;
+  background?: ChatBackground;
   onBack: () => void;
   onOpenProfile: () => void;
   onImageClick: (url: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
 
   useEffect(() => {
     if (atBottom && scrollRef.current) {
@@ -91,7 +96,10 @@ export function ChatWindow({
   );
 
   return (
-    <div className="chat-wallpaper flex h-full min-h-0 flex-1 flex-col">
+    <div
+      className="chat-wallpaper flex h-full min-h-0 flex-1 flex-col"
+      style={chatBackgroundStyle(background, isDark)}
+    >
       {/* Header */}
       <div className="z-10 flex items-center gap-3 border-b border-line bg-header px-2 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4">
         <button
