@@ -1,17 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { AppSettings, ChatBackground, Provider, ProviderType, UserProfile } from "@/types/chat";
 import { buildBackup, genId, isBackupData, restoreBackup, wipeAll } from "@/lib/storage";
 import { PROVIDER_META, PROVIDER_ORDER, RECOMMENDED_MODELS } from "@/lib/ai/providerDefaults";
-import { CHAT_COLOR_PRESETS, getPreset, presetSwatch } from "@/lib/chatBackground";
-import { fileToDataUrl } from "@/lib/imageClient";
-import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { useEscape } from "@/lib/useEscape";
 import { ThemeSegmented } from "./ThemeToggle";
+import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
 import {
   BoltIcon,
-  CameraIcon,
   CheckIcon,
   ChevronDownIcon,
   PencilIcon,
@@ -84,47 +81,8 @@ export function SettingsPanel({
   const [dataBusy, setDataBusy] = useState<"export" | "import" | "wipe" | null>(null);
   const [dataNote, setDataNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
-  const bgFileRef = useRef<HTMLInputElement>(null);
-  const [bgBusy, setBgBusy] = useState(false);
-  const [bgError, setBgError] = useState<string | null>(null);
-  /** Nilai sementara slider peredupan — disimpan ke penyimpanan saat jari dilepas. */
-  const [dimDraft, setDimDraft] = useState<number | null>(null);
-  const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
-
-  const background = settings.chatBackground ?? ({ kind: "default" } as ChatBackground);
-
   function setBackground(next: ChatBackground) {
-    setDimDraft(null);
     onSettingsChange({ ...settings, chatBackground: next });
-  }
-
-  const dimPercent =
-    dimDraft ??
-    Math.round(
-      (background.kind === "image" && typeof background.dim === "number" ? background.dim : 0.25) * 100
-    );
-
-  function commitDim(value: number) {
-    if (background.kind !== "image") return;
-    setBackground({ kind: "image", imageUrl: background.imageUrl, dim: value / 100 });
-  }
-
-  async function handleBackgroundFile(file: File) {
-    setBgError(null);
-    if (!file.type.startsWith("image/")) {
-      setBgError("Pilih file gambar.");
-      return;
-    }
-    setBgBusy(true);
-    try {
-      const imageUrl = await fileToDataUrl(file, 1600, 0.72);
-      setBackground({ kind: "image", imageUrl, dim: 0.25 });
-    } catch {
-      setBgError("Gagal membaca gambar. Coba file lain.");
-    } finally {
-      setBgBusy(false);
-      if (bgFileRef.current) bgFileRef.current.value = "";
-    }
   }
 
   // Pemilih model
@@ -408,124 +366,13 @@ export function SettingsPanel({
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
               Latar chat
             </h3>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Bawaan (pola tema) */}
-              <button
-                type="button"
-                onClick={() => setBackground({ kind: "default" })}
-                aria-pressed={background.kind === "default"}
-                title="Bawaan"
-                className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full border transition ${
-                  background.kind === "default"
-                    ? "border-ink ring-2 ring-ink/25"
-                    : "border-line hover:border-ink/40"
-                }`}
-                style={{
-                  backgroundColor: isDark ? "#0b0b0d" : "#f7f8fa",
-                  backgroundImage:
-                    "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
-                  backgroundSize: "7px 7px",
-                  color: isDark ? "rgba(255,255,255,0.16)" : "rgba(0,0,0,0.14)",
-                }}
-              >
-                <span className="sr-only">Latar bawaan</span>
-              </button>
-
-              {CHAT_COLOR_PRESETS.map((preset) => {
-                const active = background.kind === "preset" && background.id === preset.id;
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => setBackground({ kind: "preset", id: preset.id })}
-                    aria-pressed={active}
-                    title={preset.label}
-                    className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full border transition ${
-                      active
-                        ? "border-ink ring-2 ring-ink/25"
-                        : "border-line hover:border-ink/40"
-                    }`}
-                    style={{ backgroundImage: presetSwatch(preset) }}
-                  >
-                    <span className="sr-only">{preset.label}</span>
-                  </button>
-                );
-              })}
-
-              {/* Gambar sendiri */}
-              <button
-                type="button"
-                onClick={() => bgFileRef.current?.click()}
-                disabled={bgBusy}
-                title="Pilih gambar"
-                className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border transition disabled:opacity-50 ${
-                  background.kind === "image"
-                    ? "border-ink ring-2 ring-ink/25"
-                    : "border-line bg-surface-2 text-ink-soft hover:border-ink/40 hover:text-ink"
-                }`}
-                style={
-                  background.kind === "image"
-                    ? {
-                        backgroundImage: `url("${background.imageUrl}")`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : undefined
-                }
-              >
-                {background.kind !== "image" && <CameraIcon className="h-4 w-4" />}
-                <span className="sr-only">Pilih gambar latar</span>
-              </button>
-            </div>
-
-            <input
-              ref={bgFileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleBackgroundFile(file);
-              }}
+            <ChatBackgroundPicker
+              value={settings.chatBackground ?? { kind: "default" }}
+              onChange={(next) => setBackground(next ?? { kind: "default" })}
             />
-
-            {bgBusy && <p className="mt-2 text-xs text-muted">Memproses gambar...</p>}
-            {bgError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{bgError}</p>}
-
-            {background.kind === "image" && (
-              <div className="mt-3 rounded-xl border border-line px-3 py-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-ink-soft">
-                    Redup gambar · {dimPercent}%
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setBackground({ kind: "default" })}
-                    className="text-xs font-medium text-ink-soft transition hover:text-ink"
-                  >
-                    Hapus gambar
-                  </button>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={70}
-                  step={5}
-                  value={dimPercent}
-                  onChange={(e) => setDimDraft(Number(e.target.value))}
-                  onPointerUp={(e) => commitDim(Number(e.currentTarget.value))}
-                  onKeyUp={(e) => commitDim(Number(e.currentTarget.value))}
-                  onBlur={(e) => commitDim(Number(e.currentTarget.value))}
-                  aria-label="Tingkat peredupan gambar"
-                  className="mt-2 w-full accent-ink"
-                />
-              </div>
-            )}
-
-            {background.kind === "preset" && (
-              <p className="mt-2 text-xs text-muted">{getPreset(background.id).label}</p>
-            )}
+            <p className="mt-2 text-xs text-muted">
+              Tiap karakter bisa punya latar sendiri lewat menu ⋯ di percakapan.
+            </p>
           </section>
 
           {/* Provider tersimpan */}

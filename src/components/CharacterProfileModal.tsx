@@ -1,8 +1,9 @@
 "use client";
 
-import type { Character } from "@/types/chat";
+import type { Character, ChatBackground } from "@/types/chat";
 import { useEscape } from "@/lib/useEscape";
 import { Avatar } from "./Avatar";
+import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
 import { PencilIcon, TrashIcon, XIcon } from "./icons";
 
 export function CharacterProfileModal({
@@ -12,6 +13,7 @@ export function CharacterProfileModal({
   onEdit,
   onClearChat,
   onDelete,
+  onBackgroundChange,
 }: {
   character: Character;
   providerLabel: string;
@@ -19,6 +21,7 @@ export function CharacterProfileModal({
   onEdit: () => void;
   onClearChat: () => void;
   onDelete: () => void;
+  onBackgroundChange: (next: ChatBackground | null) => void;
 }) {
   useEscape(onClose);
 
@@ -61,6 +64,17 @@ export function CharacterProfileModal({
             <p className="max-h-52 overflow-y-auto whitespace-pre-wrap break-words rounded-xl bg-surface-2 p-3 text-sm leading-relaxed text-ink-soft">
               {character.personality}
             </p>
+          </div>
+
+          <div className="mt-5">
+            <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+              Latar chat
+            </h4>
+            <ChatBackgroundPicker
+              value={character.chatBackground ?? null}
+              onChange={onBackgroundChange}
+              allowInherit
+            />
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-2">

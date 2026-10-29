@@ -5,7 +5,7 @@ import type { Character, ChatBackground, ChatMessage } from "@/types/chat";
 import { chatBackgroundStyle } from "@/lib/chatBackground";
 import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { Avatar } from "./Avatar";
-import { BackIcon, DoubleCheckIcon } from "./icons";
+import { BackIcon, DoubleCheckIcon, SpeakerIcon } from "./icons";
 
 function formatTime(iso: string) {
   const d = new Date(iso);
@@ -64,6 +64,7 @@ export function ChatWindow({
   onBack,
   onOpenProfile,
   onImageClick,
+  onSpeak,
 }: {
   character: Character;
   messages: ChatMessage[];
@@ -72,6 +73,7 @@ export function ChatWindow({
   onBack: () => void;
   onOpenProfile: () => void;
   onImageClick: (url: string) => void;
+  onSpeak?: (text: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -84,6 +86,13 @@ export function ChatWindow({
   }, [messages, isTyping, atBottom]);
 
   // Tandai pesan pertama tiap hari untuk pemisah tanggal ala WhatsApp.
+  const lastReply = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant" && messages[i].content.trim()) return messages[i].content;
+    }
+    return "";
+  }, [messages]);
+
   const items = useMemo(
     () =>
       messages.map((message, index) => {
@@ -126,6 +135,17 @@ export function ChatWindow({
             </p>
           </div>
         </button>
+        {onSpeak && (
+          <button
+            onClick={() => onSpeak(lastReply)}
+            disabled={!lastReply}
+            className="rounded-full p-2 text-ink-soft transition hover:bg-line/60 hover:text-ink disabled:opacity-40"
+            aria-label="Bacakan pesan terakhir karakter"
+            title="Bacakan pesan terakhir"
+          >
+            <SpeakerIcon className="h-5 w-5" />
+          </button>
+        )}
         <button
           onClick={onOpenProfile}
           className="rounded-full px-2.5 py-1.5 text-lg leading-none text-ink-soft transition hover:bg-line/60 hover:text-ink"

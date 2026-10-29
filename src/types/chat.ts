@@ -26,6 +26,20 @@ export type UserProfile = {
   updatedAt: string;
 };
 
+/** Pengaturan suara lokal (Web Speech API di browser perangkat). */
+export type VoiceSettings = {
+  /** Bacakan balasan karakter secara otomatis. */
+  enabled: boolean;
+  /** URI suara pilihan; kosong = pilih otomatis (utamakan bahasa Indonesia). */
+  voiceURI: string;
+  /** Kecepatan bicara 0.6–1.5. */
+  rate: number;
+  /** Nada suara 0.6–1.4. */
+  pitch: number;
+  /** Volume 0–1. */
+  volume: number;
+};
+
 /** Latar area chat: bawaan tema, warna pilihan, atau gambar sendiri. */
 export type ChatBackground =
   | { kind: "default" }
@@ -37,6 +51,8 @@ export type AppSettings = {
   autoFallback: boolean;
   /** Latar area percakapan. */
   chatBackground: ChatBackground;
+  /** Suara untuk membacakan balasan. */
+  voice: VoiceSettings;
 };
 
 export type Character = {
@@ -48,6 +64,8 @@ export type Character = {
   greeting: string;
   providerId: string | null;
   model: string | null;
+  /** Latar khusus karakter ini. null/undefined = ikut setelan global. */
+  chatBackground?: ChatBackground | null;
   preview: string;
   createdAt: string;
   updatedAt: string;
@@ -72,7 +90,16 @@ export const EMPTY_PROFILE: UserProfile = {
   updatedAt: "",
 };
 
+export const DEFAULT_VOICE: VoiceSettings = {
+  enabled: false,
+  voiceURI: "",
+  rate: 0.97,
+  pitch: 1.02,
+  volume: 1,
+};
+
 export const DEFAULT_SETTINGS: AppSettings = {
   autoFallback: true,
   chatBackground: { kind: "default" },
+  voice: DEFAULT_VOICE,
 };
