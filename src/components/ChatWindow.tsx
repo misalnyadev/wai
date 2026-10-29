@@ -5,6 +5,7 @@ import type { Character, ChatBackground, ChatMessage } from "@/types/chat";
 import { chatBackgroundProps } from "@/lib/chatBackground";
 import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { Avatar } from "./Avatar";
+import { useIsSpeaking } from "@/lib/voice";
 import { ChatVideoBackground, ChatVideoPanel } from "./ChatVideo";
 import { BackIcon, DoubleCheckIcon, SpeakerIcon } from "./icons";
 
@@ -26,10 +27,14 @@ function dayLabel(iso: string) {
   return d.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" });
 }
 
-function TypingBubble() {
+function TypingBubble({ glass = false }: { glass?: boolean }) {
   return (
     <div className="bubble-in flex justify-start">
-      <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-bubble-in px-4 py-3 shadow-sm">
+      <div
+        className={`flex items-center gap-1 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm ${
+          glass ? "bg-bubble-in/75 backdrop-blur-sm" : "bg-bubble-in"
+        }`}
+      >
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.3s]" />
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.15s]" />
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted" />
@@ -62,6 +67,7 @@ export function ChatWindow({
   messages,
   isTyping,
   background,
+  glass = false,
   onBack,
   onOpenProfile,
   onImageClick,
@@ -71,6 +77,8 @@ export function ChatWindow({
   messages: ChatMessage[];
   isTyping: boolean;
   background?: ChatBackground;
+  /** Gelembung tembus pandang agar latar video/gambar terlihat di baliknya. */
+  glass?: boolean;
   onBack: () => void;
   onOpenProfile: () => void;
   onImageClick: (url: string) => void;
@@ -81,6 +89,10 @@ export function ChatWindow({
   const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
   const backdrop = chatBackgroundProps(background, isDark);
   const video = background?.kind === "video" ? background : null;
+  // Karakter dianggap "bicara" saat mengetik atau saat suaranya dibacakan —
+  // dipakai untuk berganti ke klip video bicara bila pengguna memasangnya.
+  const speaking = useIsSpeaking();
+  const talking = isTyping || speaking;
 
   useEffect(() => {
     if (atBottom && scrollRef.current) {
@@ -117,6 +129,9 @@ export function ChatWindow({
           videoId={video.videoId}
           posterUrl={video.posterUrl}
           dim={video.dim}
+          talkingVideoId={video.talkingVideoId}
+          talkingPosterUrl={video.talkingPosterUrl}
+          talking={talking}
         />
       )}
 
@@ -175,6 +190,9 @@ export function ChatWindow({
               posterUrl={video.posterUrl}
               dim={video.dim}
               name={character.name}
+              talkingVideoId={video.talkingVideoId}
+              talkingPosterUrl={video.talkingPosterUrl}
+              talking={talking}
             />
           </div>
         </div>
@@ -205,9 +223,15 @@ export function ChatWindow({
                 >
                   <div
                     className={`bubble-in relative max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[75%] ${
-                      m.role === "user"
-                        ? "rounded-br-sm bg-bubble-out text-bubble-out-ink"
-                        : "rounded-bl-sm bg-bubble-in text-bubble-in-ink"
+                      m.role === "user" ? "rounded-br-sm text-bubble-out-ink" : "rounded-bl-sm text-bubble-in-ink"
+                    } ${
+                      glass
+                        ? `backdrop-blur-sm ${
+                            m.role === "user" ? "bg-bubble-out/75" : "bg-bubble-in/75"
+                          }`
+                        : m.role === "user"
+                          ? "bg-bubble-out"
+                          : "bg-bubble-in"
                     } ${m.pending ? "opacity-60" : ""}`}
                   >
                     {m.imageUrl && (
@@ -228,7 +252,7 @@ export function ChatWindow({
               </div>
             );
           })}
-          {isTyping && <TypingBubble />}
+          {isTyping && <TypingBubble glass={glass} />}
         </div>
       </div>
     </div>

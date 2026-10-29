@@ -104,15 +104,19 @@ function sanitizeBackground(background: ChatBackground | null | undefined): Chat
 
   if (background.kind === "video") {
     if (typeof background.videoId !== "string" || !background.videoId) return { kind: "default" };
+    const poster = (value: unknown) =>
+      typeof value === "string" && value.startsWith("data:image/") ? value : "";
     return {
       kind: "video",
       videoId: background.videoId,
-      posterUrl:
-        typeof background.posterUrl === "string" && background.posterUrl.startsWith("data:image/")
-          ? background.posterUrl
-          : "",
+      posterUrl: poster(background.posterUrl),
       dim: Math.min(0.7, Math.max(0, Number(background.dim) || 0)),
       layout: background.layout === "tile" ? "tile" : "full",
+      talkingVideoId:
+        typeof background.talkingVideoId === "string" && background.talkingVideoId
+          ? background.talkingVideoId
+          : undefined,
+      talkingPosterUrl: background.talkingVideoId ? poster(background.talkingPosterUrl) : undefined,
     };
   }
 
@@ -186,7 +190,7 @@ function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings
     pause: clamp(rawVoice.pause, 0, 600, DEFAULT_VOICE.pause),
   };
 
-  return { ...merged, chatBackground: safe, voice };
+  return { ...merged, chatBackground: safe, glassBubbles: Boolean(merged.glassBubbles), voice };
 }
 
 export async function getSettings(): Promise<AppSettings> {

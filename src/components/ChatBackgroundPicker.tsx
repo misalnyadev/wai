@@ -30,8 +30,10 @@ export function ChatBackgroundPicker({
 }) {
   const imageRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
+  const talkingRef = useRef<HTMLInputElement>(null);
   const [imageBusy, setImageBusy] = useState(false);
   const [videoBusy, setVideoBusy] = useState(false);
+  const [talkingBusy, setTalkingBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   /** Nilai sementara slider peredupan — disimpan saat jari dilepas. */
@@ -94,6 +96,36 @@ export function ChatBackgroundPicker({
       setVideoBusy(false);
       if (videoRef.current) videoRef.current.value = "";
     }
+  }
+
+  async function handleTalkingVideo(file: File) {
+    if (current.kind !== "video") return;
+    setError(null);
+    setNote(null);
+    setTalkingBusy(true);
+    try {
+      const imported = await importChatVideo(file);
+      const previous = current.talkingVideoId;
+      onChange({
+        ...current,
+        talkingVideoId: imported.videoId,
+        talkingPosterUrl: imported.posterUrl,
+      });
+      if (previous) await removeChatVideo(previous);
+      setNote("Klip bicara siap — diputar saat karakter mengetik atau bersuara.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal memuat klip bicara.");
+    } finally {
+      setTalkingBusy(false);
+      if (talkingRef.current) talkingRef.current.value = "";
+    }
+  }
+
+  async function dropTalkingVideo() {
+    if (current.kind !== "video") return;
+    const previous = current.talkingVideoId;
+    onChange({ ...current, talkingVideoId: undefined, talkingPosterUrl: undefined });
+    if (previous) await removeChatVideo(previous);
   }
 
   function commitDim(percent: number) {
@@ -295,6 +327,16 @@ export function ChatBackgroundPicker({
           if (file) handleVideo(file);
         }}
       />
+      <input
+        ref={talkingRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleTalkingVideo(file);
+        }}
+      />
 
       {imageBusy && <p className="mt-2 text-xs text-muted">Memproses gambar...</p>}
       {error && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
@@ -376,6 +418,44 @@ export function ChatBackgroundPicker({
               className="mt-1 w-full accent-ink"
             />
           </div>
+
+          <div className="border-t border-line pt-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-ink-soft">Video saat bicara</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => talkingRef.current?.click()}
+                  disabled={talkingBusy}
+                  className="rounded-full border border-line px-2.5 py-1 text-[12px] font-medium text-ink-soft transition hover:text-ink disabled:opacity-50"
+                >
+                  {talkingBusy
+                    ? "Memuat..."
+                    : current.kind === "video" && current.talkingVideoId
+                      ? "Ganti"
+                      : "Pilih"}
+                </button>
+                {current.kind === "video" && current.talkingVideoId && (
+                  <button
+                    type="button"
+                    onClick={dropTalkingVideo}
+                    className="text-[12px] font-medium text-ink-soft transition hover:text-ink"
+                  >
+                    Hapus
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="mt-1 text-[12px] leading-snug text-muted">
+              Opsional — klip ini diputar saat karakter mengetik atau suaranya dibacakan. Tanpa klip
+              ini, video utama terus berjalan.
+            </p>
+          </div>
+
+          <p className="border-t border-line pt-2 text-[12px] leading-snug text-muted">
+            Supaya video lebih terlihat di balik pesan, nyalakan <b>Gelembung tembus pandang</b> di
+            Setelan → Latar chat.
+          </p>
         </div>
       )}
 

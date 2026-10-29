@@ -443,6 +443,7 @@ export function ChatApp() {
                       messages={activeMessages}
                       isTyping={typingFor === activeId}
                       background={activeCharacter.chatBackground ?? settings.chatBackground}
+                      glass={settings.glassBubbles}
                       onBack={() => setMobileShowChat(false)}
                       onOpenProfile={() => setProfileCharacter(activeCharacter)}
                       onImageClick={(url) => setLightbox(url)}

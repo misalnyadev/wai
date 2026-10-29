@@ -373,6 +373,22 @@ export function SettingsPanel({
             <p className="mt-2 text-xs text-muted">
               Tiap karakter bisa punya latar sendiri lewat menu ⋯ di percakapan.
             </p>
+
+            <label className="mt-2 flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-line px-3 py-2">
+              <span className="min-w-0">
+                <span className="block text-xs font-medium text-ink">Gelembung tembus pandang</span>
+                <span className="block text-[12px] leading-snug text-muted">
+                  Pesan memakai latar transparan + blur, jadi video atau gambar di belakangnya tetap
+                  kelihatan.
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={Boolean(settings.glassBubbles)}
+                onChange={(e) => onSettingsChange({ ...settings, glassBubbles: e.target.checked })}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-ink"
+              />
+            </label>
           </section>
 
           {/* Provider tersimpan */}

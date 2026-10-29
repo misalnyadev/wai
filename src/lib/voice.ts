@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import type { VoiceSettings } from "@/types/chat";
 
 /**
@@ -209,6 +210,8 @@ export function speak(
   const clean = speakableText(text);
   if (!clean) return false;
 
+  setSpeakingState(true);
+
   const chunks = splitSentences(clean);
   const synthetic = window.speechSynthesis;
 
@@ -226,14 +229,45 @@ export function speak(
       if (currentGeneration !== generation) return;
       if (i < chunks.length - 1) await sleep(Math.max(0, settings.pause ?? 150));
     }
+    setSpeakingState(false);
   });
 
   return true;
 }
 
 export function stopSpeaking() {
+  setSpeakingState(false);
   if (!isSpeechSupported()) return;
   generation += 1;
   chain = Promise.resolve();
   window.speechSynthesis.cancel();
+}
+
+/* ------------------------------------------------------------------ */
+/* Status "sedang membacakan" — dipakai latar video untuk berganti klip */
+/* ------------------------------------------------------------------ */
+
+let speaking = false;
+const speakingListeners = new Set<() => void>();
+
+function setSpeakingState(next: boolean) {
+  if (speaking === next) return;
+  speaking = next;
+  for (const listener of speakingListeners) listener();
+}
+
+export function subscribeSpeaking(listener: () => void): () => void {
+  speakingListeners.add(listener);
+  return () => {
+    speakingListeners.delete(listener);
+  };
+}
+
+export function getSpeakingSnapshot(): boolean {
+  return speaking;
+}
+
+/** true ketika karakter sedang membacakan pesan lewat suara perangkat. */
+export function useIsSpeaking(): boolean {
+  return useSyncExternalStore(subscribeSpeaking, getSpeakingSnapshot, () => false);
 }

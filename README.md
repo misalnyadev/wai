@@ -23,7 +23,10 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat menu ⋯ di percakapan.
   Ada juga **5 latar animasi** halus (Bokeh, Aurora, Gelombang, Bintang, Kabut) bergaya
   virtual background video call — otomatis berhenti bila perangkat memakai mode "kurangi gerakan".
-  Untuk karakter yang "hidup", tempel **video pendek** (MP4/WebM, maks 24 MB — mis. hasil rekaman
+  Ada juga **video saat bicara**: klip kedua yang otomatis diputar ketika karakter mengetik atau
+  suaranya dibacakan, lalu kembali ke klip utama — karakter jadi terasa benar-benar membalas.
+  Bila pesan menutupi latar, nyalakan **Gelembung tembus pandang** di Setelan → Latar chat
+  (pesan memakai latar transparan + blur). Untuk karakter yang "hidup", tempel **video pendek** (MP4/WebM, maks 24 MB — mis. hasil rekaman
   atau video dari Flow) sebagai latar: tampil **latar penuh** di belakang pesan, atau **panel 16:9**
   di atas pesan ala video call lengkap dengan tombol suara. Video diputar berulang, tanpa suara
   secara bawaan, dan disimpan di perangkat (tidak ikut file cadangan)
