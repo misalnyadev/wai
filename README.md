@@ -20,7 +20,8 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   (Chat · Karakter · Suara · Profil · Setelan)
 - 🖼️ **Latar chat custom** — pilih salah satu warna bawaan (punya versi terang & gelap) atau
   unggah gambar sendiri, lengkap dengan pengatur keredupan agar tulisan tetap terbaca.
-  Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat menu ⋯ di percakapan.
+  Bisa diatur sekali untuk semua chat, atau **beda per karakter** lewat halaman karakter
+  (ketuk foto/nama di header percakapan).
   Ada juga **5 latar animasi** halus (Bokeh, Aurora, Gelombang, Bintang, Kabut) bergaya
   virtual background video call — otomatis berhenti bila perangkat memakai mode "kurangi gerakan".
   Bila pesan menutupi latar, nyalakan **Gelembung tembus pandang** di Setelan → Latar chat
@@ -42,6 +43,10 @@ Karakter bisa melihat foto yang kamu kirim, mengenali **profilmu**, dan mendukun
   Gratis, tanpa API key, dan tidak dikirim ke mana pun
   - iPhone: unduh suara Indonesia kualitas *Enhanced* di Pengaturan → Aksesibilitas →
     Konten Terbaca → Suara agar suaranya jauh lebih halus
+- 🧩 **Aksi per pesan** — tekan lama sebuah gelembung di HP (atau arahkan kursor / klik kanan
+  di desktop) untuk **menyalin teks**, **membacakan pesan itu saja**, **mengulangi balasan
+  terakhir** karakter, atau **menghapus satu pesan** (dengan konfirmasi). Pratinjau di daftar
+  chat ikut menyesuaikan setelah pesan dihapus
 - 📷 Kirim foto (dikompres otomatis di browser)
 - 💾 **Cadangan & pemulihan** data (JSON) + hapus semua data perangkat
 - 🔒 Tanpa database: semua chat, foto, profil, dan API key tersimpan **di browser perangkat**
