@@ -42,11 +42,12 @@ export type VoiceSettings = {
   pause: number;
 };
 
-/** Latar area chat: bawaan tema, warna pilihan, atau gambar sendiri. */
+/** Latar area chat: bawaan tema, warna, gambar sendiri, atau animasi. */
 export type ChatBackground =
   | { kind: "default" }
   | { kind: "preset"; id: string }
-  | { kind: "image"; imageUrl: string; dim: number };
+  | { kind: "image"; imageUrl: string; dim: number }
+  | { kind: "animated"; id: string };
 
 export type AppSettings = {
   /** Pindah otomatis ke provider lain saat semua key provider ini gagal. */

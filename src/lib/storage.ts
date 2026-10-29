@@ -1,4 +1,4 @@
-import { CHAT_COLOR_PRESETS } from "@/lib/chatBackground";
+import { CHAT_ANIMATED_PRESETS, CHAT_COLOR_PRESETS } from "@/lib/chatBackground";
 import {
   DEFAULT_SETTINGS,
   DEFAULT_VOICE,
@@ -130,6 +130,11 @@ function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings
 
   let safe: ChatBackground = { kind: "default" };
   if (background?.kind === "preset" && CHAT_COLOR_PRESETS.some((p) => p.id === background.id)) {
+    safe = background;
+  } else if (
+    background?.kind === "animated" &&
+    CHAT_ANIMATED_PRESETS.some((p) => p.id === background.id)
+  ) {
     safe = background;
   } else if (
     background?.kind === "image" &&
