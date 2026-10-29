@@ -2,6 +2,21 @@ export type ThemeMode = "light" | "dark" | "system";
 
 const STORAGE_KEY = "persona-theme";
 
+/**
+ * Warna area status bar iOS = warna header aplikasi (lihat --header-bg di globals.css).
+ * Disimpan di sini karena <meta name="theme-color"> harus diubah lewat JS supaya
+ * ikut tema yang dipilih pengguna, bukan hanya preferensi sistem.
+ */
+export const HEADER_STATUS_COLORS = { light: "#f0f2f5", dark: "#202c33" } as const;
+
+function syncStatusBarColor(resolved: "light" | "dark") {
+  if (typeof document === "undefined") return;
+  const color = HEADER_STATUS_COLORS[resolved];
+  document
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((meta) => meta.setAttribute("content", color));
+}
+
 export const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: "light", label: "Terang" },
   { value: "dark", label: "Gelap" },
@@ -77,6 +92,7 @@ export function applyTheme(mode: ThemeMode): void {
   root.classList.toggle("dark", resolved === "dark");
   root.style.colorScheme = resolved;
   root.dataset.theme = mode;
+  syncStatusBarColor(resolved);
   try {
     window.localStorage.setItem(STORAGE_KEY, mode);
   } catch {
@@ -95,4 +111,4 @@ export function watchSystemTheme(onChange: () => void): () => void {
 }
 
 /** Skrip kecil yang dijalankan sebelum paint agar tidak ada kilatan tema terang. */
-export const THEME_INIT_SCRIPT = `(function(){try{var key="persona-theme";var saved=localStorage.getItem(key);var mq=window.matchMedia("(prefers-color-scheme: dark)").matches;var dark=saved==="dark"||((!saved||saved==="system")&&mq);var r=document.documentElement;r.classList.toggle("dark",dark);r.style.colorScheme=dark?"dark":"light";r.dataset.theme=saved||"system";}catch(e){}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var key="persona-theme";var saved=localStorage.getItem(key);var mq=window.matchMedia("(prefers-color-scheme: dark)").matches;var dark=saved==="dark"||((!saved||saved==="system")&&mq);var r=document.documentElement;r.classList.toggle("dark",dark);r.style.colorScheme=dark?"dark":"light";r.dataset.theme=saved||"system";var c=dark?"#202c33":"#f0f2f5";var ms=document.querySelectorAll('meta[name="theme-color"]');for(var i=0;i<ms.length;i++){ms[i].setAttribute("content",c);}}catch(e){}})();`;

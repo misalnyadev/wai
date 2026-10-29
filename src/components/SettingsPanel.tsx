@@ -264,7 +264,11 @@ export function SettingsPanel({
 
   const body = (
     <>
-      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+      <div
+        className={`flex items-center justify-between border-b border-line bg-header px-5 pb-4 ${
+          inline ? "pt-[max(1rem,env(safe-area-inset-top))]" : "pt-4"
+        }`}
+      >
         <h2 className="font-display text-lg font-bold text-ink">Setelan</h2>
         <button
           onClick={onClose}
@@ -275,7 +279,11 @@ export function SettingsPanel({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
+      <div
+        className={`flex-1 overflow-y-auto px-5 py-4 ${
+          inline ? "pb-[calc(var(--tabbar-space)+0.5rem)]" : ""
+        }`}
+      >
         <div className="mx-auto w-full max-w-2xl">
           {/* Profil */}
           <button
@@ -471,7 +479,7 @@ export function SettingsPanel({
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder={`Nama label (contoh: ${PROVIDER_LABELS[type]})`}
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
 
             {type === "custom" && (
@@ -479,7 +487,7 @@ export function SettingsPanel({
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
                 placeholder="Base URL (contoh: http://localhost:11434/v1)"
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
               />
             )}
 
@@ -502,7 +510,7 @@ export function SettingsPanel({
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder={type === "custom" ? "API key (opsional)" : "API key utama"}
                 type={showKeys ? "text" : "password"}
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
               />
 
               {backupKeys.map((key, index) => (
@@ -516,7 +524,7 @@ export function SettingsPanel({
                     }
                     placeholder={`Key cadangan ${index + 1}`}
                     type={showKeys ? "text" : "password"}
-                    className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+                    className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
                   />
                   <button
                     type="button"
@@ -546,7 +554,7 @@ export function SettingsPanel({
               value={model}
               onChange={(e) => setModel(e.target.value)}
               placeholder={`Model (default: ${PROVIDER_DEFAULT_MODEL[type] || "isi manual"})`}
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-emerald-400"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm outline-none transition placeholder:text-muted focus:border-emerald-400"
             />
 
             <label className="flex items-center gap-2 text-sm text-ink-soft">

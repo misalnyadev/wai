@@ -59,9 +59,7 @@ export function NavRail({
             >
               <Icon className="h-5 w-5" />
             </span>
-            <span
-              className={`text-[10px] font-medium ${active ? "text-brand" : "text-ink-soft"}`}
-            >
+            <span className={`text-[10px] font-medium ${active ? "text-brand" : "text-ink-soft"}`}>
               {label}
             </span>
           </button>
@@ -75,7 +73,12 @@ export function NavRail({
   );
 }
 
-/** Bilah tab bawah ala WhatsApp (mobile). */
+/**
+ * Navigasi bawah ala WhatsApp iOS: kapsul mengambang dengan efek kaca.
+ * `fixed` + blur supaya konten terlihat lewat di belakang kaca; konten
+ * yang bisa di-scroll diberi padding bawah `--tabbar-space` agar tidak
+ * tertutup, dan kapsul disembunyikan saat keyboard aktif (lihat globals.css).
+ */
 export function MobileTabBar({
   view,
   onChange,
@@ -84,31 +87,35 @@ export function MobileTabBar({
   onChange: (view: AppView) => void;
 }) {
   return (
-    <nav className="flex shrink-0 items-stretch border-t border-line bg-header pb-[env(safe-area-inset-bottom)] md:hidden">
-      {ITEMS.map(({ view: item, label, Icon }) => {
-        const active = view === item;
-        return (
-          <button
-            key={item}
-            onClick={() => onChange(item)}
-            aria-current={active}
-            className="flex flex-1 flex-col items-center gap-0.5 py-2"
-          >
-            <span
-              className={`flex h-8 w-14 items-center justify-center rounded-full transition ${
+    <div className="mobile-tabbar pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
+      <nav
+        aria-label="Navigasi utama"
+        className="glass-capsule pointer-events-auto flex w-full max-w-[420px] items-center gap-0.5 rounded-full p-1.5"
+      >
+        {ITEMS.map(({ view: item, label, Icon }) => {
+          const active = view === item;
+          return (
+            <button
+              key={item}
+              onClick={() => onChange(item)}
+              aria-current={active}
+              aria-label={label}
+              className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition active:scale-[0.97] ${
                 active ? "bg-brand-accent/15 text-brand" : "text-ink-soft"
               }`}
             >
-              <Icon className="h-5 w-5" />
-            </span>
-            <span
-              className={`text-[10px] font-medium ${active ? "text-brand" : "text-ink-soft"}`}
-            >
-              {label}
-            </span>
-          </button>
-        );
-      })}
-    </nav>
+              <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
+              <span
+                className={`truncate text-[10px] leading-none ${
+                  active ? "font-semibold" : "font-medium"
+                }`}
+              >
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
