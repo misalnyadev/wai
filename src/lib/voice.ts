@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import type { VoiceSettings } from "@/types/chat";
 
 /**
@@ -38,31 +38,122 @@ export function isSpeechSupported(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
+/* ------------------------------------------------------------------ */
+/* Membuka mesin suara di iOS                                          */
+/* ------------------------------------------------------------------ */
+
 /**
- * Bangunkan mesin suara saat pengguna menyentuh layar.
+ * iOS hanya mengizinkan `speechSynthesis.speak()` PERTAMA dijalankan dari dalam
+ * gestur pengguna (tap / klik / tombol). Setelah satu ucapan benar-benar mulai,
+ * panggilan berikutnya — termasuk yang datang dari timer sesudah balasan AI
+ * tiba — ikut diizinkan.
  *
- * iOS hanya mengeluarkan suara setelah ada sentuhan. Kalau mesinnya sempat
- * "tertidur" — misalnya setelah cancel(), atau setelah aplikasi lama menganggur
- * — ucapan berikutnya ditelan diam-diam tanpa error. Itulah sebabnya suara
- * baru muncul lagi setelah menekan tombol "Coba suara" (yang menyentuh layar),
- * lalu membuka chat. Fungsi ini melakukan hal yang sama tanpa terdengar:
- * satu ucapan kosong berdurasi nyaris nol dengan volume 0.
+ * Konsekuensinya: setiap kali aplikasi ditutup lalu dibuka lagi, halaman baru
+ * dimuat dan izin itu hangus. Itulah sebabnya auto-baca diam saja walau
+ * setelannya tersimpan, dan suara baru keluar setelah menekan "Coba suara":
+ * tombol itu gestur + ucapan sungguhan. Ucapan yang diblokir tidak memunculkan
+ * error apa pun — iOS membuangnya diam-diam.
  *
- * Panggil dari sentuhan yang wajar (kirim pesan, buka chat), bukan dari timer.
+ * Jadi: satu ucapan mini dijalankan pada sentuhan pertama, lalu semua bacaan
+ * berikutnya bebas. Kalau bacaan sempat diblokir, teksnya ditahan sebentar dan
+ * diulang pada sentuhan berikutnya.
  */
-export function primeSpeech() {
-  if (!isSpeechSupported()) return;
+let speechUnlocked = false;
+
+/** Bacaan yang tertahan karena mesin belum terbuka. */
+let blockedSpeech: { text: string; settings: VoiceSettings; at: number } | null = null;
+const BLOCKED_TTL = 20000;
+
+export function isSpeechUnlocked(): boolean {
+  return speechUnlocked;
+}
+
+/**
+ * Jalankan DI DALAM gestur pengguna. Ucapannya berupa satu titik dengan volume
+ * nyaris nol: tetap ucapan sungguhan (itu syarat iOS), tapi praktis tidak
+ * terdengar.
+ */
+export function unlockSpeech() {
+  if (!isSpeechSupported() || speechUnlocked) return;
   const synth = window.speechSynthesis;
   try {
-    // Jangan mengganggu bacaan yang sedang berjalan.
-    if (synth.speaking || synth.pending) return;
-    const utterance = new SpeechSynthesisUtterance(" ");
-    utterance.volume = 0;
-    utterance.rate = 1.6;
+    if (synth.speaking || synth.pending) {
+      // Sudah ada yang berbicara → berarti izinnya sudah terbuka.
+      speechUnlocked = true;
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(".");
+    utterance.lang = "id-ID";
+    utterance.rate = 3;
+    utterance.volume = 0.02;
+    const mark = () => {
+      speechUnlocked = true;
+    };
+    utterance.onstart = mark;
+    utterance.onend = mark;
     synth.speak(utterance);
   } catch {
-    // Mesin suara tidak siap — tidak apa-apa, nanti dicoba lagi.
+    // Mesin belum siap — dicoba lagi pada sentuhan berikutnya.
   }
+}
+
+/**
+ * Ulangi bacaan yang tadi diblokir, kalau ada dan belum kedaluwarsa.
+ * Aman dipanggil kapan saja; hanya bekerja saat mesin sedang diam.
+ */
+export function flushBlockedSpeech(): boolean {
+  if (!blockedSpeech) return false;
+  const pending = blockedSpeech;
+  if (Date.now() - pending.at > BLOCKED_TTL) {
+    blockedSpeech = null;
+    return false;
+  }
+  const synth = window.speechSynthesis;
+  // Masih ada suara berjalan → biarkan, jangan menimpa bacaan sekarang.
+  if (synth.speaking || synth.pending) return false;
+  blockedSpeech = null;
+  return speak(pending.text, pending.settings, { append: true });
+}
+
+/**
+ * Pasang sekali di akar aplikasi: setiap sentuhan membuka mesin suara, dan
+ * setiap kembali dari latar belakang mesin dibangunkan lagi (iOS menjeda
+ * antrean saat aplikasi tidak aktif).
+ */
+export function useSpeechUnlock() {
+  useEffect(() => {
+    const onGesture = () => {
+      if (speechUnlocked) {
+        flushBlockedSpeech();
+        return;
+      }
+      unlockSpeech();
+      // Beri jeda supaya ucapan pembuka selesai dulu, baru bacaan yang
+      // tertahan diulang.
+      window.setTimeout(() => flushBlockedSpeech(), 400);
+    };
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        window.speechSynthesis.resume();
+      } catch {
+        // Diabaikan.
+      }
+      // Setelah aplikasi lama di latar belakang, izin iOS bisa hangus lagi.
+      speechUnlocked = false;
+    };
+
+    document.addEventListener("touchend", onGesture, true);
+    document.addEventListener("click", onGesture, true);
+    document.addEventListener("keydown", onGesture, true);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("touchend", onGesture, true);
+      document.removeEventListener("click", onGesture, true);
+      document.removeEventListener("keydown", onGesture, true);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 }
 
 /** Suara ini kemungkinan besar sudah kualitas natural/enhanced. */
@@ -258,6 +349,10 @@ function speakOne(utterance: SpeechSynthesisUtterance): Promise<void> {
 
     utterance.onstart = () => {
       started = true;
+      // Ucapan sungguhan berjalan → izin iOS sudah terbuka, tidak ada yang
+      // perlu diulang lagi.
+      speechUnlocked = true;
+      blockedSpeech = null;
       window.clearTimeout(kickTimer);
       window.clearTimeout(giveUpTimer);
     };
@@ -284,6 +379,10 @@ export function speak(
   if (!clean) return false;
 
   setSpeakingState(true);
+
+  // Selama mesin belum terbuka, ingat bacaan ini supaya bisa diulang pada
+  // sentuhan berikutnya kalau iOS membuangnya diam-diam.
+  if (!speechUnlocked) blockedSpeech = { text, settings, at: Date.now() };
 
   const chunks = splitSentences(clean);
   const synthetic = window.speechSynthesis;
