@@ -81,6 +81,26 @@ function useVideoPlayback(
     });
   }, [ref, url, shouldPlay, sound, restartOnPlay]);
 
+  /*
+   * Jaga-jaga: iOS kadang menghentikan <video> sendiri ketika ada audio lain
+   * berbunyi (mis. suara TTS karakter). Kalau itu terjadi saat klip memang
+   * seharusnya berjalan, langsung lanjutkan lagi — supaya video tidak
+   * "berpose" padahal suaranya masih membaca.
+   */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    function onPause() {
+      if (!shouldPlay || document.hidden) return;
+      if (el!.ended) return;
+      void el!.play().catch(() => {});
+    }
+
+    el.addEventListener("pause", onPause);
+    return () => el.removeEventListener("pause", onPause);
+  }, [ref, shouldPlay, url]);
+
   useEffect(() => {
     function onVisibilityChange() {
       const el = ref.current;
