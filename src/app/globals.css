@@ -135,6 +135,27 @@ body {
 }
 
 /*
+ * Jarak aman atas.
+ *
+ * Di iOS 26 dengan `black-translucent`, env(safe-area-inset-top) kadang
+ * terbaca 0 (iOS sudah memisahkan area status bar sendiri). Akibatnya header
+ * hanya mendapat jarak 10 px dan separuhnya masuk ke area jam/baterai.
+ *
+ * Token ini dipakai SEMUA header, dengan nilai minimum setinggi status bar
+ * iPhone berponi. Kalau env() memang terbaca normal (44 px), nilainya tidak
+ * berubah sama sekali — jadi aman untuk perangkat lain.
+ */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+@media (display-mode: standalone) {
+  :root {
+    --safe-top: max(env(safe-area-inset-top, 0px), 44px);
+  }
+}
+
+/*
  * Warna area paling atas (status bar iOS / overscroll) dibuat sama dengan header
  * aplikasi supaya tidak terlihat seperti garis terputus.
  */

@@ -19,7 +19,7 @@ export function CharactersView({
 }) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
-      <header className="flex items-center justify-between gap-2 bg-header px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
+      <header className="flex items-center justify-between gap-2 bg-header px-5 pb-4 pt-[max(1rem,var(--safe-top))]">
         <div>
           <h2 className="font-display text-lg font-bold text-ink">Karakter</h2>
           <p className="text-xs text-ink-soft">{characters.length} karakter</p>

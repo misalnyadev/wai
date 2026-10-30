@@ -42,7 +42,7 @@ export function Sidebar({
 
   return (
     <div className="flex h-full w-full flex-col bg-surface md:w-[380px] lg:w-[400px]">
-      <div className="flex items-center justify-between gap-2 bg-header px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3">
+      <div className="flex items-center justify-between gap-2 bg-header px-4 pt-[max(0.75rem,var(--safe-top))] pb-3">
         <button
           onClick={onOpenProfile}
           className="flex min-w-0 items-center gap-2 text-left md:pointer-events-none"

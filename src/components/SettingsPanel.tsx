@@ -336,7 +336,7 @@ export function SettingsPanel({
     <>
       <div
         className={`flex items-center justify-between bg-header px-5 pb-3 ${
-          inline ? "pt-[max(1rem,env(safe-area-inset-top))]" : "pt-4"
+          inline ? "pt-[max(1rem,var(--safe-top))]" : "pt-4"
         }`}
       >
         <h2 className="font-display text-lg font-bold text-ink">Setelan</h2>
