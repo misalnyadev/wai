@@ -171,6 +171,24 @@ body {
 }
 
 /*
+ * iOS 26 di aplikasi ter-install (display-mode: standalone) dengan
+ * `black-translucent`: WebKit melaporkan 100dvh / 100svh lebih pendek sekitar
+ * tinggi area status bar (~59 px) — WebKit bug 301108. Root html/body sudah
+ * memakai 100vh (tinggi layar sebenarnya), jadi .app-shell yang memakai dvh
+ * berhenti ~59 px di atas tepi bawah layar. Itu yang membuat kotak ketik
+ * menggantung jauh di atas keyboard.
+ *
+ * Di mode standalone tidak ada address bar yang bisa muncul/hilang, jadi vh
+ * aman dan nilainya sama dengan root. Di browser biasa tetap dvh supaya
+ * address bar yang menyusut tidak memotong composer.
+ */
+@media (display-mode: standalone) {
+  .app-shell {
+    height: 100vh;
+  }
+}
+
+/*
  * Cegah iOS Safari memperbesar halaman saat field difokuskan.
  * Safari auto-zoom bila font field < 16px. Aturan ini berlaku untuk semua
  * perangkat sentuh (iPhone portrait & landscape, iPad), ditulis di luar
