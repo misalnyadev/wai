@@ -2,9 +2,9 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import type { CharacterMedia } from "@/types/chat";
-import { importCallAudio, removeCallAudio } from "@/lib/callAudio";
-import { importChatVideo, removeChatVideo } from "@/lib/chatVideo";
-import { FilmIcon, SpeakerIcon } from "./icons";
+import { MAX_AUDIO_MB, importCallAudio, removeCallAudio, useCallAudioUrl } from "@/lib/callAudio";
+import { MAX_VIDEO_MB, importChatVideo, removeChatVideo } from "@/lib/chatVideo";
+import { FilmIcon, PlayIcon, SpeakerIcon, StopIcon } from "./icons";
 
 type Slot = "chatVideo" | "callVideo" | "callAudio";
 
@@ -78,6 +78,27 @@ export function CharacterMediaSection({
   /** Nilai sementara slider zoom — disimpan saat jari dilepas. */
   const [zoomDraft, setZoomDraft] = useState<number | null>(null);
   const zoom = zoomDraft ?? media?.callVideoZoom ?? 100;
+  /** Pratinjau rekaman suara telepon (biar bisa didengar sebelum dipakai). */
+  const previewRef = useRef<HTMLAudioElement>(null);
+  /** Id rekaman yang sedang didengarkan — otomatis batal bila rekamannya berganti. */
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const audioUrl = useCallAudioUrl(media?.callAudioId ?? null);
+  const previewing = Boolean(media?.callAudioId) && previewId === media?.callAudioId;
+
+  function togglePreview() {
+    const el = previewRef.current;
+    if (!el || !audioUrl || !media?.callAudioId) return;
+    if (previewing) {
+      el.pause();
+      setPreviewId(null);
+      return;
+    }
+    el.currentTime = 0;
+    void el
+      .play()
+      .then(() => setPreviewId(media.callAudioId ?? null))
+      .catch(() => setError("Suara tidak bisa diputar di perangkat ini."));
+  }
 
   function commitZoom(percent: number) {
     setZoomDraft(null);
@@ -111,6 +132,8 @@ export function CharacterMediaSection({
   }
 
   async function pickAudio(file: File) {
+    previewRef.current?.pause();
+    setPreviewId(null);
     setBusy("callAudio");
     setError(null);
     try {
@@ -141,6 +164,8 @@ export function CharacterMediaSection({
   }
 
   async function dropAudio() {
+    previewRef.current?.pause();
+    setPreviewId(null);
     const previous = media?.callAudioId;
     const next: CharacterMedia = { ...(media ?? {}) };
     next.callAudioId = undefined;
@@ -206,7 +231,7 @@ export function CharacterMediaSection({
         onRemove={() => void dropVideo("callVideo")}
       />
 
-      {media?.callVideoId && (
+      {(media?.callVideoId || media?.callVideoZoom !== undefined) && (
         <div className="rounded-xl border border-line px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-ink-soft">Zoom video call</span>
@@ -226,7 +251,8 @@ export function CharacterMediaSection({
             className="mt-1 w-full accent-ink"
           />
           <p className="mt-1 text-[12px] leading-snug text-muted">
-            Perbesar bila ada bingkai hitam di tepi video, supaya layar panggilan penuh.
+            Perbesar bila ada bingkai hitam di tepi video, supaya layar panggilan penuh. Bisa juga
+            diatur langsung dari tombol − / + di layar panggilan.
           </p>
         </div>
       )}
@@ -245,9 +271,38 @@ export function CharacterMediaSection({
         onRemove={() => void dropAudio()}
       />
 
+      {media?.callAudioId && audioUrl && (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-ink-soft">Pratinjau suara</p>
+            <p className="truncate text-[12px] text-muted">
+              Dengar dulu sebelum dipakai saat panggilan.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={togglePreview}
+            aria-pressed={previewing}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[12px] font-medium text-ink-soft transition hover:text-ink"
+          >
+            {previewing ? (
+              <>
+                <StopIcon className="h-3.5 w-3.5" />
+                Berhenti
+              </>
+            ) : (
+              <>
+                <PlayIcon className="h-3.5 w-3.5" />
+                Dengarkan
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       <p className="text-[12px] leading-snug text-muted">
         Opsional — boleh diisi salah satu saja. Tanpa rekaman suara, panggilan memakai suara
-        perangkat bawaan.
+        perangkat bawaan. Video maks {MAX_VIDEO_MB} MB, suara MP3/WAV maks {MAX_AUDIO_MB} MB.
       </p>
       {error && <p className="text-[12px] text-rose-600 dark:text-rose-400">{error}</p>}
 
@@ -271,6 +326,17 @@ export function CharacterMediaSection({
           if (file) void pickVideo("callVideo", file);
         }}
       />
+      {audioUrl && (
+        <audio
+          ref={previewRef}
+          src={audioUrl}
+          preload="metadata"
+          className="hidden"
+          onEnded={() => setPreviewId(null)}
+          onPause={() => setPreviewId(null)}
+        />
+      )}
+
       <input
         ref={callAudioRef}
         type="file"
