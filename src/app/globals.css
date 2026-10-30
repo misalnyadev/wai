@@ -86,21 +86,30 @@
   --color-bubble-out-ink: var(--bubble-out-ink);
 }
 
+/*
+ * Tinggi dokumen HARUS 100vh — bukan 100%. Ini akar masalah "halaman terangkat".
+ *
+ * Aplikasi yang dipasang ke Home Screen iPhone memakai
+ * apple-mobile-web-app-status-bar-style: black-translucent + viewport-fit=cover.
+ * Dengan pengaturan itu, WebKit iOS menggeser seluruh isi halaman naik ke
+ * belakang status bar (± 44 px di iPhone 5,8", ± 59 px di model Dynamic Island)
+ * TANPA menambah tinggi viewport. Kalau html/body memakai height: 100%, tinggi
+ * itu dihitung terhadap containing block yang tidak ikut bergeser — hasilnya
+ * halaman tampak terangkat ke atas dan menyisakan celah abu di bawah sebesar
+ * tinggi status bar. 100vh selalu mengukur tinggi viewport yang sebenarnya,
+ * jadi celah itu hilang tanpa mengubah desain apa pun.
+ *
+ * Dokumen juga dikunci (overflow: hidden) supaya iOS tidak bisa memulihkan
+ * posisi scroll lama saat aplikasi dibuka kembali.
+ *
+ * Patokan iPhone 5,8" (X / XS / 11 Pro): 375 × 812 px, inset atas 44 px,
+ * inset bawah (home indicator) 34 px.
+ */
 html,
 body {
-  height: 100%;
+  height: 100vh;
   width: 100%;
   max-width: 100%;
-  /*
-   * Dokumen dikunci: tidak bisa digeser sama sekali (samping maupun atas-bawah).
-   *
-   * Di iOS, halaman masih bisa "kena scroll" ~setinggi toolbar Safari karena
-   * tinggi dokumen (100%) berbeda dengan viewport yang terlihat. Kalau aplikasi
-   * dibuka kembali, Safari memulihkan posisi scroll itu — akibatnya tampilan
-   * terlihat naik ke atas dan baru rapi setelah digeser sekali. Semua area
-   * scroll aplikasi ini ada di dalam shell, jadi dokumen tidak perlu bisa
-   * digeser.
-   */
   overflow: hidden;
   overscroll-behavior: none;
   position: relative;
