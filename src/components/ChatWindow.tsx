@@ -136,6 +136,25 @@ export function ChatWindow({
     }
   }, [messages, isTyping, atBottom]);
 
+  // Safari iOS menggeser/menyusutkan layar saat keyboard muncul. Kalau sedang
+  // di pesan terbaru, tetap tempelkan ke bawah supaya balasan terakhir tidak
+  // "hilang" ke atas saat mulai mengetik.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const pinToBottom = () => {
+      const el = scrollRef.current;
+      if (atBottom && el) el.scrollTop = el.scrollHeight;
+    };
+    // Setelah keyboard selesai bergerak, tinggi area chat baru stabil.
+    const timer = window.setTimeout(pinToBottom, 120);
+    vv.addEventListener("resize", pinToBottom);
+    return () => {
+      window.clearTimeout(timer);
+      vv.removeEventListener("resize", pinToBottom);
+    };
+  }, [atBottom]);
+
   // Bersihkan timer tekan lama saat percakapan ditutup / berganti karakter.
   useEffect(() => {
     return () => {
