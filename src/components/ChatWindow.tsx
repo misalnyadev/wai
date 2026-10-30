@@ -131,47 +131,43 @@ export function ChatWindow({
   const talking = isTyping || speaking;
 
   /*
-   * Jeda berhentinya latar video.
+   * Waktu berjalannya latar video.
    *
-   * `talking` hanya menyala saat karakter menyusun jawaban atau saat suaranya
-   * dibacakan. Begitu balasan muncul, tanda itu padam — padahal balasannya
-   * masih dibaca, jadi video berhenti terasa terlalu cepat. Karena itu latar
-   * tetap berjalan sebentar setelah balasan datang: 1,5 detik + 55 ms per
-   * karakter (maksimal 12 detik) sebagai perkiraan waktu membaca.
+   * Urutan yang diinginkan: selama "sedang mengetik..." video DIAM. Begitu
+   * balasan muncul, karakter seperti membaca balasannya — di situlah video
+   * berjalan, lamanya mengikuti panjang balasan (1,5 detik + 55 ms per
+   * karakter, maksimal 12 detik), lalu berhenti lagi.
    */
-  const [holdVideo, setHoldVideo] = useState(false);
-  const holdTimer = useRef(0);
-  const lastMessageId = useRef<string | null>(null);
+  const [reading, setReading] = useState(false);
+  const readTimer = useRef(0);
+  const wasTyping = useRef(false);
 
   useEffect(() => {
+    const typingNow = isTyping;
+    const typingBefore = wasTyping.current;
+    wasTyping.current = typingNow;
+
+    // Hanya saat "sedang mengetik..." baru saja berakhir.
+    if (!typingBefore || typingNow) return;
+
     const last = messages[messages.length - 1];
-    const id = last?.id ?? null;
-    const previous = lastMessageId.current;
-    lastMessageId.current = id;
-    if (!last || id === previous) return;
-
-    window.clearTimeout(holdTimer.current);
-
-    if (last.role !== "assistant") {
-      // Pesan baru dari kita — karakter berhenti bicara.
-      const stop = window.setTimeout(() => setHoldVideo(false), 0);
-      return () => window.clearTimeout(stop);
-    }
+    if (!last || last.role !== "assistant") return;
 
     const ms = Math.min(12000, 1500 + last.content.trim().length * 55);
+    window.clearTimeout(readTimer.current);
     // Dijadwalkan lewat timeout 0 supaya tidak memicu render berantai di dalam
     // effect (aturan react-hooks/set-state-in-effect).
     const start = window.setTimeout(() => {
-      setHoldVideo(true);
-      holdTimer.current = window.setTimeout(() => setHoldVideo(false), ms);
+      setReading(true);
+      readTimer.current = window.setTimeout(() => setReading(false), ms);
     }, 0);
     return () => window.clearTimeout(start);
-  }, [messages]);
+  }, [isTyping, messages]);
 
-  useEffect(() => () => window.clearTimeout(holdTimer.current), []);
+  useEffect(() => () => window.clearTimeout(readTimer.current), []);
 
-  /** Latar video berjalan saat menjawab, lalu sebentar lagi selama kita membaca. */
-  const videoPlaying = talking || holdVideo;
+  /** Latar berjalan selama karakter "membaca" balasannya, atau saat bersuara. */
+  const videoPlaying = (reading && !isTyping) || speaking;
 
   useEffect(() => {
     if (atBottom && scrollRef.current) {
@@ -275,7 +271,7 @@ export function ChatWindow({
           dim={video.dim}
           talkingVideoId={video.talkingVideoId}
           talkingPosterUrl={video.talkingPosterUrl}
-          talking={talking}
+          talking={videoPlaying}
           playing={videoPlaying}
         />
       )}
