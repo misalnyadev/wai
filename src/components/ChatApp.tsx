@@ -171,29 +171,10 @@ export function ChatApp() {
     );
   }
 
-  /**
-   * Petunjuk sekali saja (per browser): aksi pesan dibuka dengan tekan lama.
-   * Sengaja tidak diulang supaya tidak mengganggu percakapan berikutnya.
-   */
-  function maybeShowActionsHint() {
-    const key = "waichat.hint-message-actions";
-    try {
-      if (window.localStorage.getItem(key)) return;
-      window.localStorage.setItem(key, "1");
-    } catch {
-      return; // localStorage diblokir (mode privat) — jangan ganggu.
-    }
-    window.setTimeout(
-      () => showToast("Tekan lama sebuah pesan untuk menyalin, membacakan, atau menghapusnya."),
-      900
-    );
-  }
-
   async function handleSelect(id: string) {
     setActiveId(id);
     setView("chats");
     setMobileShowChat(true);
-    maybeShowActionsHint();
     if (!messagesRef.current[id]) {
       const msgs = await getMessages(id).catch(() => []);
       updateMessages(id, () => msgs);
