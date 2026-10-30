@@ -5,6 +5,7 @@ import type { AppSettings, ChatBackground, Provider, ProviderType, UserProfile }
 import { buildBackup, genId, isBackupData, restoreBackup, wipeAll } from "@/lib/storage";
 import { PROVIDER_META, PROVIDER_ORDER, RECOMMENDED_MODELS } from "@/lib/ai/providerDefaults";
 import { useEscape } from "@/lib/useEscape";
+import { useKeepFieldVisible } from "@/lib/keepFieldVisible";
 import { ThemeSegmented } from "./ThemeToggle";
 import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
 import {
@@ -102,6 +103,10 @@ export function SettingsPanel({
   const [modelQuery, setModelQuery] = useState("");
 
   useEscape(onClose, !inline);
+
+  // Cegah kolom yang sedang diisi tertinggal di belakang keyboard iPhone.
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  useKeepFieldVisible(scrollAreaRef, true);
 
   const meta = PROVIDER_META[type];
   const recommended = useMemo(() => RECOMMENDED_MODELS[type] ?? [], [type]);
@@ -345,6 +350,7 @@ export function SettingsPanel({
       </div>
 
       <div
+        ref={scrollAreaRef}
         className={`flex-1 overflow-y-auto px-5 py-4 ${
           inline ? "pb-[calc(var(--tabbar-space)+0.5rem)]" : ""
         }`}
