@@ -4,6 +4,10 @@ import { useEffect } from "react";
 
 /** Kelas di <html> selama iOS menggeser halaman karena keyboard. */
 const CLASS = "kb-panned";
+/** Jarak minimum yang dianggap "masih ada celah" (px). */
+const MIN_GAP = 4;
+/** Batas koreksi supaya angka aneh tidak merusak tampilan. */
+const MAX_CORRECTION = 140;
 
 /**
  * Menetralkan geseran halaman oleh iOS saat keyboard muncul.
@@ -14,10 +18,15 @@ const CLASS = "kb-panned";
  * geseran itu tidak bisa dikembalikan sendiri: kotak ketik berhenti jauh di
  * atas keyboard.
  *
- * Geseran itu terbaca di `visualViewport.offsetTop` (terukur ≈ 368 px pada
- * iPhone 5,8"). Selama nilainya > 0, aplikasi digeser balik sebesar itu dan
- * tingginya disesuaikan dengan area yang terlihat — hasilnya aplikasi terlihat
- * diam di tempatnya, dan kotak ketik menempel di atas keyboard.
+ * Dua tahap:
+ * 1. **Ikuti geseran** — selama `visualViewport.offsetTop > 0`, aplikasi
+ *    digeser balik sebesar itu dan tingginya mengikuti area yang terlihat.
+ *    Digambar lewat `transform` (lapisan GPU), jadi tidak memicu layout ulang.
+ * 2. **Koreksi sisa celah** — setelah keyboard berhenti bergerak, posisi kotak
+ *    ketik diukur sekali terhadap tepi bawah area yang terlihat, lalu selisihnya
+ *    (beberapa puluh piksel akibat pembulatan/tinggi yang dilaporkan iOS)
+ *    ditambahkan ke tinggi aplikasi. Jadi berapa pun sisa celahnya, hasilnya
+ *    kotak ketik menempel — tanpa menebak angka.
  *
  * Tanpa keyboard: offsetTop = 0 → kelas dilepas, tidak ada perubahan apa pun.
  */
@@ -35,17 +44,54 @@ export function useKeyboardPan() {
     let frame = 0;
     let lastTop = -1;
     let lastHeight = -1;
+    let settleTimer = 0;
+    /** Koreksi hanya dihitung sekali per sesi keyboard. */
+    let corrected = false;
 
     const clear = () => {
       if (frame) {
         window.cancelAnimationFrame(frame);
         frame = 0;
       }
+      window.clearTimeout(settleTimer);
+      settleTimer = 0;
       lastTop = -1;
       lastHeight = -1;
+      corrected = false;
       root.classList.remove(CLASS);
       root.style.removeProperty("--vv-top");
       root.style.removeProperty("--vv-height");
+      root.style.removeProperty("--kb-gap");
+    };
+
+    /**
+     * Ukur sisa celah antara bagian bawah kotak ketik dan tepi bawah area yang
+     * terlihat, lalu simpan sebagai penambah tinggi aplikasi.
+     */
+    const correctGap = () => {
+      settleTimer = 0;
+      if (corrected) return;
+
+      const composer = document.querySelector<HTMLElement>(".composer-bar");
+      if (!composer) return;
+
+      // getBoundingClientRect memakai koordinat layout yang sama dengan
+      // offsetTop visualViewport, jadi keduanya bisa dibandingkan langsung.
+      const visibleBottom = vv.offsetTop + vv.height;
+      const gap = visibleBottom - composer.getBoundingClientRect().bottom;
+      if (!Number.isFinite(gap) || Math.abs(gap) > 400) return;
+
+      corrected = true;
+      // Positif = kotak ketik masih di atas keyboard → aplikasi ditinggikan.
+      const correction = Math.round(
+        Math.max(-MAX_CORRECTION, Math.min(MAX_CORRECTION, gap))
+      );
+      root.style.setProperty("--kb-gap", `${Math.abs(correction) < MIN_GAP ? 0 : correction}px`);
+    };
+
+    const scheduleCorrection = (delay: number) => {
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(correctGap, delay);
     };
 
     const tick = () => {
@@ -71,6 +117,10 @@ export function useKeyboardPan() {
         root.classList.add(CLASS);
         root.style.setProperty("--vv-top", `${top}px`);
         root.style.setProperty("--vv-height", `${height}px`);
+        // Keyboard masih bergerak: hitung ulang koreksi setelah tenang.
+        corrected = false;
+        root.style.removeProperty("--kb-gap");
+        scheduleCorrection(320);
       }
 
       // Ikuti terus selama keyboard masih bergerak.
