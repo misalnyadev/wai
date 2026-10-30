@@ -87,7 +87,7 @@ export function SettingsPanel({
     onSettingsChange({ ...settings, chatBackground: next });
   }
 
-  const glassOpacity = opacityDraft ?? settings.bubbleOpacity ?? 55;
+  const glassOpacity = opacityDraft ?? settings.bubbleOpacity ?? 45;
 
   function commitOpacity(percent: number) {
     setOpacityDraft(null);
@@ -387,8 +387,8 @@ export function SettingsPanel({
               <span className="min-w-0">
                 <span className="block text-xs font-medium text-ink">Gelembung tembus pandang</span>
                 <span className="block text-[12px] leading-snug text-muted">
-                  Pesan memakai latar transparan + blur, jadi video atau gambar di belakangnya tetap
-                  kelihatan.
+                  Pesan memakai latar transparan tanpa blur, jadi video atau gambar di belakangnya
+                  tetap kelihatan.
                 </span>
               </span>
               <input
@@ -407,7 +407,7 @@ export function SettingsPanel({
                 </div>
                 <input
                   type="range"
-                  min={30}
+                  min={20}
                   max={95}
                   step={5}
                   value={glassOpacity}
@@ -419,7 +419,7 @@ export function SettingsPanel({
                   className="mt-1 w-full accent-ink"
                 />
                 <p className="mt-1 text-[12px] leading-snug text-muted">
-                  Makin kecil, video di belakang pesan makin kelihatan.
+                  Makin kecil, video di belakang pesan makin kelihatan. Bawaan 45%.
                 </p>
               </div>
             )}

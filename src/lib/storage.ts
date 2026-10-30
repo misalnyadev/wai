@@ -202,6 +202,11 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
   await kvSet("user-profile", profile);
 }
 
+/** Naikkan angka ini bila gaya gelembung bawaan berubah lagi. */
+const GLASS_VERSION = 1;
+/** Kepekatan gelembung bawaan — cukup bening sehingga video di belakang tetap terlihat. */
+const DEFAULT_BUBBLE_OPACITY = 45;
+
 function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings {
   const merged: AppSettings = { ...DEFAULT_SETTINGS, ...(saved ?? {}) };
   const safe: ChatBackground = sanitizeBackground(merged.chatBackground) ?? { kind: "default" };
@@ -220,11 +225,19 @@ function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings
     pause: clamp(rawVoice.pause, 0, 600, DEFAULT_VOICE.pause),
   };
 
+  // Pengguna lama (setelan tersimpan sebelum gelembung tembus pandang jadi
+  // bawaan) dipindahkan sekali ke tampilan baru; setelah itu pilihannya
+  // dihormati apa pun isinya.
+  const moveToGlass = Boolean(saved) && Number(saved?.glassVersion) !== GLASS_VERSION;
+
   return {
     ...merged,
     chatBackground: safe,
-    glassBubbles: Boolean(merged.glassBubbles),
-    bubbleOpacity: clamp(merged.bubbleOpacity, 30, 95, 55),
+    glassBubbles: moveToGlass ? true : Boolean(merged.glassBubbles),
+    bubbleOpacity: moveToGlass
+      ? DEFAULT_BUBBLE_OPACITY
+      : clamp(merged.bubbleOpacity, 20, 95, DEFAULT_BUBBLE_OPACITY),
+    glassVersion: GLASS_VERSION,
     voice,
   };
 }
@@ -235,7 +248,8 @@ export async function getSettings(): Promise<AppSettings> {
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  await kvSet("settings", settings);
+  // Simpan penanda versi supaya pemindahan gaya gelembung hanya terjadi sekali.
+  await kvSet("settings", { ...settings, glassVersion: GLASS_VERSION });
 }
 
 export async function saveProviders(list: Provider[]): Promise<void> {
