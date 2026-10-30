@@ -8,8 +8,9 @@ import {
   useSyncExternalStore,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import type { Character, ChatBackground, ChatMessage } from "@/types/chat";
+import type { BubbleStyle, Character, ChatBackground, ChatMessage } from "@/types/chat";
 import { chatBackgroundProps } from "@/lib/chatBackground";
+import { DEFAULT_BUBBLE_STYLE, bubbleInk, bubblePaint } from "@/lib/bubbleStyle";
 import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
 import { copyText } from "@/lib/clipboard";
 import { Avatar } from "./Avatar";
@@ -52,16 +53,12 @@ function dayLabel(iso: string) {
   return d.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" });
 }
 
-function TypingBubble({ glass = false, glassOpacity = 70 }: { glass?: boolean; glassOpacity?: number }) {
+function TypingBubble({ bubble }: { bubble: BubbleStyle }) {
   return (
     <div className="bubble-in flex justify-start">
       <div
         className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-bubble-in px-4 py-3 shadow-sm"
-        style={
-          glass
-            ? { backgroundColor: `color-mix(in oklab, var(--bubble-in) ${glassOpacity}%, transparent)` }
-            : undefined
-        }
+        style={bubblePaint(bubble, "in")}
       >
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.3s]" />
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.15s]" />
@@ -95,8 +92,7 @@ export function ChatWindow({
   messages,
   isTyping,
   background,
-  glass = false,
-  glassOpacity = 70,
+  bubble,
   onBack,
   onOpenProfile,
   onImageClick,
@@ -110,10 +106,8 @@ export function ChatWindow({
   messages: ChatMessage[];
   isTyping: boolean;
   background?: ChatBackground;
-  /** Gelembung tembus pandang agar latar video/gambar terlihat di baliknya. */
-  glass?: boolean;
-  /** Kepekatan gelembung tembus pandang (40–95%). */
-  glassOpacity?: number;
+  /** Tampilan gelembung pesan (warna & kepekatan) milik karakter ini. */
+  bubble?: BubbleStyle | null;
   onBack: () => void;
   onOpenProfile: () => void;
   onImageClick: (url: string) => void;
@@ -125,6 +119,7 @@ export function ChatWindow({
   /** Minta balasan baru untuk pesan terakhir (hanya bila memungkinkan). */
   onRegenerate?: () => void;
 }) {
+  const bubbleStyle = bubble ?? DEFAULT_BUBBLE_STYLE;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   /** Pesan yang sedang dibuka lembar aksinya (tekan lama / klik kanan). */
@@ -458,15 +453,7 @@ export function ChatWindow({
                           ? "rounded-br-sm bg-bubble-out text-bubble-out-ink"
                           : "rounded-bl-sm bg-bubble-in text-bubble-in-ink"
                       } ${m.pending ? "opacity-60" : ""}`}
-                      style={
-                        glass
-                          ? {
-                              backgroundColor: `color-mix(in oklab, var(--bubble-${
-                                m.role === "user" ? "out" : "in"
-                              }) ${glassOpacity}%, transparent)`,
-                            }
-                          : undefined
-                      }
+                      style={bubblePaint(bubbleStyle, m.role === "user" ? "out" : "in")}
                     >
                       {m.imageUrl && (
                         <img
@@ -483,9 +470,16 @@ export function ChatWindow({
                         />
                       )}
                       {m.content && (
-                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                        <p className="whitespace-pre-wrap break-words" style={bubbleInk(bubbleStyle)}>
+                          {m.content}
+                        </p>
                       )}
-                      <span className="float-right ml-2 mt-1 flex translate-y-0.5 items-center gap-1 select-none text-[12px] text-ink-soft/80">
+                      <span
+                        className={`float-right ml-2 mt-1 flex translate-y-0.5 items-center gap-1 select-none text-[12px] ${
+                          bubbleStyle.textColor ? "opacity-70" : "text-ink-soft/80"
+                        }`}
+                        style={bubbleInk(bubbleStyle)}
+                      >
                         {formatTime(m.createdAt)}
                         {m.role === "user" && <Ticks pending={m.pending} />}
                       </span>
@@ -495,7 +489,7 @@ export function ChatWindow({
               </div>
             );
           })}
-          {isTyping && <TypingBubble glass={glass} glassOpacity={glassOpacity} />}
+          {isTyping && <TypingBubble bubble={bubbleStyle} />}
         </div>
       </div>
 

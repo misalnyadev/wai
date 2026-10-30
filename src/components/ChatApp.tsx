@@ -5,6 +5,7 @@ import {
   DEFAULT_SETTINGS,
   EMPTY_PROFILE,
   type AppSettings,
+  type BubbleStyle,
   type Character,
   type CharacterMedia,
   type ChatBackground,
@@ -448,6 +449,14 @@ export function ChatApp() {
     );
   }
 
+  /** Simpan tampilan gelembung pesan khusus karakter (warna, kepekatan). */
+  function handleCharacterBubble(id: string, next: BubbleStyle | null) {
+    persistCharacters(
+      charactersRef.current.map((c) => (c.id === id ? { ...c, bubble: next } : c))
+    );
+    setProfileCharacter((current) => (current && current.id === id ? { ...current, bubble: next } : current));
+  }
+
   /** Simpan media pribadi karakter (video call, suara telepon, video chat). */
   function handleCharacterMedia(id: string, next: CharacterMedia | null) {
     persistCharacters(
@@ -502,6 +511,13 @@ export function ChatApp() {
   const activeCharacter = characters.find((c) => c.id === activeId) ?? null;
   const activeMessages = activeId ? messagesMap[activeId] ?? [] : [];
   const hasProviders = providers.length > 0;
+  /** Bawaan gelembung dari Setelan — dipakai karakter yang belum punya pilihan sendiri. */
+  const globalBubbleStyle: BubbleStyle = {
+    glass: settings.glassBubbles,
+    opacity: settings.bubbleOpacity,
+    textColor: null,
+    bgColor: null,
+  };
 
   // Dibaca saat render — pakai state (bukan ref) agar nilainya selalu segar.
   const profileProviderLabel = (() => {
@@ -556,8 +572,7 @@ export function ChatApp() {
                       messages={activeMessages}
                       isTyping={typingFor === activeId}
                       background={activeCharacter.chatBackground ?? settings.chatBackground}
-                      glass={settings.glassBubbles}
-                      glassOpacity={settings.bubbleOpacity}
+                      bubble={activeCharacter.bubble ?? globalBubbleStyle}
                       onVideoCall={() => setCall({ character: activeCharacter, mode: "video" })}
                       onAudioCall={() => setCall({ character: activeCharacter, mode: "audio" })}
                       onBack={() => setMobileShowChat(false)}
@@ -645,8 +660,6 @@ export function ChatApp() {
               onChange={persistProviders}
               settings={settings}
               onSettingsChange={persistSettings}
-              profile={profile}
-              onOpenProfile={() => setView("profile")}
               onClose={() => setView("chats")}
             />
           )}
@@ -686,6 +699,8 @@ export function ChatApp() {
           onClearChat={() => handleClearChat(profileCharacter.id)}
           onDelete={() => handleDeleteCharacter(profileCharacter.id)}
           onBackgroundChange={(next) => handleCharacterBackground(profileCharacter.id, next)}
+          onBubbleChange={(next) => handleCharacterBubble(profileCharacter.id, next)}
+          bubbleFallback={globalBubbleStyle}
           onMediaChange={(next) => handleCharacterMedia(profileCharacter.id, next)}
         />
       )}

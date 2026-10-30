@@ -100,6 +100,24 @@ export type CharacterMedia = {
   callAudioName?: string;
 };
 
+/**
+ * Tampilan gelembung pesan untuk satu karakter.
+ *
+ * Disimpan per karakter (bukan global) karena tiap karakter bisa punya latar
+ * video/gambar yang berbeda kecerahannya — warna teks dan warna gelembung
+ * perlu bisa disetel agar pesan tetap terbaca di atas latar itu.
+ */
+export type BubbleStyle = {
+  /** Tembus pandang: latar gelembung ikut tembus sehingga latar di belakangnya terlihat. */
+  glass: boolean;
+  /** Kepekatan gelembung 20–95 (%). Berlaku saat `glass` aktif. */
+  opacity: number;
+  /** Warna teks pesan (#rrggbb). null = ikut tema. */
+  textColor: string | null;
+  /** Warna latar gelembung (#rrggbb). null = ikut tema. */
+  bgColor: string | null;
+};
+
 export type Character = {
   id: string;
   name: string;
@@ -111,6 +129,8 @@ export type Character = {
   model: string | null;
   /** Latar khusus karakter ini. null/undefined = ikut setelan global. */
   chatBackground?: ChatBackground | null;
+  /** Tampilan gelembung pesan khusus karakter ini. null/undefined = ikut setelan global. */
+  bubble?: BubbleStyle | null;
   /** Klip video call, suara telepon, dan video saat mengobrol. */
   media?: CharacterMedia | null;
   preview: string;
