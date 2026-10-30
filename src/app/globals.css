@@ -200,12 +200,17 @@ body {
  */
 html.kb-panned .app-shell {
   transform: translate3d(0, var(--vv-top, 0px), 0);
-  height: var(--vv-height, 100vh);
+  /*
+   * --kb-gap = sisa celah yang diukur setelah keyboard berhenti bergerak.
+   * Ditambahkan ke tinggi, bukan digeser dengan transform: bagian atas
+   * aplikasi (header) tetap di tempatnya, hanya bagian bawah yang turun.
+   */
+  height: calc(var(--vv-height, 100vh) + var(--kb-gap, 0px));
 }
 
-/* Home indicator tertutup keyboard → jarak bawah composer cukup kecil. */
+/* Home indicator tertutup keyboard → kotak ketik boleh menempel ke tepi. */
 html.kb-panned .composer-bar {
-  padding-bottom: 0.5rem;
+  padding-bottom: 4px;
 }
 
 /*
