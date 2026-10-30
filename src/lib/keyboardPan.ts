@@ -4,8 +4,6 @@ import { useEffect } from "react";
 
 /** Kelas di <html> selama iOS menggeser halaman karena keyboard. */
 const CLASS = "kb-panned";
-/** Di bawah ini dianggap tidak ada geseran (aman untuk address bar Safari). */
-const PAN_THRESHOLD = 40;
 
 /**
  * Menetralkan geseran halaman oleh iOS saat keyboard muncul.
@@ -21,6 +19,11 @@ const PAN_THRESHOLD = 40;
  * terlihat: turun sebesar geseran, setinggi area yang terlihat. Begitu
  * keyboard ditutup, offsetTop kembali 0 dan semuanya dilepas — jadi tanpa
  * keyboard tidak ada satu pun perubahan.
+ *
+ * Supaya transisinya mulus, nilai diikuti **setiap frame** (bukan menunggu
+ * event), dimulai dari piksel pertama geseran, dan hanya ditulis kalau
+ * angkanya benar-benar berubah. Ini mencegah lompatan besar di tengah
+ * animasi keyboard (yang terlihat seperti kedipan).
  */
 export function useKeyboardPan() {
   useEffect(() => {
@@ -28,47 +31,68 @@ export function useKeyboardPan() {
     if (!vv) return;
 
     const root = document.documentElement;
+    // Di aplikasi ter-install tidak ada address bar yang bisa memicu offsetTop,
+    // jadi geseran sekecil apa pun berarti keyboard. Di Safari biasa diberi
+    // ambang supaya address bar tidak ikut memicu perubahan.
+    const standalone = window.matchMedia("(display-mode: standalone)").matches;
+    const threshold = standalone ? 1 : 30;
+
     let frame = 0;
+    let lastTop = -1;
+    let lastHeight = -1;
 
     const clear = () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      lastTop = -1;
+      lastHeight = -1;
       root.classList.remove(CLASS);
       root.style.removeProperty("--vv-top");
       root.style.removeProperty("--vv-height");
     };
 
-    const apply = () => {
+    const tick = () => {
       frame = 0;
 
-      // Pinch-zoom juga membuat offsetTop/tinggi berubah — jangan diusik.
+      // Pinch-zoom juga mengubah offsetTop/tinggi — jangan diusik.
       if (Math.abs(vv.scale - 1) > 0.01) {
         clear();
         return;
       }
 
-      if (vv.offsetTop <= PAN_THRESHOLD) {
+      const top = Math.round(vv.offsetTop);
+      if (top <= threshold) {
         clear();
         return;
       }
 
-      root.classList.add(CLASS);
-      root.style.setProperty("--vv-top", `${Math.round(vv.offsetTop)}px`);
-      root.style.setProperty("--vv-height", `${Math.round(vv.height)}px`);
+      const height = Math.round(vv.height);
+      if (top !== lastTop || height !== lastHeight) {
+        lastTop = top;
+        lastHeight = height;
+        root.classList.add(CLASS);
+        root.style.setProperty("--vv-top", `${top}px`);
+        root.style.setProperty("--vv-height", `${height}px`);
+      }
+
+      // Lanjut mengikuti animasi keyboard sampai benar-benar berhenti.
+      frame = window.requestAnimationFrame(tick);
     };
 
-    const schedule = () => {
-      if (!frame) frame = window.requestAnimationFrame(apply);
+    const start = () => {
+      if (!frame) frame = window.requestAnimationFrame(tick);
     };
 
-    // iOS mengirim `resize` saat keyboard naik dan `scroll` saat menggeser
-    // halaman — dua-duanya perlu.
-    vv.addEventListener("resize", schedule);
-    vv.addEventListener("scroll", schedule);
-    schedule();
+    // `resize` saat keyboard naik, `scroll` saat iOS menggeser halaman.
+    vv.addEventListener("resize", start);
+    vv.addEventListener("scroll", start);
+    start();
 
     return () => {
-      vv.removeEventListener("resize", schedule);
-      vv.removeEventListener("scroll", schedule);
-      if (frame) window.cancelAnimationFrame(frame);
+      vv.removeEventListener("resize", start);
+      vv.removeEventListener("scroll", start);
       clear();
     };
   }, []);
