@@ -5,6 +5,7 @@ import type { AppSettings, Provider, ProviderType } from "@/types/chat";
 import { buildBackup, genId, isBackupData, restoreBackup, wipeAll } from "@/lib/storage";
 import { PROVIDER_META, PROVIDER_ORDER, RECOMMENDED_MODELS } from "@/lib/ai/providerDefaults";
 import { useEscape } from "@/lib/useEscape";
+import { Switch } from "./Switch";
 import { useKeepFieldVisible } from "@/lib/keepFieldVisible";
 import {
   BoltIcon,
@@ -70,6 +71,8 @@ export function SettingsPanel({
   const [model, setModel] = useState("");
   const [isDefault, setIsDefault] = useState(providers.length === 0);
   const [showKeys, setShowKeys] = useState(false);
+  /** Form tambah/edit provider dilipat supaya daftar provider tetap lapang. */
+  const [formOpen, setFormOpen] = useState(providers.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [tests, setTests] = useState<Record<string, TestState>>({});
   const [dataBusy, setDataBusy] = useState<"export" | "import" | "wipe" | null>(null);
@@ -103,6 +106,7 @@ export function SettingsPanel({
 
   function resetForm() {
     setEditingId(null);
+    setFormOpen(false);
     setLabel("");
     setApiKey("");
     setBackupKeys([]);
@@ -116,6 +120,7 @@ export function SettingsPanel({
   }
 
   function startEdit(p: Provider) {
+    setFormOpen(true);
     setEditingId(p.id);
     setType(p.type);
     setLabel(p.label);
@@ -337,24 +342,28 @@ export function SettingsPanel({
         }`}
       >
         <div className="mx-auto w-full max-w-2xl">
-          {/* Profil, tema, latar chat, dan gelembung sengaja tidak ada di sini:
-              profil punya ikonnya sendiri di kapsul navigasi, tema punya tombol
-              siang/malam di header, sedangkan latar & gelembung diatur per
-              karakter di Profil Karakter. Setelan hanya untuk API & data. */}
-          <p className="mb-4 rounded-xl border border-dashed border-line px-3 py-2 text-[12px] leading-snug text-muted">
-            Tema diatur dari tombol bulan/matahari di header. Latar chat dan gelembung pesan diatur
-            per karakter lewat Profil Karakter.
-          </p>
-
+          {/* Setelan hanya berisi provider & data; sisanya ada di tempatnya masing-masing. */}
           {/* Provider tersimpan */}
-          <section className="mb-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-              Provider
-            </h3>
+          <section className={formOpen ? "mb-4" : "mb-5"}>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Provider</h3>
+              {!formOpen && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetForm();
+                    setFormOpen(true);
+                  }}
+                  className="flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-ink transition hover:bg-line/60"
+                >
+                  <PlusIcon className="h-3.5 w-3.5" /> Tambah
+                </button>
+              )}
+            </div>
 
             {providers.length === 0 ? (
               <p className="rounded-lg border border-dashed border-line px-3 py-2 text-xs text-muted">
-                Belum ada API key.
+                Belum ada provider.
               </p>
             ) : (
               <div className="space-y-2">
@@ -440,37 +449,30 @@ export function SettingsPanel({
               </div>
             )}
 
-            <label
-              className="mt-2 flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-2"
-              title="Pindah otomatis ke provider lain saat semua key provider ini gagal."
-            >
-              <input
-                type="checkbox"
+            <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-2">
+              <span className="min-w-0 text-sm text-ink-soft">Pindah provider saat key gagal</span>
+              <Switch
                 checked={settings.autoFallback}
-                onChange={(e) => onSettingsChange({ ...settings, autoFallback: e.target.checked })}
-                className="h-4 w-4 shrink-0 rounded border-line accent-ink"
+                onChange={(next) => onSettingsChange({ ...settings, autoFallback: next })}
+                label="Pindah provider saat key gagal"
               />
-              <span className="text-sm text-ink-soft">Fallback otomatis</span>
-            </label>
+            </div>
           </section>
 
-          {/* Form provider */}
+          {/* Form provider — dilipat sampai dibutuhkan. */}
+          {formOpen && (
           <form onSubmit={handleSubmit} className="space-y-2.5 border-t border-line pt-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
-                {editingId ? "Edit provider" : "Tambah provider"}
+                {editingId ? "Edit provider" : "Provider baru"}
               </h3>
-              <div className="flex items-center gap-3">
-                {editingId && (
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="text-xs font-medium text-ink-soft hover:text-ink"
-                  >
-                    Batal
-                  </button>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="text-xs font-medium text-ink-soft transition hover:text-ink"
+              >
+                Tutup
+              </button>
             </div>
 
             {/* Label "Provider" + link ambil API key */}
@@ -674,6 +676,7 @@ export function SettingsPanel({
               {editingId ? "Simpan perubahan" : "Simpan"}
             </button>
           </form>
+          )}
 
           {/* Data */}
           <section className="mt-5 border-t border-line pt-4">
@@ -714,10 +717,7 @@ export function SettingsPanel({
             >
               {dataBusy === "wipe" ? "Menghapus..." : "Hapus semua data"}
             </button>
-            <p className="mt-2 text-[12px] text-muted">
-              File cadangan memuat API key. Video latar tidak ikut tersimpan — pasang ulang setelah
-              memulihkan di perangkat lain.
-            </p>
+            <p className="mt-2 text-[12px] text-muted">Cadangan berisi API key. Video tidak ikut.</p>
 
             {dataNote && (
               <p

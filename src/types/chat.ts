@@ -112,10 +112,18 @@ export type BubbleStyle = {
   glass: boolean;
   /** Kepekatan gelembung 20–95 (%). Berlaku saat `glass` aktif. */
   opacity: number;
-  /** Warna teks pesan (#rrggbb). null = ikut tema. */
-  textColor: string | null;
-  /** Warna latar gelembung (#rrggbb). null = ikut tema. */
-  bgColor: string | null;
+  /** Warna teks gelembung karakter (#rrggbb). null = ikut tema. */
+  textColorIn: string | null;
+  /** Warna latar gelembung karakter (#rrggbb). null = ikut tema. */
+  bgColorIn: string | null;
+  /** Warna teks gelembung kamu (#rrggbb). null = ikut tema. */
+  textColorOut: string | null;
+  /** Warna latar gelembung kamu (#rrggbb). null = ikut tema. */
+  bgColorOut: string | null;
+  /** @deprecated Versi awal (#73): satu warna untuk kedua sisi. Dibaca lalu dipindahkan. */
+  textColor?: string | null;
+  /** @deprecated Lihat `textColor`. */
+  bgColor?: string | null;
 };
 
 export type Character = {
