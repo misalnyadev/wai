@@ -20,6 +20,12 @@ type VideoBackgroundProps = {
    * Bawaan true (dipakai layar panggilan).
    */
   playing?: boolean;
+  /**
+   * true = setiap kali mulai diputar lagi, klip kembali ke bingkai pertama.
+   * Dipakai latar chat supaya klip pendek terasa selalu "mulai bicara" dari
+   * awal, bukan melanjutkan dari tempat terakhir berhenti.
+   */
+  restartOnPlay?: boolean;
   /** Izinkan suara video (bawaan: senyap, mengikuti aturan autoplay browser). */
   sound?: boolean;
   /** Perbesaran media (1 = normal). Berguna untuk memotong bingkai hitam. */
@@ -35,7 +41,8 @@ function useVideoPlayback(
   ref: RefObject<HTMLVideoElement | null>,
   videoId: string | null,
   shouldPlay: boolean,
-  sound = false
+  sound = false,
+  restartOnPlay = false
 ): string | null {
   const url = useChatVideoUrl(videoId);
 
@@ -43,13 +50,27 @@ function useVideoPlayback(
     if (videoId) ensureChatVideo(videoId);
   }, [videoId]);
 
+  /** Apakah klip ini sedang diputar pada frame sebelumnya. */
+  const wasPlaying = useRef(false);
+
   useEffect(() => {
     const el = ref.current;
     if (!el || !url) return;
     if (!shouldPlay) {
       el.pause();
+      wasPlaying.current = false;
       return;
     }
+    // Mulai lagi setelah berhenti (mis. suara karakter berbunyi) → kembali ke
+    // bingkai pertama. Klip pendek pun jadi cukup: berulang selama dia bicara.
+    if (restartOnPlay && !wasPlaying.current) {
+      try {
+        el.currentTime = 0;
+      } catch {
+        // Diabaikan: sebagian browser menolak sebelum metadata siap.
+      }
+    }
+    wasPlaying.current = true;
     el.muted = !sound;
     void el.play().catch(() => {
       // Browser menolak autoplay bersuara → coba lagi tanpa suara.
@@ -58,14 +79,16 @@ function useVideoPlayback(
         void el.play().catch(() => {});
       }
     });
-  }, [ref, url, shouldPlay, sound]);
+  }, [ref, url, shouldPlay, sound, restartOnPlay]);
 
   useEffect(() => {
     function onVisibilityChange() {
       const el = ref.current;
       if (!el) return;
-      if (document.hidden) el.pause();
-      else if (shouldPlay) {
+      if (document.hidden) {
+        el.pause();
+        wasPlaying.current = false;
+      } else if (shouldPlay) {
         el.muted = !sound;
         void el.play().catch(() => {
           if (sound) {
@@ -91,6 +114,7 @@ export function ChatVideoBackground({
   talkingPosterUrl,
   talking = false,
   playing = true,
+  restartOnPlay = false,
   sound = false,
   zoom = 1,
 }: VideoBackgroundProps) {
@@ -108,8 +132,14 @@ export function ChatVideoBackground({
   // Klip utama hanya berjalan bila memang diizinkan (`playing`), tidak sedang
   // digantikan klip bicara, dan perangkat tidak meminta kurangi gerakan.
   const basePlay = !reduced && !talkingActive && playing;
-  const baseUrl = useVideoPlayback(baseRef, videoId, basePlay, sound);
-  const talkUrl = useVideoPlayback(talkRef, talkingVideoId ?? null, talkingActive, sound);
+  const baseUrl = useVideoPlayback(baseRef, videoId, basePlay, sound, restartOnPlay);
+  const talkUrl = useVideoPlayback(
+    talkRef,
+    talkingVideoId ?? null,
+    talkingActive,
+    sound,
+    restartOnPlay
+  );
 
   return (
     <div
