@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { PaperclipIcon, SendIcon, XIcon } from "./icons";
+import { PlusIcon, SendIcon, XIcon } from "./icons";
 
 export function Composer({
   onSend,
@@ -98,7 +98,7 @@ export function Composer({
             title="Kirim foto"
             aria-label="Lampirkan foto"
           >
-            <PaperclipIcon className="h-5 w-5" />
+            <PlusIcon className="h-5 w-5" />
           </button>
           <textarea
             ref={textareaRef}
