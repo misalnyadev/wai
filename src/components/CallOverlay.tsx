@@ -45,7 +45,6 @@ export function CallOverlay({
   media,
   voice,
   onClose,
-  onZoomChange,
 }: {
   character: Character;
   mode: "video" | "audio";
@@ -53,8 +52,6 @@ export function CallOverlay({
   media?: CharacterMedia | null;
   voice: VoiceSettings;
   onClose: () => void;
-  /** Simpan pembesaran video panggilan supaya dipakai lagi lain kali. */
-  onZoomChange?: (zoomPercent: number) => void;
 }) {
   const isClient = useIsClient();
   const [connected, setConnected] = useState(false);
@@ -82,16 +79,9 @@ export function CallOverlay({
   // suara dari video itu sendiri (kalau diputar dua-duanya jadi dobel).
   const voiceCall = mode === "audio";
   const hasRecording = Boolean(audioId) && voiceCall;
-  const savedZoom = Math.min(200, Math.max(100, media?.callVideoZoom ?? 100));
-  const [zoomPercent, setZoomPercent] = useState(savedZoom);
-  const zoom = zoomPercent / 100;
-
-  function changeZoom(delta: number) {
-    const next = Math.min(200, Math.max(100, zoomPercent + delta));
-    if (next === zoomPercent) return;
-    setZoomPercent(next);
-    onZoomChange?.(next);
-  }
+  // Pembesaran diatur dari halaman karakter (Zoom video call) — layar panggilan
+  // sengaja dibiarkan bersih seperti WhatsApp.
+  const zoom = Math.min(2, Math.max(1, (media?.callVideoZoom ?? 100) / 100));
 
   const greeting = (character.greeting?.trim() || `Halo, ini ${character.name}.`).slice(0, 220);
 
@@ -192,35 +182,6 @@ export function CallOverlay({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,#1d1d24,#0a0a0c_72%)]" />
         )}
       </div>
-
-      {mode === "video" && video && (
-        <div
-          className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-0.5 rounded-full bg-black/40 px-1 py-1.5 text-white ring-1 ring-white/15 backdrop-blur"
-          aria-label="Ukuran video panggilan"
-        >
-          <button
-            type="button"
-            onClick={() => changeZoom(-5)}
-            disabled={zoomPercent <= 100}
-            aria-label="Perkecil video panggilan"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none transition hover:bg-white/15 disabled:opacity-35"
-          >
-            −
-          </button>
-          <span className="min-w-[3.2ch] text-center text-[11px] font-semibold tabular-nums">
-            {zoomPercent}%
-          </span>
-          <button
-            type="button"
-            onClick={() => changeZoom(5)}
-            disabled={zoomPercent >= 200}
-            aria-label="Perbesar video panggilan"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none transition hover:bg-white/15 disabled:opacity-35"
-          >
-            +
-          </button>
-        </div>
-      )}
 
       <div className="relative flex h-full flex-col justify-between px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
         <div className="text-center">
