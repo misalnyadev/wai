@@ -166,6 +166,13 @@ export function subscribeVoices(onChange: () => void): () => void {
 
 let generation = 0;
 let chain: Promise<void> = Promise.resolve();
+/**
+ * Jumlah bagian bacaan yang masih berjalan (satu balasan bisa terdiri dari
+ * beberapa bubble → beberapa `speak()` yang diantrekan). Status "sedang
+ * bersuara" baru dimatikan setelah bagian TERAKHIR selesai; kalau tidak,
+ * latar video berhenti padahal suara masih membaca bubble berikutnya.
+ */
+let pendingSpeech = 0;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -217,25 +224,36 @@ export function speak(
 
   if (!options.append) {
     generation += 1;
+    // Bacaan sebelumnya dibatalkan; hitungannya mulai dari nol lagi.
+    pendingSpeech = 0;
     synthetic.cancel();
     chain = Promise.resolve();
   }
 
+  pendingSpeech += 1;
   const currentGeneration = generation;
   chain = chain.then(async () => {
-    for (let i = 0; i < chunks.length; i++) {
-      if (currentGeneration !== generation) return;
-      await speakOne(buildUtterance(chunks[i], settings));
-      if (currentGeneration !== generation) return;
-      if (i < chunks.length - 1) await sleep(Math.max(0, settings.pause ?? 150));
+    try {
+      for (let i = 0; i < chunks.length; i++) {
+        if (currentGeneration !== generation) return;
+        await speakOne(buildUtterance(chunks[i], settings));
+        if (currentGeneration !== generation) return;
+        if (i < chunks.length - 1) await sleep(Math.max(0, settings.pause ?? 150));
+      }
+    } finally {
+      // Bacaan dari generasi lama (sudah dibatalkan) tidak ikut dihitung.
+      if (currentGeneration === generation) {
+        pendingSpeech = Math.max(0, pendingSpeech - 1);
+        if (pendingSpeech === 0) setSpeakingState(false);
+      }
     }
-    setSpeakingState(false);
   });
 
   return true;
 }
 
 export function stopSpeaking() {
+  pendingSpeech = 0;
   setSpeakingState(false);
   if (!isSpeechSupported()) return;
   generation += 1;
