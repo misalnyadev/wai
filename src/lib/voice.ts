@@ -38,6 +38,33 @@ export function isSpeechSupported(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
+/**
+ * Bangunkan mesin suara saat pengguna menyentuh layar.
+ *
+ * iOS hanya mengeluarkan suara setelah ada sentuhan. Kalau mesinnya sempat
+ * "tertidur" — misalnya setelah cancel(), atau setelah aplikasi lama menganggur
+ * — ucapan berikutnya ditelan diam-diam tanpa error. Itulah sebabnya suara
+ * baru muncul lagi setelah menekan tombol "Coba suara" (yang menyentuh layar),
+ * lalu membuka chat. Fungsi ini melakukan hal yang sama tanpa terdengar:
+ * satu ucapan kosong berdurasi nyaris nol dengan volume 0.
+ *
+ * Panggil dari sentuhan yang wajar (kirim pesan, buka chat), bukan dari timer.
+ */
+export function primeSpeech() {
+  if (!isSpeechSupported()) return;
+  const synth = window.speechSynthesis;
+  try {
+    // Jangan mengganggu bacaan yang sedang berjalan.
+    if (synth.speaking || synth.pending) return;
+    const utterance = new SpeechSynthesisUtterance(" ");
+    utterance.volume = 0;
+    utterance.rate = 1.6;
+    synth.speak(utterance);
+  } catch {
+    // Mesin suara tidak siap — tidak apa-apa, nanti dicoba lagi.
+  }
+}
+
 /** Suara ini kemungkinan besar sudah kualitas natural/enhanced. */
 export function isNaturalVoice(voice: SpeechSynthesisVoice): boolean {
   return NATURAL_VOICE.test(voice.name ?? "");
@@ -174,8 +201,8 @@ let chain: Promise<void> = Promise.resolve();
  */
 let pendingSpeech = 0;
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number): Promise<void> {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
 function buildUtterance(text: string, settings: VoiceSettings): SpeechSynthesisUtterance {
@@ -195,9 +222,48 @@ function buildUtterance(text: string, settings: VoiceSettings): SpeechSynthesisU
 
 function speakOne(utterance: SpeechSynthesisUtterance): Promise<void> {
   return new Promise((resolve) => {
-    utterance.onend = () => resolve();
-    utterance.onerror = () => resolve();
-    window.speechSynthesis.speak(utterance);
+    const synth = window.speechSynthesis;
+    let started = false;
+    let settled = false;
+    let kickTimer = 0;
+    let giveUpTimer = 0;
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(kickTimer);
+      window.clearTimeout(giveUpTimer);
+      resolve();
+    };
+
+    // 1,2 detik tanpa tanda mulai → mesin suara kemungkinan "tertidur".
+    // Bangunkan sekali; kalau tetap diam, jangan biarkan antrean macet.
+    kickTimer = window.setTimeout(() => {
+      if (started) return;
+      try {
+        synth.resume();
+      } catch {
+        // Diabaikan.
+      }
+    }, 1200);
+    giveUpTimer = window.setTimeout(() => {
+      if (started) return;
+      try {
+        synth.cancel();
+      } catch {
+        // Diabaikan.
+      }
+      finish();
+    }, 4000);
+
+    utterance.onstart = () => {
+      started = true;
+      window.clearTimeout(kickTimer);
+      window.clearTimeout(giveUpTimer);
+    };
+    utterance.onend = finish;
+    utterance.onerror = finish;
+    synth.speak(utterance);
   });
 }
 
@@ -226,14 +292,25 @@ export function speak(
     generation += 1;
     // Bacaan sebelumnya dibatalkan; hitungannya mulai dari nol lagi.
     pendingSpeech = 0;
-    synthetic.cancel();
-    chain = Promise.resolve();
+    const wasBusy = synthetic.speaking || synthetic.pending;
+    // Jangan memanggil cancel() saat mesin sedang diam: di iOS, cancel() yang
+    // tidak perlu justru bisa membuat mesin suara "tertidur".
+    if (wasBusy) synthetic.cancel();
+    // Kalau memang ada yang dibatalkan, beri jeda kecil — di iOS speak() tepat
+    // setelah cancel() sering ditelan diam-diam.
+    chain = wasBusy ? sleep(140) : Promise.resolve();
   }
 
   pendingSpeech += 1;
   const currentGeneration = generation;
   chain = chain.then(async () => {
     try {
+      // Mesin bisa tertinggal dalam keadaan "pause" setelah interupsi.
+      try {
+        synthetic.resume();
+      } catch {
+        // Diabaikan.
+      }
       for (let i = 0; i < chunks.length; i++) {
         if (currentGeneration !== generation) return;
         await speakOne(buildUtterance(chunks[i], settings));
