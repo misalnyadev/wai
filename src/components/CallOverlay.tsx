@@ -34,8 +34,9 @@ function formatDuration(total: number) {
 
 /**
  * Layar panggilan ala WhatsApp.
- * - `video`: memutar klip "video video call" milik karakter (kalau ada), dengan
- *   suara video aktif bila browser mengizinkan.
+ * - `video`: memutar klip "video call" milik karakter (kalau ada), dengan suara
+ *   video aktif bila browser mengizinkan. Klip baru berjalan setelah panggilan
+ *   tersambung, jadi selalu ada jeda "Memanggil..." lebih dulu.
  * - `audio`: memutar rekaman MP3 karakter (kalau ada); tanpa MP3 memakai TTS.
  */
 export function CallOverlay({
@@ -157,9 +158,17 @@ export function CallOverlay({
       aria-label={`${mode === "video" ? "Video call" : "Panggilan suara"} dengan ${character.name}`}
       className="fade-in fixed inset-0 z-[80] w-full overflow-hidden bg-[#0a0a0c] text-white"
     >
-      {/* Latar: klip video call karakter, atau gradasi gelap */}
+      {/*
+       * Latar: klip video call karakter, atau gradasi gelap.
+       *
+       * Klip video SENGAJA baru dipasang setelah panggilan tersambung. Kalau
+       * dipasang sejak awal, video langsung berputar begitu tombol video call
+       * ditekan dan terasa seperti memutar klip, bukan menelepon. Dengan jeda
+       * ini alurnya sama seperti panggilan suara: "Memanggil..." sebentar →
+       * tersambung → video mulai berjalan.
+       */}
       <div className="absolute inset-0 isolate overflow-hidden">
-        {video && mode === "video" ? (
+        {video && mode === "video" && connected ? (
           <ChatVideoBackground
             videoId={video.videoId}
             posterUrl={video.posterUrl}
@@ -212,7 +221,9 @@ export function CallOverlay({
           </div>
         ) : (
           <div className="flex flex-1 items-center justify-center">
-            {!video && (
+            {/* Selama "Memanggil..." avatar yang tampil; video mulai setelah
+                tersambung (atau tetap avatar bila karakter tanpa klip). */}
+            {(!video || !connected) && (
               <div className="relative">
                 {!connected && (
                   <span className="absolute inset-0 -m-5 animate-ping rounded-full border border-white/15" />
