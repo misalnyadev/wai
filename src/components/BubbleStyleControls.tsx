@@ -2,39 +2,43 @@
 
 import { useState } from "react";
 import type { BubbleStyle } from "@/types/chat";
-import { bubbleInk, bubblePaint, colorLuminance } from "@/lib/bubbleStyle";
+import {
+  bubbleInk,
+  bubblePaint,
+  readableBg,
+  readableInk,
+  type BubbleRole,
+} from "@/lib/bubbleStyle";
+import { Switch } from "./Switch";
 
 /**
- * Pilihan warna siap pakai. Memakai chip (bukan pemilih warna bebas) supaya
- * bisa ditekan cepat di iPhone dan tidak membuka dialog sistem di tengah chat.
+ * Pilihan warna siap pakai. Chip warna (bukan pemilih warna bebas) supaya bisa
+ * ditekan cepat di iPhone dan tidak membuka dialog sistem di tengah chat.
  * `null` = ikut tema terang/gelap yang sedang aktif.
  */
-const COLORS: { value: string | null; label: string }[] = [
-  { value: null, label: "Bawaan" },
-  { value: "#ffffff", label: "Putih" },
-  { value: "#101114", label: "Hitam" },
-  { value: "#f6e7c1", label: "Krem" },
-  { value: "#0f172a", label: "Malam" },
-  { value: "#1f3d2f", label: "Hijau" },
+const COLORS: { value: string | null; label: string; hex: string | null }[] = [
+  { value: null, label: "Ikut tema", hex: null },
+  { value: "#ffffff", label: "Putih", hex: "#ffffff" },
+  { value: "#101114", label: "Hitam", hex: "#101114" },
+  { value: "#f6e7c1", label: "Krem", hex: "#f6e7c1" },
+  { value: "#0f172a", label: "Malam", hex: "#0f172a" },
+  { value: "#1f3d2f", label: "Hijau", hex: "#1f3d2f" },
 ];
 
-/** Latar yang kontras untuk sebuah warna teks (dan sebaliknya). */
-const DARK_BG = "#0f172a";
-const LIGHT_BG = "#ffffff";
-
-function ColorChips({
+/** Satu baris chip warna: label kecil di kiri, bulatan warna di kanan. */
+function ColorRow({
+  label,
   value,
   onChange,
-  label,
 }: {
+  label: string;
   value: string | null;
   onChange: (next: string | null) => void;
-  label: string;
 }) {
   return (
-    <div>
-      <span className="mb-1 block text-[12px] font-medium text-ink-soft">{label}</span>
-      <div className="flex flex-wrap gap-1.5">
+    <div className="flex items-center gap-3">
+      <span className="w-11 shrink-0 text-[12px] text-muted">{label}</span>
+      <div className="flex flex-wrap items-center gap-1.5">
         {COLORS.map((c) => {
           const active = (value ?? null) === c.value;
           return (
@@ -42,26 +46,67 @@ function ColorChips({
               key={c.label}
               type="button"
               onClick={() => onChange(c.value)}
+              aria-label={`${label}: ${c.label}`}
               aria-pressed={active}
-              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition ${
-                active
-                  ? "bg-ink text-surface"
-                  : "border border-line bg-surface text-ink-soft hover:bg-surface-2"
+              title={c.label}
+              className={`grid h-8 w-8 place-items-center rounded-full transition ${
+                active ? "ring-2 ring-ink ring-offset-2 ring-offset-surface" : "ring-1 ring-line"
               }`}
-            >
-              {c.value ? (
-                <span
-                  className="h-3 w-3 shrink-0 rounded-full ring-1 ring-black/15 dark:ring-white/20"
-                  style={{ backgroundColor: c.value }}
-                />
-              ) : (
-                <span className="h-3 w-3 shrink-0 rounded-full border border-dashed border-current" />
-              )}
-              {c.label}
-            </button>
+              style={
+                c.hex
+                  ? { backgroundColor: c.hex }
+                  : {
+                      // Chip "ikut tema": garis miring tanda warna otomatis.
+                      backgroundImage:
+                        "repeating-linear-gradient(45deg, transparent, transparent 3px, var(--line) 3px, var(--line) 5px)",
+                    }
+              }
+            />
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** Satu sisi gelembung: warna teks + warna latar. */
+function SideColors({
+  title,
+  style,
+  role,
+  onPick,
+}: {
+  title: string;
+  style: BubbleStyle;
+  role: BubbleRole;
+  onPick: (patch: Partial<BubbleStyle>) => void;
+}) {
+  const text = role === "in" ? style.textColorIn : style.textColorOut;
+  const bg = role === "in" ? style.bgColorIn : style.bgColorOut;
+  const textKey = role === "in" ? "textColorIn" : "textColorOut";
+  const bgKey = role === "in" ? "bgColorIn" : "bgColorOut";
+
+  /**
+   * Memilih satu warna saja bisa membuat teks hilang di atas latarnya, jadi
+   * pasangannya diisi otomatis dengan warna yang kontras. Tetap bisa diubah.
+   */
+  function pickText(next: string | null) {
+    const patch: Partial<BubbleStyle> = { [textKey]: next };
+    if (next && !bg) patch[bgKey] = readableBg(next);
+    onPick(patch);
+  }
+
+  function pickBg(next: string | null) {
+    const patch: Partial<BubbleStyle> = { [bgKey]: next };
+    if (next && !text) patch[textKey] = readableInk(next);
+    onPick(patch);
+  }
+
+  return (
+    <div className="space-y-2">
+      <span className="block text-[12px] font-semibold text-ink">{title}</span>
+      <ColorRow label="Teks" value={text ?? null} onChange={pickText} />
+      <ColorRow label="Latar" value={bg ?? null} onChange={pickBg} />
     </div>
   );
 }
@@ -91,106 +136,65 @@ export function BubbleStyleControls({
     onChange({ ...style, ...patch });
   }
 
-  /**
-   * Saat hanya salah satu warna dipilih, pasangkan yang lain otomatis supaya
-   * teks tidak pernah hilang di atas latarnya. Pengguna tetap bisa mengganti
-   * pasangannya sesudah ini.
-   */
-  function chooseTextColor(next: string | null) {
-    const patch: Partial<BubbleStyle> = { textColor: next };
-    if (next && !style.bgColor) patch.bgColor = colorLuminance(next) > 0.5 ? DARK_BG : LIGHT_BG;
-    update(patch);
-  }
-
-  function chooseBgColor(next: string | null) {
-    const patch: Partial<BubbleStyle> = { bgColor: next };
-    if (next && !style.textColor) patch.textColor = colorLuminance(next) > 0.5 ? "#101114" : "#ffffff";
-    update(patch);
-  }
-
   return (
-    <div className="space-y-2.5">
-      <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-line px-3 py-2">
-        <span className="min-w-0">
-          <span className="block text-xs font-medium text-ink">Tembus pandang</span>
-          <span className="block text-[12px] leading-snug text-muted">
-            Latar gelembung dibuat bening supaya video atau gambar di belakangnya tetap terlihat.
-          </span>
-        </span>
-        <input
-          type="checkbox"
-          checked={Boolean(style.glass)}
-          onChange={(e) => update({ glass: e.target.checked })}
-          className="mt-0.5 h-5 w-5 shrink-0 accent-ink"
-        />
-      </label>
-
-      <div className="rounded-xl border border-line px-3 py-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-ink-soft">Kepekatan gelembung</span>
-          <span className="text-xs font-semibold text-ink">{opacity}%</span>
+    <div className="space-y-3">
+      <div className="rounded-xl border border-line px-3 py-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-medium text-ink">Tembus pandang</span>
+          <div className="flex items-center gap-2">
+            {style.glass && <span className="text-xs font-semibold text-ink-soft">{opacity}%</span>}
+            <Switch
+              checked={Boolean(style.glass)}
+              onChange={(next) => update({ glass: next })}
+              label="Tembus pandang"
+            />
+          </div>
         </div>
-        <input
-          type="range"
-          min={20}
-          max={95}
-          step={5}
-          value={opacity}
-          onChange={(e) => setOpacityDraft(Number(e.target.value))}
-          onPointerUp={(e) => {
-            setOpacityDraft(null);
-            update({ opacity: Number(e.currentTarget.value) });
-          }}
-          onKeyUp={(e) => {
-            setOpacityDraft(null);
-            update({ opacity: Number(e.currentTarget.value) });
-          }}
-          onBlur={(e) => {
-            setOpacityDraft(null);
-            update({ opacity: Number(e.currentTarget.value) });
-          }}
-          aria-label="Kepekatan gelembung pesan"
-          className="mt-1 w-full accent-ink"
-        />
-        <p className="mt-1 text-[12px] leading-snug text-muted">
-          Makin kecil, latar di belakang pesan makin kelihatan.
-        </p>
+        {style.glass && (
+          <input
+            type="range"
+            min={20}
+            max={95}
+            step={5}
+            value={opacity}
+            onChange={(e) => setOpacityDraft(Number(e.target.value))}
+            onPointerUp={(e) => {
+              setOpacityDraft(null);
+              update({ opacity: Number(e.currentTarget.value) });
+            }}
+            onKeyUp={(e) => {
+              setOpacityDraft(null);
+              update({ opacity: Number(e.currentTarget.value) });
+            }}
+            onBlur={(e) => {
+              setOpacityDraft(null);
+              update({ opacity: Number(e.currentTarget.value) });
+            }}
+            aria-label="Kepekatan gelembung pesan"
+            className="mt-2 w-full accent-ink"
+          />
+        )}
       </div>
 
-      <ColorChips
-        label="Warna teks pesan"
-        value={style.textColor ?? null}
-        onChange={chooseTextColor}
-      />
+      <div className="space-y-3 rounded-xl border border-line px-3 py-2.5">
+        <SideColors title="Gelembung karakter" style={style} role="in" onPick={update} />
+        <div className="border-t border-line" />
+        <SideColors title="Gelembung kamu" style={style} role="out" onPick={update} />
+      </div>
 
-      <ColorChips
-        label="Warna latar gelembung"
-        value={style.bgColor ?? null}
-        onChange={chooseBgColor}
-      />
-
-      <p className="text-[12px] leading-snug text-muted">
-        Video terang → pilih teks Hitam. Video gelap → pilih teks Putih. Pasangan warnanya diatur
-        otomatis supaya pesan tetap terbaca; Anda bisa mengubahnya lagi kapan saja.
-      </p>
-
-      {/* Pratinjau supaya keterbacaan bisa dinilai tanpa keluar dari profil. */}
-      <div className="rounded-xl border border-line px-3 py-2">
-        <span className="mb-1.5 block text-[12px] font-medium text-ink-soft">Pratinjau</span>
-        <div className="flex flex-col gap-1.5">
-          <span
-            className="max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-bubble-in px-3 py-1.5 text-sm text-bubble-in-ink shadow-sm"
-            style={{ ...bubblePaint(style, "in"), ...bubbleInk(style) }}
-          >
-            Pesan dari karakter
-          </span>
-          <span
-            className="max-w-[85%] self-end rounded-2xl rounded-br-sm bg-bubble-out px-3 py-1.5 text-sm text-bubble-out-ink shadow-sm"
-            style={{ ...bubblePaint(style, "out"), ...bubbleInk(style) }}
-          >
-            Pesan dari kamu
-          </span>
-        </div>
+      <div className="flex flex-col gap-1.5 rounded-xl border border-line px-3 py-2.5">
+        <span
+          className="max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-bubble-in px-3 py-1.5 text-sm text-bubble-in-ink shadow-sm"
+          style={{ ...bubblePaint(style, "in"), ...bubbleInk(style, "in") }}
+        >
+          Pesan dari karakter
+        </span>
+        <span
+          className="max-w-[85%] self-end rounded-2xl rounded-br-sm bg-bubble-out px-3 py-1.5 text-sm text-bubble-out-ink shadow-sm"
+          style={{ ...bubblePaint(style, "out"), ...bubbleInk(style, "out") }}
+        >
+          Pesan dari kamu
+        </span>
       </div>
 
       {value !== null && (

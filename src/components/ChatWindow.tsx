@@ -470,15 +470,20 @@ export function ChatWindow({
                         />
                       )}
                       {m.content && (
-                        <p className="whitespace-pre-wrap break-words" style={bubbleInk(bubbleStyle)}>
+                        <p
+                          className="whitespace-pre-wrap break-words"
+                          style={bubbleInk(bubbleStyle, m.role === "user" ? "out" : "in")}
+                        >
                           {m.content}
                         </p>
                       )}
                       <span
                         className={`float-right ml-2 mt-1 flex translate-y-0.5 items-center gap-1 select-none text-[12px] ${
-                          bubbleStyle.textColor ? "opacity-70" : "text-ink-soft/80"
+                          (m.role === "user" ? bubbleStyle.textColorOut : bubbleStyle.textColorIn)
+                            ? "opacity-70"
+                            : "text-ink-soft/80"
                         }`}
-                        style={bubbleInk(bubbleStyle)}
+                        style={bubbleInk(bubbleStyle, m.role === "user" ? "out" : "in")}
                       >
                         {formatTime(m.createdAt)}
                         {m.role === "user" && <Ticks pending={m.pending} />}

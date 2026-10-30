@@ -515,8 +515,10 @@ export function ChatApp() {
   const globalBubbleStyle: BubbleStyle = {
     glass: settings.glassBubbles,
     opacity: settings.bubbleOpacity,
-    textColor: null,
-    bgColor: null,
+    textColorIn: null,
+    bgColorIn: null,
+    textColorOut: null,
+    bgColorOut: null,
   };
 
   // Dibaca saat render — pakai state (bukan ref) agar nilainya selalu segar.

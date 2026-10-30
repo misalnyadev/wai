@@ -5,6 +5,7 @@ import {
   EMPTY_PROFILE,
   providerTypeValues,
   type AppSettings,
+  type BubbleStyle,
   type Character,
   type CharacterMedia,
   type ChatBackground,
@@ -149,11 +150,47 @@ function sanitizeMedia(media: CharacterMedia | null | undefined): CharacterMedia
   return Object.values(next).some(Boolean) ? next : null;
 }
 
+/** Warna #rrggbb yang sah, selain itu null (= ikut tema). */
+function sanitizeColor(value: unknown): string | null {
+  return typeof value === "string" && /^#[\da-f]{6}$/i.test(value.trim())
+    ? value.trim().toLowerCase()
+    : null;
+}
+
+/**
+ * Rapikan tampilan gelembung karakter.
+ *
+ * Versi pertama (#73) hanya punya satu `textColor`/`bgColor` untuk kedua sisi.
+ * Sekarang warna dipisah per sisi, jadi nilai lama disalin ke keduanya supaya
+ * tampilan yang sudah diatur pengguna tidak berubah.
+ */
+function sanitizeBubble(bubble: BubbleStyle | null | undefined): BubbleStyle | null {
+  if (!bubble) return null;
+  const legacyText = sanitizeColor(bubble.textColor);
+  const legacyBg = sanitizeColor(bubble.bgColor);
+  const next: BubbleStyle = {
+    glass: Boolean(bubble.glass),
+    opacity: Math.min(95, Math.max(20, Math.round(Number(bubble.opacity) || 70))),
+    textColorIn: sanitizeColor(bubble.textColorIn) ?? legacyText,
+    bgColorIn: sanitizeColor(bubble.bgColorIn) ?? legacyBg,
+    textColorOut: sanitizeColor(bubble.textColorOut) ?? legacyText,
+    bgColorOut: sanitizeColor(bubble.bgColorOut) ?? legacyBg,
+  };
+  const untouched =
+    !next.glass &&
+    !next.textColorIn &&
+    !next.bgColorIn &&
+    !next.textColorOut &&
+    !next.bgColorOut;
+  return untouched ? null : next;
+}
+
 /** Karakter lama belum punya latar sendiri — anggap ikut setelan. */
 function normalizeCharacter(c: Character): Character {
   return {
     ...c,
     chatBackground: sanitizeBackground(c.chatBackground),
+    bubble: sanitizeBubble(c.bubble),
     media: sanitizeMedia(c.media),
   };
 }
