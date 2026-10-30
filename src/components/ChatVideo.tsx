@@ -14,6 +14,12 @@ type VideoBackgroundProps = {
   talkingPosterUrl?: string;
   /** true saat karakter mengetik atau suaranya sedang dibacakan. */
   talking?: boolean;
+  /**
+   * false = klip latar dijeda. Dipakai layar chat: latar hanya berjalan saat
+   * karakter menjawab, lalu berhenti lagi — supaya tidak terus berputar.
+   * Bawaan true (dipakai layar panggilan).
+   */
+  playing?: boolean;
   /** Izinkan suara video (bawaan: senyap, mengikuti aturan autoplay browser). */
   sound?: boolean;
   /** Perbesaran media (1 = normal). Berguna untuk memotong bingkai hitam. */
@@ -84,6 +90,7 @@ export function ChatVideoBackground({
   talkingVideoId,
   talkingPosterUrl,
   talking = false,
+  playing = true,
   sound = false,
   zoom = 1,
 }: VideoBackgroundProps) {
@@ -98,7 +105,10 @@ export function ChatVideoBackground({
   const talkingActive = Boolean(
     talking && talkingVideoId && !reduced && talkingStatus !== "missing"
   );
-  const baseUrl = useVideoPlayback(baseRef, videoId, !reduced && !talkingActive, sound);
+  // Klip utama hanya berjalan bila memang diizinkan (`playing`), tidak sedang
+  // digantikan klip bicara, dan perangkat tidak meminta kurangi gerakan.
+  const basePlay = !reduced && !talkingActive && playing;
+  const baseUrl = useVideoPlayback(baseRef, videoId, basePlay, sound);
   const talkUrl = useVideoPlayback(talkRef, talkingVideoId ?? null, talkingActive, sound);
 
   return (
@@ -123,7 +133,7 @@ export function ChatVideoBackground({
             muted={!sound}
             loop
             playsInline
-            autoPlay
+            autoPlay={basePlay}
             preload="auto"
             disablePictureInPicture
             tabIndex={-1}
