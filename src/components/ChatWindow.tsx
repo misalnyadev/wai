@@ -322,10 +322,10 @@ export function ChatWindow({
       <div className="z-10 flex items-center gap-3 bg-header px-2 pb-2.5 pt-[max(0.625rem,var(--safe-top))] sm:px-4">
         <button
           onClick={onBack}
-          className="rounded-full p-1.5 text-ink-soft transition hover:bg-line/60 md:hidden"
+          className="shrink-0 p-[5px] text-ink-soft transition active:opacity-50 md:hidden"
           aria-label="Kembali ke daftar chat"
         >
-          <BackIcon className="h-5 w-5" />
+          <BackIcon className="h-[30px] w-[30px]" />
         </button>
         <button
           onClick={onOpenProfile}
