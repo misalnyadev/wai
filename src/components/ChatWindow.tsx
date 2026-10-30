@@ -130,6 +130,49 @@ export function ChatWindow({
   const speaking = useIsSpeaking();
   const talking = isTyping || speaking;
 
+  /*
+   * Jeda berhentinya latar video.
+   *
+   * `talking` hanya menyala saat karakter menyusun jawaban atau saat suaranya
+   * dibacakan. Begitu balasan muncul, tanda itu padam — padahal balasannya
+   * masih dibaca, jadi video berhenti terasa terlalu cepat. Karena itu latar
+   * tetap berjalan sebentar setelah balasan datang: 1,5 detik + 55 ms per
+   * karakter (maksimal 12 detik) sebagai perkiraan waktu membaca.
+   */
+  const [holdVideo, setHoldVideo] = useState(false);
+  const holdTimer = useRef(0);
+  const lastMessageId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    const id = last?.id ?? null;
+    const previous = lastMessageId.current;
+    lastMessageId.current = id;
+    if (!last || id === previous) return;
+
+    window.clearTimeout(holdTimer.current);
+
+    if (last.role !== "assistant") {
+      // Pesan baru dari kita — karakter berhenti bicara.
+      const stop = window.setTimeout(() => setHoldVideo(false), 0);
+      return () => window.clearTimeout(stop);
+    }
+
+    const ms = Math.min(12000, 1500 + last.content.trim().length * 55);
+    // Dijadwalkan lewat timeout 0 supaya tidak memicu render berantai di dalam
+    // effect (aturan react-hooks/set-state-in-effect).
+    const start = window.setTimeout(() => {
+      setHoldVideo(true);
+      holdTimer.current = window.setTimeout(() => setHoldVideo(false), ms);
+    }, 0);
+    return () => window.clearTimeout(start);
+  }, [messages]);
+
+  useEffect(() => () => window.clearTimeout(holdTimer.current), []);
+
+  /** Latar video berjalan saat menjawab, lalu sebentar lagi selama kita membaca. */
+  const videoPlaying = talking || holdVideo;
+
   useEffect(() => {
     if (atBottom && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -221,7 +264,7 @@ export function ChatWindow({
           videoId={chatVideo.videoId}
           posterUrl={chatVideo.posterUrl}
           dim={0.12}
-          playing={talking}
+          playing={videoPlaying}
         />
       )}
 
@@ -233,7 +276,7 @@ export function ChatWindow({
           talkingVideoId={video.talkingVideoId}
           talkingPosterUrl={video.talkingPosterUrl}
           talking={talking}
-          playing={talking}
+          playing={videoPlaying}
         />
       )}
 
