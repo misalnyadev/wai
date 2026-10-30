@@ -308,10 +308,18 @@ export function FilmIcon({ className }: { className?: string }) {
 /**
  * Ikon panggilan video — tombol video call di header chat.
  *
- * Digambar pada 32 px (h-8), sedangkan ikon telepon di sebelahnya 24 px (h-6).
- * Tebal garis ikut membesar mengikuti ukuran kotak, jadi 1.9 pada 32 px terlihat
- * ±2,5 px — lebih tebal dari ikon telepon (±1,9 px). Nilai 1.4 × 32/24 = 1,87 px,
- * sehingga ketebalan garisnya kini sama dengan ikon telepon.
+ * Dua angka yang dijaga supaya seimbang dengan ikon telepon di sebelahnya.
+ *
+ * 1. Tebal garis. Ikon ini digambar pada 32 px (h-8), telepon 24 px (h-6), dan
+ *    tebal garis ikut membesar mengikuti ukuran kotak. 1.9 pada 32 px terlihat
+ *    ±2,5 px (lebih tebal), sedangkan 1.4 × 32/24 = 1,87 px — sama dengan
+ *    telepon (±1,9 px).
+ *
+ * 2. Ukuran gambar. Gambar lama hanya memakai separuh tinggi kotak (12 dari 24
+ *    satuan), jadi walau kotaknya lebih besar, bentuknya tampak lebih kecil:
+ *    hanya 16 px tinggi. Sekarang gambar memenuhi kotak (15 satuan = 20 px
+ *    tinggi, sama dengan ikon telepon) tanpa mengubah ukuran kotak ikon — jadi
+ *    tinggi tombol dan header tidak ikut bergeser.
  */
 export function VideoCallIcon({ className }: { className?: string }) {
   return (
@@ -324,8 +332,8 @@ export function VideoCallIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
       className={className}
     >
-      <rect x="2.5" y="6" width="12.5" height="12" rx="3" />
-      <path d="M15 11.2 21 8v8l-6-3.2z" />
+      <rect x="1.6" y="4.5" width="14.2" height="15" rx="3.8" />
+      <path d="M15.8 10.2 22.6 6.6v10.8l-6.8-3.6z" />
     </svg>
   );
 }
