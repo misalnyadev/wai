@@ -27,7 +27,6 @@ import {
 } from "@/lib/storage";
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
 import { speak, stopSpeaking } from "@/lib/voice";
-import { useKeyboardViewport } from "@/lib/keyboardViewport";
 import { Avatar } from "./Avatar";
 import { Sidebar } from "./Sidebar";
 import { ChatWindow } from "./ChatWindow";
@@ -88,9 +87,6 @@ export function ChatApp() {
    * sehingga seluruh tampilan terlihat naik ke atas sampai digeser sekali.
    * Dokumen memang sudah dikunci lewat CSS (globals.css); ini jaring pengaman.
    */
-  // Keyboard iPhone: composer menempel di atas keyboard (lihat lib/keyboardViewport).
-  useKeyboardViewport();
-
   useEffect(() => {
     const resetScroll = () => {
       if (window.scrollY !== 0) window.scrollTo(0, 0);
