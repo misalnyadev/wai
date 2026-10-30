@@ -1,10 +1,11 @@
 "use client";
 
-import type { Character, CharacterMedia, ChatBackground } from "@/types/chat";
+import type { BubbleStyle, Character, CharacterMedia, ChatBackground } from "@/types/chat";
 import { useEscape } from "@/lib/useEscape";
 import { Avatar } from "./Avatar";
 import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
 import { CharacterMediaSection } from "./CharacterMediaSection";
+import { BubbleStyleControls } from "./BubbleStyleControls";
 import { PencilIcon, TrashIcon, XIcon } from "./icons";
 
 export function CharacterProfileModal({
@@ -15,6 +16,8 @@ export function CharacterProfileModal({
   onClearChat,
   onDelete,
   onBackgroundChange,
+  onBubbleChange,
+  bubbleFallback,
   onMediaChange,
 }: {
   character: Character;
@@ -24,6 +27,10 @@ export function CharacterProfileModal({
   onClearChat: () => void;
   onDelete: () => void;
   onBackgroundChange: (next: ChatBackground | null) => void;
+  /** Simpan tampilan gelembung pesan milik karakter ini. */
+  onBubbleChange: (next: BubbleStyle | null) => void;
+  /** Bawaan dari Setelan, dipakai selama karakter belum punya pilihan sendiri. */
+  bubbleFallback: BubbleStyle;
   onMediaChange: (next: CharacterMedia | null) => void;
 }) {
   useEscape(onClose);
@@ -77,6 +84,17 @@ export function CharacterProfileModal({
               value={character.chatBackground ?? null}
               onChange={onBackgroundChange}
               allowInherit
+            />
+          </div>
+
+          <div className="mt-5">
+            <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+              Gelembung pesan
+            </h4>
+            <BubbleStyleControls
+              value={character.bubble ?? null}
+              fallback={bubbleFallback}
+              onChange={onBubbleChange}
             />
           </div>
 

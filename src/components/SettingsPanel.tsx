@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { AppSettings, ChatBackground, Provider, ProviderType, UserProfile } from "@/types/chat";
+import type { AppSettings, Provider, ProviderType } from "@/types/chat";
 import { buildBackup, genId, isBackupData, restoreBackup, wipeAll } from "@/lib/storage";
 import { PROVIDER_META, PROVIDER_ORDER, RECOMMENDED_MODELS } from "@/lib/ai/providerDefaults";
 import { useEscape } from "@/lib/useEscape";
 import { useKeepFieldVisible } from "@/lib/keepFieldVisible";
-import { ThemeSegmented } from "./ThemeToggle";
-import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
 import {
   BoltIcon,
   CheckIcon,
@@ -16,7 +14,6 @@ import {
   PlusIcon,
   RefreshIcon,
   TrashIcon,
-  UserIcon,
   XIcon,
 } from "./icons";
 
@@ -52,8 +49,6 @@ export function SettingsPanel({
   onChange,
   settings,
   onSettingsChange,
-  profile,
-  onOpenProfile,
   onClose,
   variant = "modal",
 }: {
@@ -61,8 +56,6 @@ export function SettingsPanel({
   onChange: (next: Provider[]) => void;
   settings: AppSettings;
   onSettingsChange: (next: AppSettings) => void;
-  profile: UserProfile;
-  onOpenProfile: () => void;
   onClose: () => void;
   variant?: "modal" | "inline";
 }) {
@@ -81,19 +74,7 @@ export function SettingsPanel({
   const [tests, setTests] = useState<Record<string, TestState>>({});
   const [dataBusy, setDataBusy] = useState<"export" | "import" | "wipe" | null>(null);
   const [dataNote, setDataNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
-  /** Nilai sementara slider kepekatan gelembung — disimpan saat jari dilepas. */
-  const [opacityDraft, setOpacityDraft] = useState<number | null>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
-  function setBackground(next: ChatBackground) {
-    onSettingsChange({ ...settings, chatBackground: next });
-  }
-
-  const glassOpacity = opacityDraft ?? settings.bubbleOpacity ?? 45;
-
-  function commitOpacity(percent: number) {
-    setOpacityDraft(null);
-    onSettingsChange({ ...settings, bubbleOpacity: percent });
-  }
 
   // Pemilih model
   const [models, setModels] = useState<ModelOption[] | null>(null);
@@ -356,80 +337,14 @@ export function SettingsPanel({
         }`}
       >
         <div className="mx-auto w-full max-w-2xl">
-          {/* Profil */}
-          <button
-            onClick={onOpenProfile}
-            className="mb-4 flex w-full items-center gap-3 rounded-xl border border-line bg-surface-2 p-2.5 text-left transition hover:bg-line/30"
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-soft ring-1 ring-line">
-              <UserIcon className="h-4 w-4" />
-            </span>
-            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-              {profile.name?.trim() || "Profil"}
-            </span>
-            <PencilIcon className="h-4 w-4 shrink-0 text-muted" />
-          </button>
-
-          {/* Tema */}
-          <section className="mb-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Tema</h3>
-            <ThemeSegmented />
-          </section>
-
-          {/* Latar chat */}
-          <section className="mb-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-              Latar chat
-            </h3>
-            <ChatBackgroundPicker
-              value={settings.chatBackground ?? { kind: "default" }}
-              onChange={(next) => setBackground(next ?? { kind: "default" })}
-            />
-            <p className="mt-2 text-xs text-muted">
-              Tiap karakter bisa punya latar sendiri lewat menu ⋯ di percakapan.
-            </p>
-
-            <label className="mt-2 flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-line px-3 py-2">
-              <span className="min-w-0">
-                <span className="block text-xs font-medium text-ink">Gelembung tembus pandang</span>
-                <span className="block text-[12px] leading-snug text-muted">
-                  Pesan memakai latar transparan tanpa blur, jadi video atau gambar di belakangnya
-                  tetap kelihatan.
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={Boolean(settings.glassBubbles)}
-                onChange={(e) => onSettingsChange({ ...settings, glassBubbles: e.target.checked })}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-ink"
-              />
-            </label>
-
-            {settings.glassBubbles && (
-              <div className="mt-2 rounded-xl border border-line px-3 py-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-ink-soft">Kepekatan gelembung</span>
-                  <span className="text-xs font-semibold text-ink">{glassOpacity}%</span>
-                </div>
-                <input
-                  type="range"
-                  min={20}
-                  max={95}
-                  step={5}
-                  value={glassOpacity}
-                  onChange={(e) => setOpacityDraft(Number(e.target.value))}
-                  onPointerUp={(e) => commitOpacity(Number(e.currentTarget.value))}
-                  onKeyUp={(e) => commitOpacity(Number(e.currentTarget.value))}
-                  onBlur={(e) => commitOpacity(Number(e.currentTarget.value))}
-                  aria-label="Kepekatan gelembung pesan"
-                  className="mt-1 w-full accent-ink"
-                />
-                <p className="mt-1 text-[12px] leading-snug text-muted">
-                  Makin kecil, video di belakang pesan makin kelihatan. Bawaan 45%.
-                </p>
-              </div>
-            )}
-          </section>
+          {/* Profil, tema, latar chat, dan gelembung sengaja tidak ada di sini:
+              profil punya ikonnya sendiri di kapsul navigasi, tema punya tombol
+              siang/malam di header, sedangkan latar & gelembung diatur per
+              karakter di Profil Karakter. Setelan hanya untuk API & data. */}
+          <p className="mb-4 rounded-xl border border-dashed border-line px-3 py-2 text-[12px] leading-snug text-muted">
+            Tema diatur dari tombol bulan/matahari di header. Latar chat dan gelembung pesan diatur
+            per karakter lewat Profil Karakter.
+          </p>
 
           {/* Provider tersimpan */}
           <section className="mb-5">
