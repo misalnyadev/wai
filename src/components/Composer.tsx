@@ -148,6 +148,17 @@ export function Composer({
             <PlusIcon className="h-[30px] w-[30px]" />
           </button>
           <div className="relative min-w-0 w-full flex-1">
+            {/*
+              Kotak tulis digeser turun 4 px supaya cincinnya sejajar dengan
+              tombol kirim dan ikon mikrofon.
+
+              Sebabnya: textarea itu elemen inline, jadi di bawahnya selalu
+              tersisa ruang turun huruf (± 4–6 px) yang tidak terlihat. Karena
+              baris memakai `items-end`, sisa ruang itulah yang menempel ke
+              dasar, sehingga kotak tulis tampak lebih tinggi daripada kedua
+              tombol. Digeser dengan `top`, bukan margin, supaya tinggi
+              komposer tidak berubah sama sekali.
+            */}
             <textarea
               ref={textareaRef}
               value={text}
@@ -167,7 +178,7 @@ export function Composer({
               autoComplete="off"
               enterKeyHint="send"
               aria-label="Tulis pesan"
-              className={`max-h-[120px] w-full resize-none border-none bg-surface px-4 py-2.5 pr-11 text-base text-ink outline-none ring-1 ring-line transition-[border-radius] duration-150 placeholder:text-muted disabled:opacity-60 sm:text-sm ${
+              className={`relative top-1 max-h-[120px] w-full resize-none border-none bg-surface px-4 py-2.5 pr-11 text-base text-ink outline-none ring-1 ring-line transition-[border-radius] duration-150 placeholder:text-muted disabled:opacity-60 sm:text-sm ${
                 multiline ? "rounded-2xl" : "rounded-full"
               }`}
             />
