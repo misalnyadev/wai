@@ -208,9 +208,13 @@ html.kb-panned .app-shell {
   height: calc(var(--vv-height, 100vh) + var(--kb-gap, 0px));
 }
 
-/* Home indicator tertutup keyboard → kotak ketik boleh menempel ke tepi. */
+/*
+ * Home indicator tertutup keyboard → tidak perlu ruang 34 px di bawah composer.
+ * Jarak aman ke keyboard (dan ke bar aksesori bawaan iOS) diatur oleh
+ * useKeyboardPan lewat SAFE_MARGIN, jadi padding ini cukup nol.
+ */
 html.kb-panned .composer-bar {
-  padding-bottom: 4px;
+  padding-bottom: 0px;
 }
 
 /*
