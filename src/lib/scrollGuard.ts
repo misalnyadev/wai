@@ -17,14 +17,6 @@ import { useEffect } from "react";
  * Tidak mengubah tata letak, tinggi, atau posisi apa pun — hanya mengembalikan
  * geseran yang tidak diminta.
  */
-/** Geseran terbesar yang pernah terjadi (px) — untuk keterangan di Setelan. */
-let maxShift = 0;
-
-/** Berapa px halaman pernah tergeser sebelum dikembalikan ke 0. */
-export function maxObservedShift(): number {
-  return Math.round(maxShift);
-}
-
 export function useScrollGuard() {
   useEffect(() => {
     let frame = 0;
@@ -34,15 +26,6 @@ export function useScrollGuard() {
 
       const scrolling = document.scrollingElement as HTMLElement | null;
       const shell = document.querySelector<HTMLElement>(".app-shell");
-
-      // Catat dulu seberapa jauh yang tergeser (dipakai untuk diagnosis).
-      const shift = Math.max(
-        scrolling?.scrollTop ?? 0,
-        document.body.scrollTop,
-        shell?.scrollTop ?? 0,
-        window.scrollY
-      );
-      if (shift > maxShift) maxShift = shift;
 
       if (scrolling && scrolling.scrollTop !== 0) scrolling.scrollTop = 0;
       if (document.body.scrollTop !== 0) document.body.scrollTop = 0;
