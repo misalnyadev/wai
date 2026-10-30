@@ -211,11 +211,17 @@ export function ChatWindow({
       }`}
       style={backdrop.style}
     >
+      {/*
+       * Latar tidak diputar terus-menerus: klip berjalan hanya saat karakter
+       * menjawab (mengetik / suaranya dibacakan), lalu dijeda lagi. Jadi
+       * terlihat seperti dia bicara, bukan video yang berputar sendiri.
+       */}
       {chatVideoFull && chatVideo && (
         <ChatVideoBackground
           videoId={chatVideo.videoId}
           posterUrl={chatVideo.posterUrl}
           dim={0.12}
+          playing={talking}
         />
       )}
 
@@ -227,6 +233,7 @@ export function ChatWindow({
           talkingVideoId={video.talkingVideoId}
           talkingPosterUrl={video.talkingPosterUrl}
           talking={talking}
+          playing={talking}
         />
       )}
 
