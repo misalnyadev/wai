@@ -301,6 +301,7 @@ export function ChatWindow({
           posterUrl={chatVideo.posterUrl}
           dim={0.12}
           playing={videoPlaying}
+          restartOnPlay
         />
       )}
 
@@ -313,6 +314,7 @@ export function ChatWindow({
           talkingPosterUrl={video.talkingPosterUrl}
           talking={videoPlaying}
           playing={videoPlaying}
+          restartOnPlay
         />
       )}
 
