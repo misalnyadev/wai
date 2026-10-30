@@ -378,6 +378,9 @@ export function speak(
   const clean = speakableText(text);
   if (!clean) return false;
 
+  // Suara perangkat dan suara HD tidak boleh berbunyi bersamaan.
+  stopHandlers.forEach((handler) => handler());
+
   setSpeakingState(true);
 
   // Selama mesin belum terbuka, ingat bacaan ini supaya bisa diulang pada
@@ -428,9 +431,21 @@ export function speak(
   return true;
 }
 
+/**
+ * Pemutar lain (mis. suara HD dari API) mendaftar di sini supaya tombol
+ * "Hentikan" dan bacaan baru ikut menghentikannya.
+ */
+const stopHandlers = new Set<() => void>();
+
+export function onStopSpeaking(handler: () => void): () => void {
+  stopHandlers.add(handler);
+  return () => stopHandlers.delete(handler);
+}
+
 export function stopSpeaking() {
   pendingSpeech = 0;
   setSpeakingState(false);
+  stopHandlers.forEach((handler) => handler());
   if (!isSpeechSupported()) return;
   generation += 1;
   chain = Promise.resolve();
@@ -448,6 +463,14 @@ function setSpeakingState(next: boolean) {
   if (speaking === next) return;
   speaking = next;
   for (const listener of speakingListeners) listener();
+}
+
+/**
+ * Tandai sedang bersuara dari mesin lain (suara HD). Dipakai supaya latar video
+ * tetap mengikuti audio apa pun mesinnya.
+ */
+export function markSpeaking(next: boolean) {
+  setSpeakingState(next);
 }
 
 export function subscribeSpeaking(listener: () => void): () => void {

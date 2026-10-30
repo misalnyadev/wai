@@ -9,11 +9,12 @@ import {
   isNaturalVoice,
   isSpeechSupported,
   sortVoices,
-  speak,
   stopSpeaking,
   subscribeVoices,
 } from "@/lib/voice";
 import { CheckIcon, SpeakerIcon } from "./icons";
+import { VoiceHdSection } from "./VoiceHdSection";
+import { speakBest } from "@/lib/tts";
 
 function Slider({
   label,
@@ -75,7 +76,8 @@ export function VoiceView({
   }
 
   function handleTest() {
-    const ok = speak(VOICE_TEST_TEXT, settings);
+    // speakBest memilih suara HD kalau aktif, kalau tidak suara perangkat.
+    const ok = speakBest(VOICE_TEST_TEXT, settings);
     setSpoken(ok);
     setTimeout(() => setSpoken(false), 2200);
   }
@@ -123,6 +125,9 @@ export function VoiceView({
               className="h-4 w-4 shrink-0 rounded border-line accent-ink"
             />
           </label>
+
+          {/* Suara HD dari API — hasilnya di-cache di perangkat */}
+          <VoiceHdSection settings={settings} onChange={onChange} />
 
           {/* Saran suara paling natural */}
           {supported && bestVoice && (
