@@ -85,7 +85,7 @@ export function VoiceView({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
-      <div className="flex items-center justify-between bg-header px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between bg-header px-5 pb-3 pt-[max(1rem,var(--safe-top))]">
         <h2 className="font-display text-lg font-bold text-ink">Suara</h2>
         {supported && (
           <button

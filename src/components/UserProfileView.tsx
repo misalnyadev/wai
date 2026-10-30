@@ -46,7 +46,7 @@ export function UserProfileView({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
-      <header className="bg-header px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
+      <header className="bg-header px-5 pb-4 pt-[max(1rem,var(--safe-top))]">
         <h2 className="font-display text-lg font-bold text-ink">Profil saya</h2>
       </header>
 

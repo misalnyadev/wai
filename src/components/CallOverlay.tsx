@@ -174,7 +174,7 @@ export function CallOverlay({
         )}
       </div>
 
-      <div className="relative flex h-full flex-col justify-between px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
+      <div className="relative flex h-full flex-col justify-between px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,var(--safe-top))]">
         <div className="text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/55">
             {mode === "video" ? "Video call" : "Panggilan suara"}
