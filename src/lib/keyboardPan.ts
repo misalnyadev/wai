@@ -82,25 +82,52 @@ export function useKeyboardPan() {
     /**
      * Selaraskan kotak ketik dengan tepi bawah area terlihat.
      *
-     * `applied` adalah koreksi yang sudah terpasang, jadi jarak yang terukur
-     * sekarang = jarak asli − applied. Selisihnya ditambahkan ke applied,
-     * sehingga pemanggilan berulang akan mengumpul ke SAFE_MARGIN (stabil).
+     * PENTING soal satuan: `getBoundingClientRect()` sudah memakai koordinat
+     * area yang TERLIHAT (geseran iOS sudah ikut dihitung di dalamnya). Jadi
+     * tepi bawah area terlihat adalah `vv.height`, BUKAN `vv.offsetTop +
+     * vv.height`. Dulu rumus kedua yang dipakai, sehingga jarak yang terukur
+     * kelebihan sebesar offsetTop (≈368 px), koreksi mentok di batas 140 px,
+     * dan kotak ketik justru terdorong ke bawah keyboard — kotaknya "hilang".
+     *
+     * Supaya aman terhadap perbedaan perilaku WebKit, dua kemungkinan satuan
+     * dihitung lalu dipilih yang paling kecil selisihnya. Kalau dua-duanya
+     * besar (> 200 px), pengukuran dianggap tidak sah dan koreksi dilewati —
+     * lebih baik tidak mengoreksi daripada mendorong kotak keluar layar.
      */
     const measureGap = () => {
       if (!root.classList.contains(CLASS)) return;
+      if (!document.querySelector(".composer-bar")) return;
 
-      const composer = document.querySelector<HTMLElement>(".composer-bar");
-      if (!composer) return;
+      const bottom = document.querySelector<HTMLElement>(".composer-bar")!
+        .getBoundingClientRect().bottom;
+      if (!Number.isFinite(bottom)) return;
 
-      const visibleBottom = vv.offsetTop + vv.height;
-      const gap = visibleBottom - composer.getBoundingClientRect().bottom;
-      if (!Number.isFinite(gap) || Math.abs(gap) > 400) return;
+      const candidates = [vv.height - bottom, vv.offsetTop + vv.height - bottom];
+      const gap = candidates.reduce((best, value) =>
+        Math.abs(value) < Math.abs(best) ? value : best
+      );
+      if (Math.abs(gap) > 200) return;
 
-      const next = Math.round(clamp(applied + (gap - SAFE_MARGIN)));
+      // Selisih ditambahkan bertahap (maks 60 px sekali ukur) supaya koreksi
+      // mengumpul ke SAFE_MARGIN, tidak melompat melewatinya.
+      const delta = gap - SAFE_MARGIN;
+      const step = Math.max(-60, Math.min(60, delta));
+      const next = Math.round(clamp(applied + step));
       if (next === applied) return;
 
       applied = next;
       root.style.setProperty("--kb-gap", `${Math.abs(next) < MIN_GAP ? 0 : next}px`);
+
+      // Jaring pengaman: kalau setelah dikoreksi kotak ketik masih berada di
+      // bawah area terlihat, batalkan koreksi. Lebih baik kembali ke tampilan
+      // apa adanya daripada kotak ketik hilang di balik keyboard.
+      const after = document.querySelector<HTMLElement>(".composer-bar");
+      if (!after) return;
+      const overflow = after.getBoundingClientRect().bottom - vv.height;
+      if (overflow > 8) {
+        applied = 0;
+        root.style.removeProperty("--kb-gap");
+      }
     };
 
     const scheduleMeasures = () => {
