@@ -28,6 +28,7 @@ import {
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
 import { speak } from "@/lib/voice";
 import { useKeyboardPan } from "@/lib/keyboardPan";
+import { useSafeTop } from "@/lib/safeTop";
 import { Avatar } from "./Avatar";
 import { Sidebar } from "./Sidebar";
 import { ChatWindow } from "./ChatWindow";
@@ -90,6 +91,8 @@ export function ChatApp() {
    */
   // Keyboard iPhone: netralkan geseran halaman oleh iOS (lib/keyboardPan).
   useKeyboardPan();
+  // Status bar iPhone: pastikan header tidak pernah tertutup jam/baterai.
+  useSafeTop();
 
   useEffect(() => {
     const resetScroll = () => {

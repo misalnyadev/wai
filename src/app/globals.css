@@ -144,12 +144,18 @@ body {
  * Token ini dipakai SEMUA header, dengan nilai minimum setinggi status bar
  * iPhone berponi. Kalau env() memang terbaca normal (44 px), nilainya tidak
  * berubah sama sekali — jadi aman untuk perangkat lain.
+ *
+ * Lantainya sengaja dipasang pada `(pointer: coarse)` — yaitu layar sentuh —
+ * BUKAN pada `display-mode: standalone`. Alasannya: lantai versi standalone
+ * tetap tidak berefek di perangkat ini, artinya pembacaan display-mode tidak
+ * bisa diandalkan. Dengan layar sentuh, aturan ini berlaku baik saat aplikasi
+ * dibuka dari Home Screen maupun dari Safari. Desktop (mouse) tidak berubah.
  */
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
 }
 
-@media (display-mode: standalone) {
+@media (pointer: coarse) {
   :root {
     --safe-top: max(env(safe-area-inset-top, 0px), 44px);
   }
