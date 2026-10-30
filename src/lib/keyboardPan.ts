@@ -19,6 +19,19 @@ const MAX_CORRECTION = 140;
 const SAFE_MARGIN = 12;
 
 /**
+ * Selisih tinggi yang dianggap "keyboard sedang naik" (px).
+ *
+ * Dulu keyboard dideteksi HANYA dari `vv.offsetTop > 0` — yaitu saat iOS
+ * menggeser halaman. Sejak geseran itu dikunci (globals.css + scrollGuard),
+ * iOS tidak lagi menggeser apa pun: yang terjadi hanya area terlihat menyusut.
+ * Tanpa deteksi kedua ini, kode tidak pernah tahu keyboard sudah naik dan
+ * kotak ketik tertinggal di balik keyboard. Ambang 120 px aman: keyboard
+ * iPhone paling pendek ~250 px, sedangkan address bar Safari paling tinggi
+ * ~90 px.
+ */
+const KEYBOARD_MIN = 120;
+
+/**
  * Menetralkan geseran halaman oleh iOS saat keyboard muncul.
  *
  * iOS tidak mengecilkan halaman saat keyboard muncul — dia **menggeser**
@@ -51,6 +64,8 @@ export function useKeyboardPan() {
     const threshold = standalone ? 1 : 24;
 
     let frame = 0;
+    /** Tinggi area terlihat saat keyboard TERTUTUP — acuan deteksi keyboard. */
+    let baseHeight = Math.max(window.innerHeight, Math.round(vv.height));
     let lastTop = -1;
     let lastHeight = -1;
     let settleTimer = 0;
@@ -60,6 +75,17 @@ export function useKeyboardPan() {
 
     const clamp = (value: number) =>
       Math.max(-MAX_CORRECTION, Math.min(MAX_CORRECTION, value));
+
+    /**
+     * Keyboard sedang naik? Dua tandanya: halaman digeser iOS (offsetTop), atau
+     * area terlihat menyusut jauh dari tinggi acuan. Tanda kedua yang dipakai
+     * sekarang karena geseran halaman sudah dikunci `overflow: clip`.
+     */
+    const isKeyboardUp = () => {
+      if (vv.offsetTop > threshold) return true;
+      if (Math.abs(vv.scale - 1) > 0.01) return false; // pinch-zoom, bukan keyboard
+      return baseHeight - Math.round(vv.height) > KEYBOARD_MIN;
+    };
 
     const clear = () => {
       if (frame) {
@@ -73,6 +99,10 @@ export function useKeyboardPan() {
       lastTop = -1;
       lastHeight = -1;
       applied = 0;
+      // Saat keyboard tertutup, catat tinggi area terlihat sebagai acuan baru.
+      if (Math.abs(vv.scale - 1) < 0.01 && Math.round(vv.height) > baseHeight) {
+        baseHeight = Math.round(vv.height);
+      }
       root.classList.remove(CLASS);
       root.style.removeProperty("--vv-top");
       root.style.removeProperty("--vv-height");
@@ -161,11 +191,12 @@ export function useKeyboardPan() {
         return;
       }
 
-      const top = Math.round(vv.offsetTop);
-      if (top <= threshold) {
+      if (!isKeyboardUp()) {
         clear();
         return;
       }
+
+      const top = Math.round(vv.offsetTop);
 
       const height = Math.round(vv.height);
       // Hanya tulis kalau angkanya berubah — mencegah kerja sia-sia tiap frame.

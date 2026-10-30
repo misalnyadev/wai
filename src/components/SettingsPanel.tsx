@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { AppSettings, ChatBackground, Provider, ProviderType, UserProfile } from "@/types/chat";
 import { buildBackup, genId, isBackupData, restoreBackup, wipeAll } from "@/lib/storage";
 import { PROVIDER_META, PROVIDER_ORDER, RECOMMENDED_MODELS } from "@/lib/ai/providerDefaults";
 import { useEscape } from "@/lib/useEscape";
 import { useKeepFieldVisible } from "@/lib/keepFieldVisible";
-import { describeSafeTop } from "@/lib/safeTop";
 import { ThemeSegmented } from "./ThemeToggle";
 import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
 import {
@@ -68,14 +67,6 @@ export function SettingsPanel({
   variant?: "modal" | "inline";
 }) {
   const inline = variant === "inline";
-
-  // Sementara: menampilkan angka jarak aman atas supaya bisa dicek di perangkat.
-  const [safeInfo, setSafeInfo] = useState("");
-  useEffect(() => {
-    // Dibaca setelah layar siap (bukan saat render) supaya tidak bentrok hidrasi.
-    const id = window.setTimeout(() => setSafeInfo(describeSafeTop()), 0);
-    return () => window.clearTimeout(id);
-  }, []);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [type, setType] = useState<ProviderType>("gemini");
@@ -825,10 +816,6 @@ export function SettingsPanel({
               </p>
             )}
           </section>
-
-          {safeInfo && (
-            <p className="px-1 py-4 text-center text-[11px] leading-relaxed text-muted">{safeInfo}</p>
-          )}
         </div>
       </div>
     </>
