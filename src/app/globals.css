@@ -105,9 +105,11 @@ body {
 }
 
 /*
- * Karena konten sekarang boleh masuk ke area status bar (black-translucent),
- * tema terang diberi selubung gelap tipis di paling atas supaya ikon jam dan
- * baterai tetap terbaca. Di tema gelap selubung ini tidak perlu.
+ * Selubung tipis di area status bar untuk aplikasi ter-install.
+ * Sejak status bar dikembalikan ke "default" (lihat layout.tsx), iOS sudah
+ * memisahkan area ini sendiri sehingga env(safe-area-inset-top) = 0 dan
+ * selubung ini tingginya nol. Dibuat hanya sebagai jaring pengaman bila
+ * suatu saat safe-area atas kembali bukan nol.
  */
 @media (display-mode: standalone) {
   .status-scrim {

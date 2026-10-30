@@ -77,10 +77,22 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "WaiChat",
-    // "black-translucent" = konten boleh masuk ke area status bar. Tiap layar
-    // sudah menjaga jarak sendiri lewat env(safe-area-inset-*) di globals.css,
-    // dan layar panggilan memakai ini supaya video benar-benar penuh ke atas.
-    statusBarStyle: "black-translucent",
+    /*
+     * "default" = area status bar diurus iOS sendiri, konten aplikasi dimulai
+     * DI BAWAH jam dan baterai.
+     *
+     * Ini sengaja dikembalikan ke "default" (dulu sempat "black-translucent"
+     * sejak PR #22 agar video call bisa penuh sampai atas). Dengan
+     * black-translucent + viewport-fit=cover, iOS menggeser seluruh halaman ke
+     * atas saat keyboard muncul supaya kolom ketik terlihat — dan karena
+     * halaman dikunci, geseran itu tidak bisa dikembalikan: header masuk ke
+     * area status bar. Itu sumber semua masalah #24–#39.
+     *
+     * Layar panggilan tetap terlihat penuh: CallOverlay memanggil
+     * setStatusBarColor("#0a0a0c") yang mengubah <meta name="theme-color">,
+     * jadi area status bar ikut gelap seperti latar panggilan.
+     */
+    statusBarStyle: "default",
   },
   manifest: "/manifest.webmanifest",
   formatDetection: {
