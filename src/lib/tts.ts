@@ -1,8 +1,21 @@
 "use client";
 
-import type { VoiceSettings } from "@/types/chat";
-import { markSpeaking, onStopSpeaking, speak as fallbackSpeak, speakableText } from "./voice";
-import { getCachedAudio, putCachedAudio, ttsKey } from "./ttsCache";
+import { DEFAULT_VOICE, type VoiceSettings } from "@/types/chat";
+import {
+  markSpeaking,
+  onStopSpeaking,
+  speak as fallbackSpeak,
+  speakableText,
+  VOICE_TEST_TEXT,
+} from "./voice";
+import {
+  getCachedAudio,
+  listCachedEntries,
+  putCachedAudio,
+  setEntryText,
+  ttsKey,
+} from "./ttsCache";
+import { getCharacters, getMessages } from "./storage";
 
 /**
  * Suara HD dari API (Gemini TTS) dengan cache di perangkat.
@@ -124,7 +137,12 @@ async function audioFor(part: string, settings: VoiceSettings): Promise<Blob | n
       return null;
     }
     lastError = null;
-    await putCachedAudio(key, blob);
+    // Teks ikut disimpan supaya daftar rekaman bisa dibaca & dicadangkan.
+    await putCachedAudio(key, blob, {
+      text: part,
+      voice: settings.hdVoice,
+      model: settings.hdModel,
+    });
     return blob;
   } catch {
     lastError = "Gagal menghubungi server suara.";
@@ -362,23 +380,147 @@ export const COMMON_PHRASES = [
   "Sampai nanti.",
 ];
 
+export type PrewarmResult = {
+  total: number;
+  /** Sudah ada di perangkat, tidak memanggil API. */
+  existing: number;
+  /** Baru dibuat sekarang. */
+  added: number;
+  /** Gagal dibuat (kuota habis, key salah, dsb.). */
+  failed: number;
+  /** Berhenti lebih awal karena kuota API habis. */
+  quota: boolean;
+};
+
 /**
- * Buat & simpan audio untuk daftar frasa tanpa memutarnya. Mengembalikan
- * jumlah frasa yang siap dipakai (baru dibuat atau sudah ada di cache).
+ * Buat & simpan audio untuk daftar frasa tanpa memutarnya.
+ *
+ * Frasa yang sudah ada di cache dilewati tanpa memanggil API — penting saat
+ * kuota key sedang mepet. Kalau API menjawab kuota habis, pembuatan langsung
+ * dihentikan supaya tidak menghabiskan sisa jatah untuk percobaan yang pasti
+ * gagal.
  */
 export async function prewarmTts(
   phrases: string[],
   settings: VoiceSettings,
   onProgress?: (done: number, total: number) => void
-): Promise<number> {
-  if (!settings.hdEnabled || !settings.hdKey.trim()) return 0;
-  let ready = 0;
+): Promise<PrewarmResult> {
+  const result: PrewarmResult = {
+    total: phrases.length,
+    existing: 0,
+    added: 0,
+    failed: 0,
+    quota: false,
+  };
+  if (!settings.hdEnabled || !settings.hdKey.trim()) return result;
+
   for (let i = 0; i < phrases.length; i++) {
-    const blob = await audioFor(phrases[i], settings);
-    if (blob) ready += 1;
+    const cached = await getCachedAudio(cacheKey(phrases[i], settings));
+    if (cached) {
+      result.existing += 1;
+    } else {
+      const blob = await audioFor(phrases[i], settings);
+      if (blob) {
+        result.added += 1;
+      } else {
+        result.failed += 1;
+        const message = getLastTtsError() ?? "";
+        if (/kuota|429/i.test(message)) {
+          result.quota = true;
+          onProgress?.(i + 1, phrases.length);
+          break;
+        }
+      }
+    }
     onProgress?.(i + 1, phrases.length);
   }
-  return ready;
+  return result;
+}
+
+/**
+ * Putar ulang satu klip yang sudah tersimpan di perangkat.
+ *
+ * Dipakai daftar rekaman di Setelan: tidak ada panggilan API sama sekali,
+ * jadi tetap bisa didengar walau kuota key sudah habis atau offline.
+ */
+export async function playCached(key: string): Promise<boolean> {
+  const blob = await getCachedAudio(key);
+  if (!blob) {
+    lastError = "Rekaman ini tidak ada lagi di perangkat.";
+    return false;
+  }
+
+  stopHd();
+  const generation = hdGeneration;
+  hdPending += 1;
+  markSpeaking(true);
+
+  const run = async (): Promise<boolean> => {
+    try {
+      if (generation !== hdGeneration) return false;
+      await playBlob(blob, generation);
+      return true;
+    } finally {
+      hdPending = Math.max(0, hdPending - 1);
+      if (generation === hdGeneration && hdPending === 0) {
+        releaseAudio();
+        markSpeaking(false);
+      }
+    }
+  };
+
+  const result = hdQueue.then(run, run);
+  hdQueue = result.catch(() => false);
+  return result;
+}
+
+/**
+ * Tebak teks untuk klip dari versi lama yang belum menyimpan keterangan.
+ *
+ * Kunci cache adalah hash dari (model + suara + gaya + teks), jadi teks tidak
+ * bisa dibalik. Yang bisa dilakukan: hitung ulang hash untuk semua kalimat
+ * yang mungkin pernah diucapkan (frasa umum + seluruh riwayat chat), lalu
+ * cocokkan dengan kunci yang ada. Hasilnya hanya keterangan tampilan — audio
+ * tidak diubah sama sekali.
+ */
+export async function recoverCachedTexts(settings: VoiceSettings): Promise<number> {
+  const missing = (await listCachedEntries()).filter((entry) => !entry.text);
+  if (!missing.length) return 0;
+
+  const candidates = new Set<string>([...COMMON_PHRASES, VOICE_TEST_TEXT]);
+  const characters = await getCharacters().catch(() => []);
+  for (const character of characters) {
+    const messages = await getMessages(character.id).catch(() => []);
+    for (const message of messages) {
+      if (!message.content) continue;
+      // Hanya balasan karakter yang pernah dibacakan otomatis.
+      if (message.role !== "assistant") continue;
+      for (const part of splitClauses(message.content)) candidates.add(part);
+    }
+  }
+
+  const lookup = new Map<string, string>();
+  const voices = new Set([settings.hdVoice, DEFAULT_VOICE.hdVoice]);
+  const models = new Set([settings.hdModel, DEFAULT_VOICE.hdModel]);
+  const styles = new Set([settings.hdStyle.trim(), ""]);
+  for (const voice of voices) {
+    for (const model of models) {
+      for (const style of styles) {
+        for (const text of candidates) {
+          lookup.set(ttsKey([model, voice, style, text].join("|")), text);
+        }
+      }
+    }
+  }
+
+  let found = 0;
+  for (const entry of missing) {
+    const text = lookup.get(entry.key);
+    if (!text) continue;
+    await setEntryText(entry.key, text);
+    found += 1;
+  }
+  return found;
 }
 
 /** Hentikan suara HD yang sedang berjalan. */
