@@ -171,30 +171,6 @@ body {
 }
 
 /*
- * Keyboard iPhone.
- * iOS tidak mengecilkan layout viewport saat keyboard muncul; yang mengecil
- * hanya area yang terlihat, lalu iOS menggeser halaman agar field terlihat.
- * Karena halaman ini dikunci (supaya tidak "terangkat"), geseran itu bisa
- * berhenti di posisi yang salah: composer melayang jauh di atas keyboard.
- *
- * Selama keyboard benar-benar terbuka, `useKeyboardViewport` memasang kelas
- * `kb-open` + dua variabel berisi ukuran area yang terlihat. Aplikasi lalu
- * dipasang persis di area itu, sehingga composer menempel di atas keyboard.
- * Tanpa keyboard, aturan ini sama sekali tidak aktif: tata letak tetap 100dvh
- * dan tidak ada pengukuran lewat JS.
- */
-html.kb-open .app-shell {
-  position: relative;
-  top: var(--kb-top, 0px);
-  height: var(--kb-height, 100dvh);
-}
-
-/* Home indicator ikut tertutup keyboard → jarak bawah composer cukup kecil. */
-html.kb-open .composer-bar {
-  padding-bottom: 0.5rem;
-}
-
-/*
  * Cegah iOS Safari memperbesar halaman saat field difokuskan.
  * Safari auto-zoom bila font field < 16px. Aturan ini berlaku untuk semua
  * perangkat sentuh (iPhone portrait & landscape, iPad), ditulis di luar
