@@ -26,7 +26,7 @@ import {
   saveUserProfile,
 } from "@/lib/storage";
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
-import { speak } from "@/lib/voice";
+import { primeSpeech, speak } from "@/lib/voice";
 import { useKeyboardPan } from "@/lib/keyboardPan";
 import { useSafeTop } from "@/lib/safeTop";
 import { useScrollGuard } from "@/lib/scrollGuard";
@@ -175,6 +175,8 @@ export function ChatApp() {
   }
 
   async function handleSelect(id: string) {
+    // Sentuhan pengguna: bangunkan mesin suara supaya balasan berikutnya bunyi.
+    primeSpeech();
     setActiveId(id);
     setView("chats");
     setMobileShowChat(true);
@@ -210,6 +212,9 @@ export function ChatApp() {
   }
 
   async function handleSend(text: string, imageFile: File | null) {
+    // Dipanggil dari tombol kirim (sentuhan pengguna) — kesempatan terbaik
+    // untuk membangunkan mesin suara sebelum balasan datang beberapa detik lagi.
+    primeSpeech();
     if (!activeId) return;
     const character = charactersRef.current.find((c) => c.id === activeId);
     if (!character) return;
