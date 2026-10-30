@@ -318,10 +318,10 @@ export function FilmIcon({ className }: { className?: string }) {
  * 2. Ukuran gambar. Gambar lama hanya memakai separuh tinggi kotak (12 dari 24
  *    satuan), jadi walau kotaknya lebih besar, bentuknya tampak lebih kecil:
  *    hanya 16 px tinggi. Sekarang gambarnya 15 satuan tinggi (20 px, sama
- *    dengan ikon telepon) dan 18 satuan lebar (24 px) — sebelumnya 21 satuan
- *    (28 px) sehingga terasa terlalu lebar. Lebar ikon telepon 20 px, jadi
- *    selisihnya kini ±4 px: badan kamera tetap hampir persegi, yang dipendekkan
- *    bagian lensanya.
+ *    dengan ikon telepon) dan 19,5 satuan lebar (26 px). Versi 28 px terasa
+ *    terlalu lebar, versi 24 px terasa terlalu sempit; 26 px ada di antaranya.
+ *    Badan kamera 13,6 satuan (18,1 px) supaya tetap hampir persegi seperti
+ *    bentuk kamera aslinya, sisanya lensa.
  *
  * Ukuran kotak ikon (h-8) tidak diubah, jadi tinggi tombol dan header tidak
  * bergeser.
@@ -337,8 +337,8 @@ export function VideoCallIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
       className={className}
     >
-      <rect x="3" y="4.5" width="12.6" height="15" rx="3.4" />
-      <path d="M15.6 9.9 21 6.8v10.4l-5.4-3.1z" />
+      <rect x="2.7" y="4.5" width="13.6" height="15" rx="3.6" />
+      <path d="M16.3 9.9 22.2 6.7v10.6l-5.9-3.3z" />
     </svg>
   );
 }
