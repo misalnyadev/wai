@@ -26,7 +26,7 @@ import {
   saveUserProfile,
 } from "@/lib/storage";
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
-import { speak } from "@/lib/voice";
+import { speak, stopSpeaking } from "@/lib/voice";
 import { Avatar } from "./Avatar";
 import { Sidebar } from "./Sidebar";
 import { ChatWindow } from "./ChatWindow";
@@ -564,8 +564,16 @@ export function ChatApp() {
                       background={activeCharacter.chatBackground ?? settings.chatBackground}
                       glass={settings.glassBubbles}
                       glassOpacity={settings.bubbleOpacity}
-                      onVideoCall={() => setCall({ character: activeCharacter, mode: "video" })}
-                      onAudioCall={() => setCall({ character: activeCharacter, mode: "audio" })}
+                      onVideoCall={() => {
+                        // Matikan suara chat dulu supaya tidak dobel dengan
+                        // audio video call.
+                        stopSpeaking();
+                        setCall({ character: activeCharacter, mode: "video" });
+                      }}
+                      onAudioCall={() => {
+                        stopSpeaking();
+                        setCall({ character: activeCharacter, mode: "audio" });
+                      }}
                       onBack={() => setMobileShowChat(false)}
                       onOpenProfile={() => setProfileCharacter(activeCharacter)}
                       onImageClick={(url) => setLightbox(url)}
@@ -704,6 +712,14 @@ export function ChatApp() {
           media={call.character.media}
           voice={settings.voice}
           onClose={() => setCall(null)}
+          onZoomChange={(zoomPercent) => {
+            const latest = charactersRef.current.find((c) => c.id === call.character.id);
+            if (!latest) return;
+            handleCharacterMedia(latest.id, {
+              ...(latest.media ?? {}),
+              callVideoZoom: zoomPercent,
+            });
+          }}
         />
       )}
 
