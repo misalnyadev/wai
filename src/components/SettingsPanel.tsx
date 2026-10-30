@@ -5,7 +5,6 @@ import type { AppSettings, ChatBackground, Provider, ProviderType, UserProfile }
 import { buildBackup, genId, isBackupData, restoreBackup, wipeAll } from "@/lib/storage";
 import { PROVIDER_META, PROVIDER_ORDER, RECOMMENDED_MODELS } from "@/lib/ai/providerDefaults";
 import { useEscape } from "@/lib/useEscape";
-import { setDiagEnabled, useDiagEnabled } from "@/lib/diag";
 import { ThemeSegmented } from "./ThemeToggle";
 import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
 import {
@@ -81,8 +80,6 @@ export function SettingsPanel({
   const [tests, setTests] = useState<Record<string, TestState>>({});
   const [dataBusy, setDataBusy] = useState<"export" | "import" | "wipe" | null>(null);
   const [dataNote, setDataNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
-  /** Panel pengukur tampilan (lihat ViewportProbe). Hanya untuk melaporkan bug. */
-  const diagOn = useDiagEnabled();
   /** Nilai sementara slider kepekatan gelembung — disimpan saat jari dilepas. */
   const [opacityDraft, setOpacityDraft] = useState<number | null>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
@@ -801,21 +798,6 @@ export function SettingsPanel({
               memulihkan di perangkat lain.
             </p>
 
-            <label className="mt-4 flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-line px-3 py-2">
-              <span className="min-w-0">
-                <span className="block text-xs font-medium text-ink">Diagnostik tampilan</span>
-                <span className="block text-[12px] leading-snug text-muted">
-                  Menampilkan angka ukuran layar (viewport, safe-area, keyboard) untuk melaporkan
-                  masalah jarak composer. Tidak mengubah tampilan apa pun.
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={diagOn}
-                onChange={(e) => setDiagEnabled(e.target.checked)}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-ink"
-              />
-            </label>
             {dataNote && (
               <p
                 className={`mt-1 text-xs ${

@@ -86,33 +86,22 @@
   --color-bubble-out-ink: var(--bubble-out-ink);
 }
 
-/*
- * Tinggi dokumen HARUS 100vh — bukan 100%. Ini akar masalah "halaman terangkat".
- *
- * Aplikasi yang dipasang ke Home Screen iPhone memakai
- * apple-mobile-web-app-status-bar-style: black-translucent + viewport-fit=cover.
- * Dengan pengaturan itu, WebKit iOS menggeser seluruh isi halaman naik ke
- * belakang status bar (± 44 px di iPhone 5,8", ± 59 px di model Dynamic Island)
- * TANPA menambah tinggi viewport. Kalau html/body memakai height: 100%, tinggi
- * itu dihitung terhadap containing block yang tidak ikut bergeser — hasilnya
- * halaman tampak terangkat ke atas dan menyisakan celah abu di bawah sebesar
- * tinggi status bar. 100vh selalu mengukur tinggi viewport yang sebenarnya,
- * jadi celah itu hilang tanpa mengubah desain apa pun.
- *
- * Dokumen juga dikunci (overflow: hidden) supaya iOS tidak bisa memulihkan
- * posisi scroll lama saat aplikasi dibuka kembali.
- *
- * Patokan iPhone 5,8" (X / XS / 11 Pro): 375 × 812 px, inset atas 44 px,
- * inset bawah (home indicator) 34 px.
- */
 html,
 body {
-  height: 100vh;
+  height: 100%;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
+  /* Kunci lebar halaman: tidak ada lagi geser/melebar ke samping di iOS */
+  overflow-x: clip;
   position: relative;
+}
+
+/* Fallback untuk browser lama (iOS < 16) yang belum mengenal overflow: clip */
+@supports not (overflow: clip) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
 }
 
 /*
@@ -161,47 +150,6 @@ body {
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-/*
- * Keyboard iPhone: geseran halaman oleh iOS.
- *
- * iOS menggeser (pan) seluruh halaman ke atas saat keyboard muncul supaya
- * kolom ketik terlihat. Halaman ini dikunci (overflow: hidden) supaya tidak
- * "terangkat", jadi geseran itu tidak bisa dikembalikan sendiri: header ikut
- * masuk area status bar dan kotak ketik menggantung di atas keyboard.
- *
- * `useKeyboardPan` menulis dua variabel di bawah ini hanya selama geseran itu
- * ada (visualViewport.offsetTop > 0). Aplikasi lalu dipasang tepat di area
- * yang terlihat, sehingga header kembali di tempatnya dan kotak ketik
- * menempel di atas keyboard. Tanpa keyboard, aturan ini tidak aktif sama
- * sekali dan tata letak memakai tinggi CSS biasa.
- */
-html.kb-panned .app-shell {
-  position: fixed;
-  inset-inline: 0;
-  top: var(--vv-top, 0px);
-  height: var(--vv-height, 100dvh);
-  /*
-   * iOS menggeser halaman bertahap (bukan halus), jadi tanpa transisi
-   * pendek aplikasi ikut bergerak "patah-patah" — terlihat seperti kedipan.
-   * 70ms linear cukup untuk meratakan langkahnya tanpa terasa telat.
-   */
-  transition: top 70ms linear, height 70ms linear;
-  will-change: top, height;
-}
-
-/*
- * Home indicator tertutup keyboard → jarak bawah composer tidak perlu 34 px.
- * Diberi transisi supaya perubahan 34 px → 8 px tidak terasa seperti kedipan
- * saat keyboard mulai naik.
- */
-.composer-bar {
-  transition: padding-bottom 0.18s ease;
-}
-
-html.kb-panned .composer-bar {
-  padding-bottom: 0.5rem;
-}
-
 /* Pakai tinggi viewport dinamis supaya address bar HP tidak memotong composer */
 .app-shell {
   height: 100vh;
@@ -209,24 +157,6 @@ html.kb-panned .composer-bar {
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-}
-
-/*
- * iOS 26 di aplikasi ter-install (display-mode: standalone) dengan
- * `black-translucent`: WebKit melaporkan 100dvh / 100svh lebih pendek sekitar
- * tinggi area status bar (~59 px) — WebKit bug 301108. Root html/body sudah
- * memakai 100vh (tinggi layar sebenarnya), jadi .app-shell yang memakai dvh
- * berhenti ~59 px di atas tepi bawah layar. Itu yang membuat kotak ketik
- * menggantung jauh di atas keyboard.
- *
- * Di mode standalone tidak ada address bar yang bisa muncul/hilang, jadi vh
- * aman dan nilainya sama dengan root. Di browser biasa tetap dvh supaya
- * address bar yang menyusut tidak memotong composer.
- */
-@media (display-mode: standalone) {
-  .app-shell {
-    height: 100vh;
-  }
 }
 
 /*

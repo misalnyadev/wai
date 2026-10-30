@@ -136,30 +136,6 @@ export function ChatWindow({
     }
   }, [messages, isTyping, atBottom]);
 
-  // Safari iOS menggeser/menyusutkan layar saat keyboard muncul. Kalau sedang
-  // di pesan terbaru, tetap tempelkan ke bawah supaya balasan terakhir tidak
-  // "hilang" ke atas saat mulai mengetik.
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    let timer = 0;
-    // Ditunda sampai animasi keyboard selesai — kalau ditempel di setiap
-    // frame, daftar pesan ikut melompat dan terlihat berkedip.
-    const pinSoon = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        const el = scrollRef.current;
-        if (atBottom && el) el.scrollTop = el.scrollHeight;
-      }, 180);
-    };
-    vv.addEventListener("resize", pinSoon);
-    pinSoon();
-    return () => {
-      window.clearTimeout(timer);
-      vv.removeEventListener("resize", pinSoon);
-    };
-  }, [atBottom]);
-
   // Bersihkan timer tekan lama saat percakapan ditutup / berganti karakter.
   useEffect(() => {
     return () => {
@@ -255,10 +231,7 @@ export function ChatWindow({
       )}
 
       {/* Header */}
-      <div
-        data-probe="header"
-        className="z-10 flex items-center gap-3 bg-header px-2 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4"
-      >
+      <div className="z-10 flex items-center gap-3 bg-header px-2 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4">
         <button
           onClick={onBack}
           className="rounded-full p-1.5 text-ink-soft transition hover:bg-line/60 md:hidden"
