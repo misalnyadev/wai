@@ -18,6 +18,22 @@ import { ChatVideoBackground, ChatVideoPanel } from "./ChatVideo";
 import { MessageActionsSheet, MessageHoverActions } from "./MessageActions";
 import { BackIcon, DoubleCheckIcon, PhoneCallIcon, SpeakerIcon, VideoCallIcon } from "./icons";
 
+/**
+ * Lama latar video berjalan setelah balasan muncul ("dia membaca").
+ *
+ * Dihitung dari jumlah KATA, bukan karakter: 2,6 kata/detik ≈ 155 kata/menit —
+ * kecepatan bicara santai. Contoh: balasan 30 kata → ±11,5 detik, 100 kata →
+ * ±38 detik.
+ *
+ * Kalau video terasa berhenti terlalu cepat, naikkan READ_MAX_MS atau turunkan
+ * READ_WORDS_PER_SECOND. Kalau terasa kelamaan, lakukan sebaliknya.
+ */
+const READ_WORDS_PER_SECOND = 2.6;
+/** Batas bawah: balasan super pendek tetap ada gerakan (±2 detik). */
+const READ_MIN_MS = 2000;
+/** Batas atas supaya balasan sangat panjang tidak memutar video selamanya. */
+const READ_MAX_MS = 45000;
+
 function formatTime(iso: string) {
   const d = new Date(iso);
   return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
@@ -135,8 +151,8 @@ export function ChatWindow({
    *
    * Urutan yang diinginkan: selama "sedang mengetik..." video DIAM. Begitu
    * balasan muncul, karakter seperti membaca balasannya — di situlah video
-   * berjalan, lamanya mengikuti panjang balasan (1,5 detik + 55 ms per
-   * karakter, maksimal 12 detik), lalu berhenti lagi.
+   * berjalan, lamanya mengikuti panjang balasan (lihat READ_WORDS_PER_SECOND
+   * di atas berkas), lalu berhenti lagi.
    */
   const [reading, setReading] = useState(false);
   const readTimer = useRef(0);
@@ -153,7 +169,11 @@ export function ChatWindow({
     const last = messages[messages.length - 1];
     if (!last || last.role !== "assistant") return;
 
-    const ms = Math.min(12000, 1500 + last.content.trim().length * 55);
+    const words = last.content.trim().split(/\s+/).filter(Boolean).length;
+    const ms = Math.min(
+      READ_MAX_MS,
+      Math.max(READ_MIN_MS, Math.round((words / READ_WORDS_PER_SECOND) * 1000))
+    );
     window.clearTimeout(readTimer.current);
     // Dijadwalkan lewat timeout 0 supaya tidak memicu render berantai di dalam
     // effect (aturan react-hooks/set-state-in-effect).
