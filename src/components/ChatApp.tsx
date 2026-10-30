@@ -40,6 +40,7 @@ import { UserProfileView } from "./UserProfileView";
 import { VoiceView } from "./VoiceView";
 import { MobileTabBar, NavRail, type AppView } from "./Navigation";
 import { ViewportProbe } from "./ViewportProbe";
+import { useKeyboardPan } from "@/lib/keyboardPan";
 import { PlusIcon, SettingsIcon, XIcon } from "./icons";
 
 function sleep(ms: number) {
@@ -88,6 +89,9 @@ export function ChatApp() {
    * sehingga seluruh tampilan terlihat naik ke atas sampai digeser sekali.
    * Dokumen memang sudah dikunci lewat CSS (globals.css); ini jaring pengaman.
    */
+  // Keyboard iPhone: netralkan geseran halaman oleh iOS (lihat lib/keyboardPan).
+  useKeyboardPan();
+
   useEffect(() => {
     const resetScroll = () => {
       if (window.scrollY !== 0) window.scrollTo(0, 0);

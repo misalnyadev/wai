@@ -161,6 +161,32 @@ body {
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
+/*
+ * Keyboard iPhone: geseran halaman oleh iOS.
+ *
+ * iOS menggeser (pan) seluruh halaman ke atas saat keyboard muncul supaya
+ * kolom ketik terlihat. Halaman ini dikunci (overflow: hidden) supaya tidak
+ * "terangkat", jadi geseran itu tidak bisa dikembalikan sendiri: header ikut
+ * masuk area status bar dan kotak ketik menggantung di atas keyboard.
+ *
+ * `useKeyboardPan` menulis dua variabel di bawah ini hanya selama geseran itu
+ * ada (visualViewport.offsetTop > 0). Aplikasi lalu dipasang tepat di area
+ * yang terlihat, sehingga header kembali di tempatnya dan kotak ketik
+ * menempel di atas keyboard. Tanpa keyboard, aturan ini tidak aktif sama
+ * sekali dan tata letak memakai tinggi CSS biasa.
+ */
+html.kb-panned .app-shell {
+  position: fixed;
+  inset-inline: 0;
+  top: var(--vv-top, 0px);
+  height: var(--vv-height, 100dvh);
+}
+
+/* Home indicator tertutup keyboard → jarak bawah composer tidak perlu 34 px. */
+html.kb-panned .composer-bar {
+  padding-bottom: 0.5rem;
+}
+
 /* Pakai tinggi viewport dinamis supaya address bar HP tidak memotong composer */
 .app-shell {
   height: 100vh;
