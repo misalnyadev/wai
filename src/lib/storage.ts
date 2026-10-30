@@ -356,8 +356,21 @@ export async function deleteAudioBlob(audioId: string): Promise<void> {
 /* Cache suara HD (hasil TTS API, disimpan supaya tidak minta ulang)   */
 /* ------------------------------------------------------------------ */
 
-/** Satu baris catatan cache: kunci, ukuran berkas, dan waktu simpan. */
-export type TtsCacheEntry = { key: string; bytes: number; at: number };
+/**
+ * Satu baris catatan cache.
+ *
+ * `text` disimpan supaya daftar rekaman bisa dibaca manusia ("Hai! Kamu sudah
+ * bangun?"), bukan deretan kode hash. Klip dari versi lama belum punya teks;
+ * isinya bisa ditebak ulang dari riwayat chat (lihat recoverCachedTexts).
+ */
+export type TtsCacheEntry = {
+  key: string;
+  bytes: number;
+  at: number;
+  text?: string;
+  voice?: string;
+  model?: string;
+};
 
 const TTS_INDEX = "tts-index";
 

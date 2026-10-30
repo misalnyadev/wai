@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import type { VoiceSettings } from "@/types/chat";
-import { clearTtsCache, ttsCacheInfo } from "@/lib/ttsCache";
 import { COMMON_PHRASES, getLastTtsError, prewarmTts, speakHd, stopHd } from "@/lib/tts";
 import { VOICE_TEST_TEXT } from "@/lib/voice";
 import { Switch } from "./Switch";
+import { VoiceBank } from "./VoiceBank";
 
 /** Suara bawaan Gemini TTS yang paling cocok untuk percakapan bahasa Indonesia. */
 const HD_VOICES: { id: string; label: string; hint: string }[] = [
@@ -24,12 +24,6 @@ const HD_MODELS: { id: string; label: string; hint: string }[] = [
   { id: "gemini-3.8-flash-lite-tts", label: "3.8 Lite", hint: "paling cepat & hemat" },
 ];
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 /**
  * Setelan suara HD dari API.
  *
@@ -43,21 +37,10 @@ export function VoiceHdSection({
   settings: VoiceSettings;
   onChange: (next: VoiceSettings) => void;
 }) {
-  const [cache, setCache] = useState<{ count: number; bytes: number } | null>(null);
-  const [busy, setBusy] = useState<"test" | "clear" | "prewarm" | null>(null);
+  const [busy, setBusy] = useState<"test" | "prewarm" | null>(null);
   const [note, setNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
-
-  const refreshCache = useCallback(() => {
-    ttsCacheInfo()
-      .then(setCache)
-      .catch(() => setCache(null));
-  }, []);
-
-  useEffect(() => {
-    // Ditunda satu tick supaya tidak setState saat effect berjalan.
-    const timer = window.setTimeout(refreshCache, 0);
-    return () => window.clearTimeout(timer);
-  }, [refreshCache]);
+  /** Dinaikkan setiap ada rekaman baru supaya daftar di VoiceBank ikut segar. */
+  const [tick, setTick] = useState(0);
 
   function update(patch: Partial<VoiceSettings>) {
     onChange({ ...settings, ...patch });
@@ -73,8 +56,8 @@ export function VoiceHdSection({
     const ok = await speakHd(VOICE_TEST_TEXT, settings);
     setBusy(null);
     if (ok) {
-      setNote({ tone: "ok", text: "Suara HD berhasil diputar (tersimpan di cache)." });
-      refreshCache();
+      setNote({ tone: "ok", text: "Suara HD berhasil diputar (tersimpan di perangkat)." });
+      setTick((value) => value + 1);
     } else {
       setNote({ tone: "err", text: getLastTtsError() ?? "Gagal memutar suara HD." });
     }
@@ -87,24 +70,29 @@ export function VoiceHdSection({
     }
     setBusy("prewarm");
     setNote({ tone: "ok", text: `Menyiapkan 0/${COMMON_PHRASES.length}...` });
-    const ready = await prewarmTts(COMMON_PHRASES, settings, (done, total) =>
+    const result = await prewarmTts(COMMON_PHRASES, settings, (done, total) =>
       setNote({ tone: "ok", text: `Menyiapkan ${done}/${total}...` })
     );
     setBusy(null);
-    refreshCache();
-    setNote(
-      ready === COMMON_PHRASES.length
-        ? { tone: "ok", text: `Siap ${ready} frasa — sekarang diputar instan.` }
-        : { tone: "err", text: `Hanya ${ready} dari ${COMMON_PHRASES.length} frasa yang berhasil.` }
-    );
-  }
+    setTick((value) => value + 1);
 
-  async function handleClear() {
-    setBusy("clear");
-    await clearTtsCache();
-    setBusy(null);
-    refreshCache();
-    setNote({ tone: "ok", text: "Cache suara dihapus." });
+    const parts: string[] = [];
+    if (result.added) parts.push(`${result.added} frasa baru`);
+    if (result.existing) parts.push(`${result.existing} sudah ada`);
+    if (result.failed) parts.push(`${result.failed} gagal`);
+
+    if (result.quota) {
+      setNote({
+        tone: "err",
+        text: `Kuota Gemini habis di tengah jalan. ${parts.join(", ")}. Rekaman yang sudah ada tetap bisa diputar.`,
+      });
+    } else if (result.added === 0 && result.existing > 0) {
+      setNote({ tone: "ok", text: "Semua frasa sudah tersimpan — langsung diputar lokal." });
+    } else if (result.failed && !result.added) {
+      setNote({ tone: "err", text: `Gagal membuat suara. ${getLastTtsError() ?? ""}`.trim() });
+    } else {
+      setNote({ tone: "ok", text: `${parts.join(", ")} — sisanya diputar lokal.` });
+    }
   }
 
   return (
@@ -205,20 +193,7 @@ export function VoiceHdSection({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 px-3 py-2">
-            <span className="text-[12px] text-ink-soft">
-              Cache di perangkat
-              {cache ? ` · ${cache.count} kalimat · ${formatBytes(cache.bytes)}` : ""}
-            </span>
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={busy === "clear" || !cache?.count}
-              className="shrink-0 text-[12px] font-semibold text-ink-soft transition hover:text-ink disabled:opacity-40"
-            >
-              {busy === "clear" ? "Menghapus..." : "Hapus"}
-            </button>
-          </div>
+          <VoiceBank settings={settings} tick={tick} onChanged={() => setTick((v) => v + 1)} />
 
           <button
             type="button"
