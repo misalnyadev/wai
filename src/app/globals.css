@@ -169,6 +169,46 @@ body {
 }
 
 /*
+ * iOS 26 di aplikasi ter-install (display-mode: standalone) melaporkan 100dvh
+ * lebih pendek sekitar tinggi area status bar (WebKit bug 301108). Root
+ * html/body memakai 100vh (tinggi layar sebenarnya), jadi .app-shell harus
+ * ikut 100vh — kalau tidak, aplikasi berhenti ~59 px di atas tepi bawah layar
+ * dan kotak ketik menggantung. Di browser biasa tetap dvh supaya address bar
+ * yang menyusut tidak memotong composer.
+ */
+@media (display-mode: standalone) {
+  .app-shell {
+    height: 100vh;
+  }
+}
+
+/*
+ * Keyboard iPhone: geseran halaman oleh iOS.
+ *
+ * iOS menggeser seluruh halaman ke atas supaya kolom ketik terlihat. Halaman
+ * ini dikunci (overflow: hidden) supaya header tidak "terangkat", jadi geseran
+ * itu tidak bisa dikembalikan sendiri — kotak ketik berhenti jauh di atas
+ * keyboard.
+ *
+ * `useKeyboardPan` menulis --vv-top / --vv-height HANYA selama geseran ada.
+ * Aplikasi digeser balik sebesar geseran (lewat transform, digambar di lapisan
+ * GPU — bukan `top`, supaya tidak memicu layout ulang tiap frame) dan
+ * tingginya disesuaikan dengan area yang terlihat. Hasilnya: aplikasi terlihat
+ * diam, kotak ketik menempel di atas keyboard.
+ *
+ * Tanpa keyboard kelas ini tidak aktif dan tidak ada satu pun perubahan.
+ */
+html.kb-panned .app-shell {
+  transform: translate3d(0, var(--vv-top, 0px), 0);
+  height: var(--vv-height, 100vh);
+}
+
+/* Home indicator tertutup keyboard → jarak bawah composer cukup kecil. */
+html.kb-panned .composer-bar {
+  padding-bottom: 0.5rem;
+}
+
+/*
  * Cegah iOS Safari memperbesar halaman saat field difokuskan.
  * Safari auto-zoom bila font field < 16px. Aturan ini berlaku untuk semua
  * perangkat sentuh (iPhone portrait & landscape, iPad), ditulis di luar
