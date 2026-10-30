@@ -140,11 +140,9 @@ function sanitizeMedia(media: CharacterMedia | null | undefined): CharacterMedia
       : undefined,
     callVideoId: id(media.callVideoId),
     callVideoPosterUrl: poster(media.callVideoPosterUrl),
-    // Zoom juga berlaku saat panggilan memakai video latar (tanpa klip khusus).
-    callVideoZoom:
-      media.callVideoZoom === undefined || media.callVideoZoom === null
-        ? undefined
-        : Math.min(200, Math.max(100, Number(media.callVideoZoom) || 100)),
+    callVideoZoom: media.callVideoId
+      ? Math.min(200, Math.max(100, Number(media.callVideoZoom) || 100))
+      : undefined,
     callAudioId: id(media.callAudioId),
     callAudioName: id(media.callAudioName),
   };
