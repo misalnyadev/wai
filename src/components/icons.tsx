@@ -305,14 +305,21 @@ export function FilmIcon({ className }: { className?: string }) {
   );
 }
 
-/** Kamera video (handycam) — tombol video call di header chat. */
+/**
+ * Ikon panggilan video — tombol video call di header chat.
+ *
+ * Digambar pada 32 px (h-8), sedangkan ikon telepon di sebelahnya 24 px (h-6).
+ * Tebal garis ikut membesar mengikuti ukuran kotak, jadi 1.9 pada 32 px terlihat
+ * ±2,5 px — lebih tebal dari ikon telepon (±1,9 px). Nilai 1.4 × 32/24 = 1,87 px,
+ * sehingga ketebalan garisnya kini sama dengan ikon telepon.
+ */
 export function VideoCallIcon({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.9}
+      strokeWidth={1.4}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
