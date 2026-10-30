@@ -192,7 +192,14 @@ body {
   height: 100dvh;
   width: 100%;
   max-width: 100%;
+  /*
+   * `hidden` saja hanya melarang pengguna menggeser — iOS tetap bisa
+   * menggesernya sendiri saat keyboard muncul, dan aplikasi tertinggal
+   * tergeser ke atas (header masuk status bar). `clip` benar-benar
+   * menjadikannya bukan kotak scroll.
+   */
   overflow: hidden;
+  overflow: clip;
 }
 
 /*
