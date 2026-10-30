@@ -94,11 +94,11 @@ export function Composer({
           <button
             onClick={() => fileRef.current?.click()}
             disabled={disabled}
-            className="mb-0.5 shrink-0 p-2 text-ink-soft transition active:opacity-50 disabled:opacity-50"
+            className="mb-0.5 shrink-0 p-[5px] text-ink-soft transition active:opacity-50 disabled:opacity-50"
             title="Kirim foto"
             aria-label="Lampirkan foto"
           >
-            <PlusIcon className="h-6 w-6" />
+            <PlusIcon className="h-[30px] w-[30px]" />
           </button>
           <textarea
             ref={textareaRef}
