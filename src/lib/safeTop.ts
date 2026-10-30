@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { maxObservedShift } from "@/lib/scrollGuard";
 
 /**
  * Jarak aman atas (tinggi status bar iPhone) sebagai jaring pengaman.
@@ -120,5 +121,6 @@ export function describeSafeTop(): string {
   const { w, h } = screenSize();
   const measured = Math.round(readInsetTop());
   const applied = Math.round(resolveSafeTop());
-  return `Layar ${w}×${h} · env ${measured} px · ${isAppMode() ? "app" : "browser"} · jarak atas ${applied} px`;
+  const shifted = maxObservedShift();
+  return `Layar ${w}×${h} · env ${measured} px · ${isAppMode() ? "app" : "browser"} · jarak atas ${applied} px · geser ${shifted} px`;
 }
