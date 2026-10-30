@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { Character, UserProfile } from "@/types/chat";
 import { Avatar } from "./Avatar";
 import { ThemeQuickToggle } from "./ThemeToggle";
-import { PlusIcon, SearchIcon, SettingsIcon } from "./icons";
+import { PlusIcon, SearchIcon } from "./icons";
 
 function formatListTime(iso: string) {
   const d = new Date(iso);
@@ -72,20 +72,10 @@ export function Sidebar({
           </span>
         </button>
         <div className="flex shrink-0 items-center gap-1">
-          <span className="hidden md:block">
-            <ThemeQuickToggle />
-          </span>
-          <button
-            onClick={onOpenSettings}
-            className="relative rounded-full p-2 text-ink-soft transition hover:bg-line/60"
-            title="Setelan"
-            aria-label="Setelan"
-          >
-            <SettingsIcon className="h-5 w-5" />
-            {!hasProviders && (
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 animate-pulse rounded-full bg-ink/40 ring-2 ring-header" />
-            )}
-          </button>
+          {/* Setelan sudah ada di kapsul navigasi bawah, jadi tombol gear di
+              sini diganti tombol tema terang/gelap. Ukurannya sama (p-2 + 20 px)
+              sehingga tinggi header tidak berubah. */}
+          <ThemeQuickToggle />
           <button
             onClick={onNewCharacter}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-brand-ink shadow-sm transition hover:bg-brand-strong active:scale-95"
