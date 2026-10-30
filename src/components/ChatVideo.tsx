@@ -18,6 +18,10 @@ type VideoBackgroundProps = {
   sound?: boolean;
   /** Perbesaran media (1 = normal). Berguna untuk memotong bingkai hitam. */
   zoom?: number;
+  /** Dipanggil bila browser menolak memutar video bersuara tanpa ketukan. */
+  onSoundBlocked?: () => void;
+  /** Ganti angka ini untuk mencoba menyalakan suara lagi. */
+  replayKey?: number;
 };
 
 /**
@@ -29,9 +33,18 @@ function useVideoPlayback(
   ref: RefObject<HTMLVideoElement | null>,
   videoId: string | null,
   shouldPlay: boolean,
-  sound = false
+  sound = false,
+  /** Dipanggil saat browser menolak autoplay bersuara (butuh ketukan). */
+  onSoundBlocked?: () => void,
+  /** Ganti angka ini untuk mencoba menyalakan suara lagi setelah diketuk. */
+  replayKey = 0
 ): string | null {
   const url = useChatVideoUrl(videoId);
+  const blockedRef = useRef(onSoundBlocked);
+
+  useEffect(() => {
+    blockedRef.current = onSoundBlocked;
+  }, [onSoundBlocked]);
 
   useEffect(() => {
     if (videoId) ensureChatVideo(videoId);
@@ -46,13 +59,15 @@ function useVideoPlayback(
     }
     el.muted = !sound;
     void el.play().catch(() => {
-      // Browser menolak autoplay bersuara → coba lagi tanpa suara.
+      // Browser menolak autoplay bersuara → coba lagi tanpa suara, lalu
+      // beri tahu UI supaya pengguna bisa mengetuk tombol suara.
       if (sound) {
+        blockedRef.current?.();
         el.muted = true;
         void el.play().catch(() => {});
       }
     });
-  }, [ref, url, shouldPlay, sound]);
+  }, [ref, url, shouldPlay, sound, replayKey]);
 
   useEffect(() => {
     function onVisibilityChange() {
@@ -63,6 +78,7 @@ function useVideoPlayback(
         el.muted = !sound;
         void el.play().catch(() => {
           if (sound) {
+            blockedRef.current?.();
             el.muted = true;
             void el.play().catch(() => {});
           }
@@ -86,6 +102,8 @@ export function ChatVideoBackground({
   talking = false,
   sound = false,
   zoom = 1,
+  onSoundBlocked,
+  replayKey = 0,
 }: VideoBackgroundProps) {
   const reduced = usePrefersReducedMotion();
   const baseRef = useRef<HTMLVideoElement>(null);
@@ -98,8 +116,22 @@ export function ChatVideoBackground({
   const talkingActive = Boolean(
     talking && talkingVideoId && !reduced && talkingStatus !== "missing"
   );
-  const baseUrl = useVideoPlayback(baseRef, videoId, !reduced && !talkingActive, sound);
-  const talkUrl = useVideoPlayback(talkRef, talkingVideoId ?? null, talkingActive, sound);
+  const baseUrl = useVideoPlayback(
+    baseRef,
+    videoId,
+    !reduced && !talkingActive,
+    sound,
+    onSoundBlocked,
+    replayKey
+  );
+  const talkUrl = useVideoPlayback(
+    talkRef,
+    talkingVideoId ?? null,
+    talkingActive,
+    sound,
+    onSoundBlocked,
+    replayKey
+  );
 
   return (
     <div
@@ -180,14 +212,31 @@ export function ChatVideoPanel({
   const [sound, setSound] = useState(false);
   /** Saat perangkat memakai "Kurangi Gerakan", video boleh diputar manual. */
   const [forcePlay, setForcePlay] = useState(false);
+  /** Autoplay bersuara ditolak → minta pengguna mengetuk. */
+  const [soundBlocked, setSoundBlocked] = useState(false);
+  const [replayKey, setReplayKey] = useState(0);
 
   const talkingStatus = useChatVideoStatus(talkingVideoId ?? null);
   const talkingActive = Boolean(
     talking && talkingVideoId && !reduced && talkingStatus !== "missing"
   );
   const shouldPlay = !reduced || forcePlay;
-  const baseUrl = useVideoPlayback(baseRef, videoId, shouldPlay && !talkingActive, sound);
-  const talkUrl = useVideoPlayback(talkRef, talkingVideoId ?? null, shouldPlay && talkingActive, sound);
+  const baseUrl = useVideoPlayback(
+    baseRef,
+    videoId,
+    shouldPlay && !talkingActive,
+    sound,
+    () => setSoundBlocked(true),
+    replayKey
+  );
+  const talkUrl = useVideoPlayback(
+    talkRef,
+    talkingVideoId ?? null,
+    shouldPlay && talkingActive,
+    sound,
+    () => setSoundBlocked(true),
+    replayKey
+  );
   const status = useChatVideoStatus(videoId);
 
   return (
@@ -244,6 +293,20 @@ export function ChatVideoPanel({
 
       <div className="pointer-events-none absolute inset-0 bg-black" style={{ opacity: dim }} />
 
+      {sound && soundBlocked && baseUrl && shouldPlay && (
+        <button
+          type="button"
+          onClick={() => {
+            setSoundBlocked(false);
+            setReplayKey((value) => value + 1);
+          }}
+          className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full bg-black/65 px-3 py-2 text-[11px] font-semibold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-black/80"
+        >
+          <SpeakerOffIcon className="h-4 w-4" />
+          Ketuk untuk menyalakan suara
+        </button>
+      )}
+
       <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-gradient-to-b from-black/55 to-transparent px-3 pb-6 pt-2">
         <span className="min-w-0 truncate text-xs font-semibold text-white/90">{name}</span>
         <div className="flex shrink-0 items-center gap-1">
@@ -261,7 +324,11 @@ export function ChatVideoPanel({
           {baseUrl && shouldPlay && (
             <button
               type="button"
-              onClick={() => setSound((value) => !value)}
+              onClick={() => {
+                setSound((value) => !value);
+                setSoundBlocked(false);
+                setReplayKey((value) => value + 1);
+              }}
               aria-pressed={sound}
               className="rounded-full bg-black/45 p-1.5 text-white/90 backdrop-blur transition hover:bg-black/65"
               aria-label={sound ? "Matikan suara video" : "Nyalakan suara video"}
