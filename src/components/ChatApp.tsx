@@ -27,6 +27,7 @@ import {
 } from "@/lib/storage";
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
 import { speak } from "@/lib/voice";
+import { useKeyboardPan } from "@/lib/keyboardPan";
 import { Avatar } from "./Avatar";
 import { Sidebar } from "./Sidebar";
 import { ChatWindow } from "./ChatWindow";
@@ -87,6 +88,9 @@ export function ChatApp() {
    * sehingga seluruh tampilan terlihat naik ke atas sampai digeser sekali.
    * Dokumen memang sudah dikunci lewat CSS (globals.css); ini jaring pengaman.
    */
+  // Keyboard iPhone: netralkan geseran halaman oleh iOS (lib/keyboardPan).
+  useKeyboardPan();
+
   useEffect(() => {
     const resetScroll = () => {
       if (window.scrollY !== 0) window.scrollTo(0, 0);
