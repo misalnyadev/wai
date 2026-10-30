@@ -28,6 +28,7 @@ import {
 } from "@/lib/storage";
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
 import { speakBest } from "@/lib/tts";
+import { isDictating } from "@/lib/dictation";
 import { useSpeechUnlock } from "@/lib/voice";
 import { useKeyboardPan } from "@/lib/keyboardPan";
 import { useSafeTop } from "@/lib/safeTop";
@@ -355,7 +356,9 @@ export function ChatApp() {
         };
         updateMessages(characterId, (l) => [...l, reply]);
         touchCharacter(characterId, bubbles[i]);
-        if (settings.voice.enabled) speakBest(bubbles[i], settings.voice, { append: i > 0 });
+        if (settings.voice.enabled && !isDictating()) {
+          speakBest(bubbles[i], settings.voice, { append: i > 0 });
+        }
         if (i < bubbles.length - 1) await sleep(350);
       }
       setTypingFor(null);
@@ -589,7 +592,11 @@ export function ChatApp() {
                         void handleRegenerate(activeCharacter.id);
                       }}
                     />
-                    <Composer onSend={handleSend} disabled={typingFor === activeId} />
+                    <Composer
+                      onSend={handleSend}
+                      disabled={typingFor === activeId}
+                      onNotice={showToast}
+                    />
                   </>
                 ) : (
                   <div className="dot-grid relative flex h-full flex-1 flex-col items-center justify-center overflow-y-auto bg-app px-5 py-10 text-center">
