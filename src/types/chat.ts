@@ -40,6 +40,19 @@ export type VoiceSettings = {
   volume: number;
   /** Jeda antar kalimat (ms) — bikin terdengar seperti mengambil napas. */
   pause: number;
+  /**
+   * Suara HD dari API (Gemini TTS). Hasilnya disimpan di perangkat, jadi teks
+   * yang sama diputar ulang tanpa memanggil API lagi.
+   */
+  hdEnabled: boolean;
+  /** API key Gemini untuk suara HD. Kosong = tetap pakai suara perangkat. */
+  hdKey: string;
+  /** Nama suara Gemini, mis. "Kore". */
+  hdVoice: string;
+  /** Arahan gaya bicara, mis. "bicara santai dan hangat". */
+  hdStyle: string;
+  /** Model TTS Gemini. */
+  hdModel: string;
 };
 
 /** Latar area chat: bawaan tema, warna, gambar sendiri, animasi, atau video. */
@@ -172,6 +185,11 @@ export const DEFAULT_VOICE: VoiceSettings = {
   pitch: 1.0,
   volume: 1,
   pause: 150,
+  hdEnabled: false,
+  hdKey: "",
+  hdVoice: "Kore",
+  hdStyle: "",
+  hdModel: "gemini-3.8-flash-tts",
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {

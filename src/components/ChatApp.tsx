@@ -27,7 +27,8 @@ import {
   saveUserProfile,
 } from "@/lib/storage";
 import { fileToDataUrl, splitDataUrl } from "@/lib/imageClient";
-import { speak, useSpeechUnlock } from "@/lib/voice";
+import { speakBest } from "@/lib/tts";
+import { useSpeechUnlock } from "@/lib/voice";
 import { useKeyboardPan } from "@/lib/keyboardPan";
 import { useSafeTop } from "@/lib/safeTop";
 import { useScrollGuard } from "@/lib/scrollGuard";
@@ -354,7 +355,7 @@ export function ChatApp() {
         };
         updateMessages(characterId, (l) => [...l, reply]);
         touchCharacter(characterId, bubbles[i]);
-        if (settings.voice.enabled) speak(bubbles[i], settings.voice, { append: i > 0 });
+        if (settings.voice.enabled) speakBest(bubbles[i], settings.voice, { append: i > 0 });
         if (i < bubbles.length - 1) await sleep(350);
       }
       setTypingFor(null);
@@ -580,7 +581,7 @@ export function ChatApp() {
                       onBack={() => setMobileShowChat(false)}
                       onOpenProfile={() => setProfileCharacter(activeCharacter)}
                       onImageClick={(url) => setLightbox(url)}
-                      onSpeak={(text) => speak(text, settings.voice)}
+                      onSpeak={(text) => speakBest(text, settings.voice)}
                       onDeleteMessage={(messageId) =>
                         handleDeleteMessage(activeCharacter.id, messageId)
                       }

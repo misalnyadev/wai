@@ -244,6 +244,13 @@ const GLASS_VERSION = 1;
 /** Kepekatan gelembung bawaan — cukup bening sehingga video di belakang tetap terlihat. */
 const DEFAULT_BUBBLE_OPACITY = 45;
 
+/** Model suara yang sudah/tengah dipensiunkan Google. */
+const LEGACY_TTS_MODELS = new Set([
+  "gemini-2.5-flash-preview-tts",
+  "gemini-2.5-pro-preview-tts",
+  "gemini-3.1-flash-tts-preview",
+]);
+
 function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings {
   const merged: AppSettings = { ...DEFAULT_SETTINGS, ...(saved ?? {}) };
   const safe: ChatBackground = sanitizeBackground(merged.chatBackground) ?? { kind: "default" };
@@ -260,6 +267,17 @@ function normalizeSettings(saved: Partial<AppSettings> | undefined): AppSettings
     pitch: clamp(rawVoice.pitch, 0.5, 1.6, DEFAULT_VOICE.pitch),
     volume: clamp(rawVoice.volume, 0, 1, DEFAULT_VOICE.volume),
     pause: clamp(rawVoice.pause, 0, 600, DEFAULT_VOICE.pause),
+    hdEnabled: Boolean(rawVoice.hdEnabled),
+    hdKey: typeof rawVoice.hdKey === "string" ? rawVoice.hdKey : "",
+    hdVoice: typeof rawVoice.hdVoice === "string" && rawVoice.hdVoice ? rawVoice.hdVoice : DEFAULT_VOICE.hdVoice,
+    hdStyle: typeof rawVoice.hdStyle === "string" ? rawVoice.hdStyle : "",
+    // Model TTS generasi 2.5 dipensiunkan pertengahan November 2026; setelan
+    // lama dipindahkan ke model 3.8 supaya suaranya tidak mendadak mati.
+    hdModel: LEGACY_TTS_MODELS.has(String(rawVoice.hdModel))
+      ? DEFAULT_VOICE.hdModel
+      : typeof rawVoice.hdModel === "string" && rawVoice.hdModel
+        ? rawVoice.hdModel
+        : DEFAULT_VOICE.hdModel,
   };
 
   // Pengguna lama (setelan tersimpan sebelum gelembung tembus pandang jadi
@@ -332,6 +350,36 @@ export async function getAudioBlob(audioId: string): Promise<Blob | undefined> {
 
 export async function deleteAudioBlob(audioId: string): Promise<void> {
   await kvDel(`audio:${audioId}`);
+}
+
+/* ------------------------------------------------------------------ */
+/* Cache suara HD (hasil TTS API, disimpan supaya tidak minta ulang)   */
+/* ------------------------------------------------------------------ */
+
+/** Satu baris catatan cache: kunci, ukuran berkas, dan waktu simpan. */
+export type TtsCacheEntry = { key: string; bytes: number; at: number };
+
+const TTS_INDEX = "tts-index";
+
+export async function readTtsBlob(key: string): Promise<Blob | undefined> {
+  return kvGet<Blob>(`tts:${key}`);
+}
+
+export async function writeTtsBlob(key: string, blob: Blob): Promise<void> {
+  await kvSet(`tts:${key}`, blob);
+}
+
+export async function removeTtsBlob(key: string): Promise<void> {
+  await kvDel(`tts:${key}`);
+}
+
+export async function readTtsIndex(): Promise<TtsCacheEntry[]> {
+  const list = await kvGet<TtsCacheEntry[]>(TTS_INDEX);
+  return Array.isArray(list) ? list : [];
+}
+
+export async function writeTtsIndex(list: TtsCacheEntry[]): Promise<void> {
+  await kvSet(TTS_INDEX, list);
 }
 
 const SEED = [
