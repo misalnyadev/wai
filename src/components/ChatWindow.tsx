@@ -231,7 +231,10 @@ export function ChatWindow({
       )}
 
       {/* Header */}
-      <div className="z-10 flex items-center gap-3 bg-header px-2 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4">
+      <div
+        data-probe="header"
+        className="z-10 flex items-center gap-3 bg-header px-2 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4"
+      >
         <button
           onClick={onBack}
           className="rounded-full p-1.5 text-ink-soft transition hover:bg-line/60 md:hidden"

@@ -39,6 +39,7 @@ import { CharactersView } from "./CharactersView";
 import { UserProfileView } from "./UserProfileView";
 import { VoiceView } from "./VoiceView";
 import { MobileTabBar, NavRail, type AppView } from "./Navigation";
+import { ViewportProbe } from "./ViewportProbe";
 import { PlusIcon, SettingsIcon, XIcon } from "./icons";
 
 function sleep(ms: number) {
@@ -726,6 +727,8 @@ export function ChatApp() {
           />
         </div>
       )}
+
+      <ViewportProbe />
 
       {toast && (
         <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[70] flex justify-center px-4 md:bottom-5">
