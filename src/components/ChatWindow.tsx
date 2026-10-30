@@ -142,16 +142,21 @@ export function ChatWindow({
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    const pinToBottom = () => {
-      const el = scrollRef.current;
-      if (atBottom && el) el.scrollTop = el.scrollHeight;
+    let timer = 0;
+    // Ditunda sampai animasi keyboard selesai — kalau ditempel di setiap
+    // frame, daftar pesan ikut melompat dan terlihat berkedip.
+    const pinSoon = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const el = scrollRef.current;
+        if (atBottom && el) el.scrollTop = el.scrollHeight;
+      }, 180);
     };
-    // Setelah keyboard selesai bergerak, tinggi area chat baru stabil.
-    const timer = window.setTimeout(pinToBottom, 120);
-    vv.addEventListener("resize", pinToBottom);
+    vv.addEventListener("resize", pinSoon);
+    pinSoon();
     return () => {
       window.clearTimeout(timer);
-      vv.removeEventListener("resize", pinToBottom);
+      vv.removeEventListener("resize", pinSoon);
     };
   }, [atBottom]);
 

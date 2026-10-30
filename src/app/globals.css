@@ -180,9 +180,24 @@ html.kb-panned .app-shell {
   inset-inline: 0;
   top: var(--vv-top, 0px);
   height: var(--vv-height, 100dvh);
+  /*
+   * iOS menggeser halaman bertahap (bukan halus), jadi tanpa transisi
+   * pendek aplikasi ikut bergerak "patah-patah" — terlihat seperti kedipan.
+   * 70ms linear cukup untuk meratakan langkahnya tanpa terasa telat.
+   */
+  transition: top 70ms linear, height 70ms linear;
+  will-change: top, height;
 }
 
-/* Home indicator tertutup keyboard → jarak bawah composer tidak perlu 34 px. */
+/*
+ * Home indicator tertutup keyboard → jarak bawah composer tidak perlu 34 px.
+ * Diberi transisi supaya perubahan 34 px → 8 px tidak terasa seperti kedipan
+ * saat keyboard mulai naik.
+ */
+.composer-bar {
+  transition: padding-bottom 0.18s ease;
+}
+
 html.kb-panned .composer-bar {
   padding-bottom: 0.5rem;
 }
