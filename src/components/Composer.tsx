@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { PaperclipIcon, SendIcon, XIcon } from "./icons";
+import { PlusIcon, SendIcon, XIcon } from "./icons";
 
 export function Composer({
   onSend,
@@ -94,11 +94,11 @@ export function Composer({
           <button
             onClick={() => fileRef.current?.click()}
             disabled={disabled}
-            className="mb-0.5 shrink-0 rounded-full p-2.5 text-ink-soft transition hover:bg-line/60 disabled:opacity-50"
+            className="mb-0.5 shrink-0 p-2.5 text-ink-soft transition active:opacity-50 disabled:opacity-50"
             title="Kirim foto"
             aria-label="Lampirkan foto"
           >
-            <PaperclipIcon className="h-5 w-5" />
+            <PlusIcon className="h-5 w-5" />
           </button>
           <textarea
             ref={textareaRef}
