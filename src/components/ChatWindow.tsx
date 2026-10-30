@@ -153,9 +153,15 @@ export function ChatWindow({
    * balasan muncul, karakter seperti membaca balasannya — di situlah video
    * berjalan, lamanya mengikuti panjang balasan (lihat READ_WORDS_PER_SECOND
    * di atas berkas), lalu berhenti lagi.
+   *
+   * Kalau balasan itu DIBACAKAN (suara karakter menyala), audio yang jadi
+   * patokan: timer "membaca" dibatalkan dan video hanya mengikuti `speaking`
+   * — mulai saat suara terdengar, berhenti tepat saat suaranya selesai.
    */
   const [reading, setReading] = useState(false);
   const readTimer = useRef(0);
+  /** Timeout 0 ms yang menandai "mulai membaca" (dibatalkan bila audio masuk). */
+  const startTimer = useRef(0);
   const wasTyping = useRef(false);
 
   useEffect(() => {
@@ -177,17 +183,31 @@ export function ChatWindow({
     window.clearTimeout(readTimer.current);
     // Dijadwalkan lewat timeout 0 supaya tidak memicu render berantai di dalam
     // effect (aturan react-hooks/set-state-in-effect).
-    const start = window.setTimeout(() => {
+    startTimer.current = window.setTimeout(() => {
       setReading(true);
       readTimer.current = window.setTimeout(() => setReading(false), ms);
     }, 0);
-    return () => window.clearTimeout(start);
+    return () => window.clearTimeout(startTimer.current);
   }, [isTyping, messages]);
 
   useEffect(() => () => window.clearTimeout(readTimer.current), []);
 
-  /** Latar berjalan selama karakter "membaca" balasannya, atau saat bersuara. */
-  const videoPlaying = (reading && !isTyping) || speaking;
+  // Suara karakter mulai terdengar → timer "membaca" tidak dipakai lagi.
+  // Timer mulai (timeout 0) ikut dibatalkan supaya tidak sempat menyalakan
+  // lagi video setelah audio selesai.
+  useEffect(() => {
+    if (!speaking) return;
+    window.clearTimeout(startTimer.current);
+    window.clearTimeout(readTimer.current);
+    const id = window.setTimeout(() => setReading(false), 0);
+    return () => window.clearTimeout(id);
+  }, [speaking]);
+
+  /**
+   * Latar berjalan saat karakter bersuara (mengikuti audio sampai suaranya
+   * habis) atau, bila tidak ada audio, selama perkiraan waktu membaca.
+   */
+  const videoPlaying = speaking || (reading && !isTyping);
 
   useEffect(() => {
     if (atBottom && scrollRef.current) {
