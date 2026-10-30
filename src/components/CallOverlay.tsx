@@ -59,10 +59,6 @@ export function CallOverlay({
   const [muted, setMuted] = useState(false);
   /** true bila browser menolak memutar audio tanpa ketukan pengguna. */
   const [audioBlocked, setAudioBlocked] = useState(false);
-  /** true bila autoplay video bersuara ditolak (butuh ketukan pengguna). */
-  const [soundBlocked, setSoundBlocked] = useState(false);
-  /** Naikkan angka ini untuk mencoba menyalakan suara video lagi. */
-  const [soundReplay, setSoundReplay] = useState(0);
   const speaking = useIsSpeaking();
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -79,8 +75,6 @@ export function CallOverlay({
   // suara dari video itu sendiri (kalau diputar dua-duanya jadi dobel).
   const voiceCall = mode === "audio";
   const hasRecording = Boolean(audioId) && voiceCall;
-  // Pembesaran diatur dari halaman karakter (Zoom video call) — layar panggilan
-  // sengaja dibiarkan bersih seperti WhatsApp.
   const zoom = Math.min(2, Math.max(1, (media?.callVideoZoom ?? 100) / 100));
 
   const greeting = (character.greeting?.trim() || `Halo, ini ${character.name}.`).slice(0, 220);
@@ -138,9 +132,6 @@ export function CallOverlay({
     const next = !muted;
     setMuted(next);
     setAudioBlocked(false);
-    setSoundBlocked(false);
-    // Ketukan pengguna = izin autoplay bersuara; coba putar ulang video.
-    if (!next) setSoundReplay((value) => value + 1);
     const el = audioRef.current;
     if (el) {
       el.muted = next;
@@ -164,7 +155,7 @@ export function CallOverlay({
       role="dialog"
       aria-modal="true"
       aria-label={`${mode === "video" ? "Video call" : "Panggilan suara"} dengan ${character.name}`}
-      className="fade-in fixed inset-0 z-[80] w-full overflow-hidden bg-[#0a0a0c] text-white"
+      className="fade-in fixed inset-0 z-[80] h-[100dvh] w-full overflow-hidden bg-[#0a0a0c] text-white"
     >
       {/* Latar: klip video call karakter, atau gradasi gelap */}
       <div className="absolute inset-0 isolate overflow-hidden">
@@ -173,10 +164,10 @@ export function CallOverlay({
             videoId={video.videoId}
             posterUrl={video.posterUrl}
             dim={0.08}
+            talkingVideoId={media?.callVideoId ? undefined : media?.chatVideoId}
+            talking={speaking}
             sound={!muted}
             zoom={zoom}
-            onSoundBlocked={() => setSoundBlocked(true)}
-            replayKey={soundReplay}
           />
         ) : (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,#1d1d24,#0a0a0c_72%)]" />
@@ -196,19 +187,6 @@ export function CallOverlay({
             <p className="mt-1 text-[12px] text-white/55">
               Ketuk ikon suara untuk menyalakan audio.
             </p>
-          )}
-          {mode === "video" && video && soundBlocked && !muted && (
-            <button
-              type="button"
-              onClick={() => {
-                setSoundBlocked(false);
-                setSoundReplay((value) => value + 1);
-              }}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-semibold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/25 active:scale-95"
-            >
-              <SpeakerOffIcon className="h-4 w-4" />
-              Ketuk untuk menyalakan suara
-            </button>
           )}
         </div>
 

@@ -272,11 +272,11 @@ export function ChatWindow({
         {onVideoCall && (
           <button
             onClick={onVideoCall}
-            className="rounded-full p-1 text-ink-soft transition hover:bg-line/60 hover:text-ink"
+            className="rounded-full p-2 text-ink-soft transition hover:bg-line/60 hover:text-ink"
             aria-label={`Video call dengan ${character.name}`}
             title="Video call"
           >
-            <VideoCallIcon className="h-10 w-10" />
+            <VideoCallIcon className="h-8 w-8" />
           </button>
         )}
         {onAudioCall && (

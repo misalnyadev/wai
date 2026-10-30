@@ -296,14 +296,6 @@ export function PlayIcon({ className }: { className?: string }) {
   );
 }
 
-export function StopIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
-      <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
 export function FilmIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
