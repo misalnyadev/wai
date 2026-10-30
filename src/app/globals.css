@@ -86,22 +86,29 @@
   --color-bubble-out-ink: var(--bubble-out-ink);
 }
 
+/*
+ * Tinggi dokumen HARUS 100vh — bukan 100%.
+ *
+ * Aplikasi yang dipasang ke Home Screen iPhone memakai
+ * apple-mobile-web-app-status-bar-style: black-translucent + viewport-fit=cover.
+ * Dengan pengaturan itu, WebKit iOS menggeser seluruh isi halaman naik ke
+ * belakang status bar (± 44 px di iPhone 5,8") TANPA menambah tinggi viewport.
+ * Kalau html/body memakai height: 100%, tinggi itu dihitung terhadap
+ * containing block yang tidak ikut bergeser — hasilnya header naik ke area
+ * status bar dan menyisakan celah di bawah. 100vh selalu mengukur tinggi
+ * viewport yang sebenarnya, jadi masalah itu hilang tanpa mengubah desain.
+ *
+ * Dokumen juga dikunci (overflow: hidden) supaya iOS tidak bisa memulihkan
+ * posisi scroll lama saat aplikasi dibuka kembali.
+ */
 html,
 body {
-  height: 100%;
+  height: 100vh;
   width: 100%;
   max-width: 100%;
-  /* Kunci lebar halaman: tidak ada lagi geser/melebar ke samping di iOS */
-  overflow-x: clip;
+  overflow: hidden;
+  overscroll-behavior: none;
   position: relative;
-}
-
-/* Fallback untuk browser lama (iOS < 16) yang belum mengenal overflow: clip */
-@supports not (overflow: clip) {
-  html,
-  body {
-    overflow-x: hidden;
-  }
 }
 
 /*
