@@ -1,0 +1,1231 @@
+From 4e2e07c8876defebd870738880ecf0b0b1d9ce3f Mon Sep 17 00:00:00 2001
+From: arena <arena@local>
+Date: Sat, 31 Oct 2026 03:57:48 +0000
+Subject: [PATCH] Tahap 2c Aisherly: latar chat tersimpan di akun + tepi atas
+ penuh
+
+- Pemilih latar chat baru di Setelan: bawaan, 6 warna, gambar sendiri, 5 animasi
+- Pilihan disimpan di kolom users.chat_background, jadi ikut ke semua perangkat
+- Endpoint /api/appearance (GET/PATCH/DELETE) untuk membaca & menyimpan
+- Header halaman jadi bilah kaca (top-bar) supaya latar terlihat sampai tepi atas
+- html & body ikut berwarna header agar area status bar tidak jadi pita warna lain
+- theme-color disamakan dengan tema terpilih (bukan tema sistem), supaya bilah
+  atas Safari tidak terlihat terpotong saat tema dipaksa
+- safeTop: kalau env() sudah melaporkan angka wajar, angka tabel tidak dipakai lagi
+---
+ src/app/api/appearance/route.ts         |  73 +++++++
+ src/app/globals.css                     | 241 +++++++++++++++++++++++-
+ src/components/CharactersView.tsx       |   2 +-
+ src/components/ChatApp.tsx              |  26 ++-
+ src/components/ChatBackgroundPicker.tsx | 224 ++++++++++++++++++++++
+ src/components/ChatWindow.tsx           |  18 +-
+ src/components/ProfileView.tsx          |   2 +-
+ src/components/SettingsView.tsx         |  57 +++++-
+ src/components/Sidebar.tsx              |   2 +-
+ src/components/VoiceView.tsx            |   2 +-
+ src/db/schema.ts                        |   9 +
+ src/lib/chatBackground.ts               | 200 ++++++++++++++++++++
+ src/lib/dbReady.ts                      |   1 +
+ src/lib/safeTop.ts                      |  11 +-
+ src/lib/theme.ts                        |  39 +++-
+ 15 files changed, 890 insertions(+), 17 deletions(-)
+ create mode 100644 src/app/api/appearance/route.ts
+ create mode 100644 src/components/ChatBackgroundPicker.tsx
+ create mode 100644 src/lib/chatBackground.ts
+
+diff --git a/src/app/api/appearance/route.ts b/src/app/api/appearance/route.ts
+new file mode 100644
+index 0000000..b95606b
+--- /dev/null
++++ b/src/app/api/appearance/route.ts
+@@ -0,0 +1,73 @@
++import { NextResponse } from "next/server";
++import { eq } from "drizzle-orm";
++import { db } from "@/db";
++import { users } from "@/db/schema";
++import { requireUser } from "@/lib/auth";
++import { ensureDb } from "@/lib/dbReady";
++import { DEFAULT_CHAT_BACKGROUND, normalizeChatBackground, parseChatBackground } from "@/lib/chatBackground";
++
++export const dynamic = "force-dynamic";
++export const runtime = "nodejs";
++
++const UNAUTHORIZED = { error: "Kamu belum masuk." };
++
++/**
++ * Tampilan chat milik akun.
++ *
++ * Disimpan di server, bukan di HP, supaya latar yang dipilih di satu perangkat
++ * ikut terbawa ke perangkat lain — sama seperti profil dan API key.
++ */
++export async function GET() {
++  await ensureDb();
++
++  const user = await requireUser();
++  if (!user) return NextResponse.json(UNAUTHORIZED, { status: 401 });
++
++  const [row] = await db
++    .select({ chatBackground: users.chatBackground })
++    .from(users)
++    .where(eq(users.id, user.id))
++    .limit(1);
++
++  return NextResponse.json({
++    chatBackground: parseChatBackground(row?.chatBackground),
++  });
++}
++
++export async function PATCH(req: Request) {
++  await ensureDb();
++
++  const user = await requireUser();
++  if (!user) return NextResponse.json(UNAUTHORIZED, { status: 401 });
++
++  const body = await req.json().catch(() => null);
++  if (!body || typeof body !== "object" || !("chatBackground" in body)) {
++    return NextResponse.json({ error: "Body tidak valid." }, { status: 400 });
++  }
++
++  const chatBackground = normalizeChatBackground(
++    (body as { chatBackground?: unknown }).chatBackground
++  );
++
++  await db
++    .update(users)
++    .set({ chatBackground: JSON.stringify(chatBackground) })
++    .where(eq(users.id, user.id));
++
++  return NextResponse.json({ chatBackground });
++}
++
++/** Kembalikan latar bawaan tanpa menyentuh database (dipakai tombol "Atur ulang"). */
++export async function DELETE() {
++  await ensureDb();
++
++  const user = await requireUser();
++  if (!user) return NextResponse.json(UNAUTHORIZED, { status: 401 });
++
++  await db
++    .update(users)
++    .set({ chatBackground: JSON.stringify(DEFAULT_CHAT_BACKGROUND) })
++    .where(eq(users.id, user.id));
++
++  return NextResponse.json({ chatBackground: DEFAULT_CHAT_BACKGROUND });
++}
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 819a472..73e776a 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -91,6 +91,23 @@ body {
+   -webkit-text-size-adjust: 100%;
+ }
+ 
++/*
++ * Warna dasar dipegang <html>, bukan cuma <body>.
++ *
++ * Di iPhone, area di belakang status bar dan area pantul (rubber band) diambil
++ * dari latar <html>. Kalau <html> tidak diwarnai, di sana muncul pita putih saat
++ * halaman ditarik atau saat tema gelap — persis yang membuat bagian atas
++ * terlihat terpotong.
++ */
++html {
++  background-color: var(--header);
++  color-scheme: light;
++}
++
++html.dark {
++  color-scheme: dark;
++}
++
+ /* ------------------------------------------------------------------ */
+ /* Jarak aman atas (poni / Dynamic Island iPhone)                      */
+ /* ------------------------------------------------------------------ */
+@@ -119,7 +136,9 @@ html.kb-panned .app-shell {
+ }
+ 
+ body {
+-  background-color: var(--app);
++  /* Sama dengan warna header: area di balik status bar & home indicator tidak
++     pernah terlihat sebagai pita warna lain. */
++  background-color: var(--header);
+   color: var(--ink);
+   font-family: var(--font-sans);
+   -webkit-font-smoothing: antialiased;
+@@ -166,6 +185,226 @@ body {
+   background-position: 0 0, 13px 13px;
+ }
+ 
++/* ------------------------------------------------------------------ */
++/* Bilah atas tembus pandang                                           */
++/* ------------------------------------------------------------------ */
++/*
++ * Header memakai kaca, bukan bidang pekat. Dengan begitu latar chat / wallpaper
++ * tetap terlihat sampai tepi atas layar — tidak ada garis potong di bawah
++ * status bar.
++ */
++.top-bar {
++  background-color: color-mix(in srgb, var(--header) 78%, transparent);
++  border-bottom: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
++}
++
++@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
++  .top-bar {
++    background-color: color-mix(in srgb, var(--header) 62%, transparent);
++    -webkit-backdrop-filter: saturate(180%) blur(18px);
++    backdrop-filter: saturate(180%) blur(18px);
++  }
++}
++
++/* ------------------------------------------------------------------ */
++/* Latar animasi — nuansa "virtual background" video call, monokrom    */
++/* ------------------------------------------------------------------ */
++.chat-anim {
++  position: relative;
++  isolation: isolate;
++  overflow: hidden;
++  --anim-1: rgba(0, 0, 0, 0.055);
++  --anim-2: rgba(0, 0, 0, 0.032);
++}
++
++.dark .chat-anim {
++  --anim-1: rgba(255, 255, 255, 0.062);
++  --anim-2: rgba(255, 255, 255, 0.034);
++}
++
++/* Dua lapisan dekorasi di belakang konten, bergerak sangat pelan. */
++.chat-anim::before,
++.chat-anim::after {
++  content: "";
++  position: absolute;
++  inset: -30%;
++  z-index: -1;
++  pointer-events: none;
++  will-change: transform, opacity;
++}
++
++.chat-anim-bokeh::before {
++  background-image:
++    radial-gradient(circle at 22% 28%, var(--anim-1) 0 17%, transparent 18%),
++    radial-gradient(circle at 70% 64%, var(--anim-2) 0 21%, transparent 22%),
++    radial-gradient(circle at 44% 86%, var(--anim-1) 0 13%, transparent 14%);
++  filter: blur(26px);
++  animation: anim-drift-a 26s ease-in-out infinite alternate;
++}
++
++.chat-anim-bokeh::after {
++  background-image:
++    radial-gradient(circle at 82% 18%, var(--anim-2) 0 19%, transparent 20%),
++    radial-gradient(circle at 28% 72%, var(--anim-1) 0 15%, transparent 16%);
++  filter: blur(38px);
++  animation: anim-drift-b 36s ease-in-out infinite alternate;
++}
++
++@keyframes anim-drift-a {
++  from {
++    transform: translate3d(-4%, -3%, 0) scale(1);
++  }
++  to {
++    transform: translate3d(5%, 4%, 0) scale(1.14);
++  }
++}
++
++@keyframes anim-drift-b {
++  from {
++    transform: translate3d(4%, 5%, 0) scale(1.12);
++  }
++  to {
++    transform: translate3d(-5%, -4%, 0) scale(1);
++  }
++}
++
++.chat-anim-aurora::before {
++  background-image: linear-gradient(
++    115deg,
++    transparent 0%,
++    var(--anim-1) 26%,
++    transparent 52%,
++    var(--anim-2) 76%,
++    transparent 100%
++  );
++  filter: blur(42px);
++  animation: anim-aurora-a 30s ease-in-out infinite alternate;
++}
++
++.chat-anim-aurora::after {
++  background-image: linear-gradient(295deg, transparent 12%, var(--anim-2) 44%, transparent 72%);
++  filter: blur(60px);
++  animation: anim-aurora-b 40s ease-in-out infinite alternate;
++}
++
++/* Transform (bukan background-position) supaya dianimasikan di compositor. */
++@keyframes anim-aurora-a {
++  from {
++    transform: translate3d(-8%, -6%, 0) rotate(3deg) scale(1.12);
++  }
++  to {
++    transform: translate3d(8%, 6%, 0) rotate(-3deg) scale(1.04);
++  }
++}
++
++@keyframes anim-aurora-b {
++  from {
++    transform: translate3d(7%, 5%, 0) rotate(-2deg) scale(1.08);
++  }
++  to {
++    transform: translate3d(-7%, -5%, 0) rotate(2deg) scale(1.16);
++  }
++}
++
++.chat-anim-waves::before {
++  background-image: repeating-linear-gradient(
++    155deg,
++    var(--anim-1) 0 2px,
++    transparent 2px 46px
++  );
++  opacity: 0.6;
++  animation: anim-flow 24s linear infinite;
++}
++
++.chat-anim-waves::after {
++  background-image: repeating-linear-gradient(
++    155deg,
++    var(--anim-2) 0 1px,
++    transparent 1px 92px
++  );
++  opacity: 0.5;
++  animation: anim-flow-slow 38s linear infinite reverse;
++}
++
++@keyframes anim-flow {
++  from {
++    transform: translate3d(0, 0, 0);
++  }
++  to {
++    transform: translate3d(-46px, -46px, 0);
++  }
++}
++
++@keyframes anim-flow-slow {
++  from {
++    transform: translate3d(0, 0, 0);
++  }
++  to {
++    transform: translate3d(-92px, -92px, 0);
++  }
++}
++
++.chat-anim-stars::before {
++  background-image:
++    radial-gradient(circle, var(--anim-1) 1px, transparent 1.6px),
++    radial-gradient(circle, var(--anim-2) 1px, transparent 1.6px);
++  background-size:
++    94px 94px,
++    151px 151px;
++  background-position:
++    0 0,
++    37px 53px;
++  animation: anim-twinkle 9s ease-in-out infinite;
++}
++
++@keyframes anim-twinkle {
++  0%,
++  100% {
++    opacity: 0.45;
++  }
++  50% {
++    opacity: 1;
++  }
++}
++
++.chat-anim-mist::before {
++  background-image: radial-gradient(ellipse 60% 50% at 32% 26%, var(--anim-1), transparent 70%);
++  filter: blur(50px);
++  animation: anim-mist-a 42s ease-in-out infinite alternate;
++}
++
++.chat-anim-mist::after {
++  background-image: radial-gradient(ellipse 55% 45% at 72% 74%, var(--anim-2), transparent 72%);
++  filter: blur(64px);
++  animation: anim-mist-b 54s ease-in-out infinite alternate;
++}
++
++@keyframes anim-mist-a {
++  from {
++    transform: translate3d(-6%, 2%, 0) scale(1);
++  }
++  to {
++    transform: translate3d(7%, -5%, 0) scale(1.18);
++  }
++}
++
++@keyframes anim-mist-b {
++  from {
++    transform: translate3d(6%, -3%, 0) scale(1.14);
++  }
++  to {
++    transform: translate3d(-7%, 4%, 0) scale(1);
++  }
++}
++
++/* Hormati setelan sistem "kurangi gerakan" */
++@media (prefers-reduced-motion: reduce) {
++  .chat-anim::before,
++  .chat-anim::after {
++    animation: none !important;
++  }
++}
++
+ /* Pola titik halus untuk panel kosong di desktop */
+ .dot-grid {
+   background-image: radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0);
+diff --git a/src/components/CharactersView.tsx b/src/components/CharactersView.tsx
+index ca5d04c..104b08b 100644
+--- a/src/components/CharactersView.tsx
++++ b/src/components/CharactersView.tsx
+@@ -24,7 +24,7 @@ export function CharactersView({
+ 
+   return (
+     <div className="flex h-full min-h-0 flex-1 flex-col bg-app">
+-      <div className="flex items-center justify-between border-b border-line bg-header px-5 pb-3.5 pt-[max(1rem,var(--safe-top))]">
++      <div className="top-bar flex items-center justify-between px-5 pb-3.5 pt-[max(1rem,var(--safe-top))]">
+         <div>
+           <h1 className="font-display text-xl font-bold tracking-tight text-ink">Karakter</h1>
+           <p className="text-xs text-ink-soft">
+diff --git a/src/components/ChatApp.tsx b/src/components/ChatApp.tsx
+index 628231d..6a2e6ac 100644
+--- a/src/components/ChatApp.tsx
++++ b/src/components/ChatApp.tsx
+@@ -2,6 +2,10 @@
+ 
+ import { useCallback, useEffect, useRef, useState } from "react";
+ import type { CharacterDetail, CharacterSummary, ChatMessage, ProviderSummary } from "@/types/chat";
++import {
++  DEFAULT_CHAT_BACKGROUND,
++  type ChatBackground,
++} from "@/lib/chatBackground";
+ import { compressImageFile } from "@/lib/compressImage";
+ import { useKeyboardPan } from "@/lib/keyboardPan";
+ import { MAX_CHARACTERS } from "@/lib/limits";
+@@ -58,6 +62,7 @@ export function ChatApp() {
+   const [providers, setProviders] = useState<ProviderSummary[]>([]);
+   const [profile, setProfile] = useState<UserProfile>(EMPTY_PROFILE);
+   const [autoFallback, setAutoFallback] = useState(true);
++  const [chatBackground, setChatBackground] = useState<ChatBackground>(DEFAULT_CHAT_BACKGROUND);
+   const [limit, setLimit] = useState<number>(MAX_CHARACTERS);
+   const [activeId, setActiveId] = useState<string | null>(null);
+   const [messagesMap, setMessagesMap] = useState<Record<string, ChatMessage[]>>({});
+@@ -117,6 +122,13 @@ export function ChatApp() {
+     if (typeof data.autoFallback === "boolean") setAutoFallback(data.autoFallback);
+   }, [api]);
+ 
++  const fetchAppearance = useCallback(async () => {
++    const res = await api("/api/appearance");
++    if (!res.ok) return;
++    const data = await res.json();
++    if (data.chatBackground) setChatBackground(data.chatBackground);
++  }, [api]);
++
+   const fetchProfile = useCallback(async () => {
+     const res = await api("/api/profile");
+     if (!res.ok) return;
+@@ -125,10 +137,13 @@ export function ChatApp() {
+   }, [api]);
+ 
+   useEffect(() => {
+-    Promise.all([fetchCharacters(), fetchProviders(), fetchProfile()]).finally(() =>
+-      setLoaded(true)
+-    );
+-  }, [fetchCharacters, fetchProviders, fetchProfile]);
++    Promise.all([
++      fetchCharacters(),
++      fetchProviders(),
++      fetchProfile(),
++      fetchAppearance(),
++    ]).finally(() => setLoaded(true));
++  }, [fetchCharacters, fetchProviders, fetchProfile, fetchAppearance]);
+ 
+   const fetchMessages = useCallback(
+     async (characterId: string) => {
+@@ -423,6 +438,7 @@ export function ChatApp() {
+                       isSpeaking={isSpeaking}
+                       canSpeak={speechSupported}
+                       voiceEnabled={voice.enabled}
++                      background={chatBackground}
+                       onBack={() => {
+                         stopSpeaking();
+                         setMobileShowChat(false);
+@@ -511,6 +527,8 @@ export function ChatApp() {
+               providers={providers}
+               autoFallback={autoFallback}
+               onAutoFallbackChange={setAutoFallback}
++              chatBackground={chatBackground}
++              onChatBackgroundChange={setChatBackground}
+               onChanged={fetchProviders}
+             />
+           )}
+diff --git a/src/components/ChatBackgroundPicker.tsx b/src/components/ChatBackgroundPicker.tsx
+new file mode 100644
+index 0000000..bb94d05
+--- /dev/null
++++ b/src/components/ChatBackgroundPicker.tsx
+@@ -0,0 +1,224 @@
++"use client";
++
++import { useRef, useState, useSyncExternalStore } from "react";
++import { compressImageFile } from "@/lib/compressImage";
++import {
++  CHAT_ANIMATED_PRESETS,
++  CHAT_COLOR_PRESETS,
++  animatedSwatch,
++  getAnimatedPreset,
++  getPreset,
++  presetSwatch,
++  type ChatBackground,
++} from "@/lib/chatBackground";
++import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
++import { CameraIcon } from "./icons";
++
++const ring = "border-ink ring-2 ring-ink/25";
++const idle = "border-line hover:border-ink/40";
++
++/**
++ * Pemilih latar area chat: bawaan, warna, gambar sendiri, atau animasi.
++ *
++ * Gambar diunggah lewat `/api/upload` (bukan data URL) supaya kuota database
++ * tidak habis oleh satu wallpaper — unggahan pertama akan mengecilkan gambar
++ * di browser sebelum dikirim.
++ */
++export function ChatBackgroundPicker({
++  value,
++  onChange,
++  disabled = false,
++}: {
++  value: ChatBackground;
++  onChange: (next: ChatBackground) => void;
++  disabled?: boolean;
++}) {
++  const imageRef = useRef<HTMLInputElement>(null);
++  const [busy, setBusy] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++  /** Nilai sementara penggeser peredupan — baru disimpan saat jari dilepas. */
++  const [dimDraft, setDimDraft] = useState<number | null>(null);
++  const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
++
++  const isImage = value.kind === "image";
++  const dimPercent =
++    dimDraft ?? Math.round((value.kind === "image" ? value.dim : 0.25) * 100);
++
++  async function handleImage(file: File) {
++    setError(null);
++    if (!file.type.startsWith("image/")) {
++      setError("Pilih berkas gambar.");
++      return;
++    }
++    setBusy(true);
++    try {
++      const compressed = await compressImageFile(file, { maxSize: 1600, quality: 0.75 });
++      const body = new FormData();
++      body.append("file", compressed);
++      const res = await fetch("/api/upload", { method: "POST", body });
++      const data = await res.json().catch(() => ({}));
++      if (!res.ok) throw new Error(data.error || "Gagal mengunggah gambar.");
++      setDimDraft(null);
++      onChange({ kind: "image", imageUrl: data.url, dim: 0.25 });
++    } catch (err) {
++      setError(err instanceof Error ? err.message : "Gagal memakai gambar itu.");
++    } finally {
++      setBusy(false);
++      if (imageRef.current) imageRef.current.value = "";
++    }
++  }
++
++  function commitDim(percent: number) {
++    if (value.kind !== "image") return;
++    setDimDraft(null);
++    onChange({ kind: "image", imageUrl: value.imageUrl, dim: percent / 100 });
++  }
++
++  return (
++    <div className={`space-y-3 ${disabled ? "pointer-events-none opacity-50" : ""}`}>
++      <div>
++        <p className="mb-1.5 text-[12px] font-medium text-muted">Warna &amp; gambar</p>
++        <div className="flex flex-wrap items-center gap-2">
++          <button
++            type="button"
++            onClick={() => onChange({ kind: "default" })}
++            aria-pressed={value.kind === "default"}
++            title="Bawaan"
++            className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full border transition ${
++              value.kind === "default" ? ring : idle
++            }`}
++            style={{
++              backgroundColor: isDark ? "#0b0b0d" : "#f7f8fa",
++              backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
++              backgroundSize: "7px 7px",
++              color: isDark ? "rgba(255,255,255,0.16)" : "rgba(0,0,0,0.14)",
++            }}
++          >
++            <span className="sr-only">Latar bawaan</span>
++          </button>
++
++          {CHAT_COLOR_PRESETS.map((preset) => {
++            const active = value.kind === "preset" && value.id === preset.id;
++            return (
++              <button
++                key={preset.id}
++                type="button"
++                onClick={() => onChange({ kind: "preset", id: preset.id })}
++                aria-pressed={active}
++                title={preset.label}
++                className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full border transition ${
++                  active ? ring : idle
++                }`}
++                style={{ backgroundImage: presetSwatch(preset) }}
++              >
++                <span className="sr-only">{preset.label}</span>
++              </button>
++            );
++          })}
++
++          <button
++            type="button"
++            onClick={() => imageRef.current?.click()}
++            disabled={busy}
++            title="Pilih gambar"
++            className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border transition disabled:opacity-50 ${
++              isImage ? ring : `${idle} bg-surface-2 text-ink-soft hover:text-ink`
++            }`}
++            style={
++              isImage
++                ? {
++                    backgroundImage: `url("${value.imageUrl}")`,
++                    backgroundSize: "cover",
++                    backgroundPosition: "center",
++                  }
++                : undefined
++            }
++          >
++            {!isImage && <CameraIcon className="h-4 w-4" />}
++            <span className="sr-only">Pilih gambar latar</span>
++          </button>
++        </div>
++      </div>
++
++      <div>
++        <p className="mb-1.5 text-[12px] font-medium text-muted">Animasi</p>
++        <div className="flex flex-wrap items-center gap-2">
++          {CHAT_ANIMATED_PRESETS.map((preset) => {
++            const active = value.kind === "animated" && value.id === preset.id;
++            return (
++              <button
++                key={preset.id}
++                type="button"
++                onClick={() => onChange({ kind: "animated", id: preset.id })}
++                aria-pressed={active}
++                title={`${preset.label} · ${preset.hint}`}
++                className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full border transition ${
++                  active ? ring : idle
++                }`}
++                style={{ backgroundImage: animatedSwatch(preset, isDark) }}
++              >
++                <span
++                  aria-hidden="true"
++                  className="absolute inset-0 grid place-items-center text-[11px] font-bold text-ink-soft"
++                >
++                  ▶
++                </span>
++                <span className="sr-only">{preset.label}</span>
++              </button>
++            );
++          })}
++        </div>
++      </div>
++
++      <input
++        ref={imageRef}
++        type="file"
++        accept="image/*"
++        className="hidden"
++        onChange={(e) => {
++          const file = e.target.files?.[0];
++          if (file) handleImage(file);
++        }}
++      />
++
++      {busy && <p className="text-xs text-muted">Memproses gambar...</p>}
++      {error && <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>}
++
++      {isImage && (
++        <div className="rounded-xl border border-line px-3 py-2">
++          <div className="flex items-center justify-between gap-2">
++            <span className="text-xs font-medium text-ink-soft">Redup gambar · {dimPercent}%</span>
++            <button
++              type="button"
++              onClick={() => onChange({ kind: "default" })}
++              className="text-xs font-medium text-ink-soft transition hover:text-ink"
++            >
++              Hapus gambar
++            </button>
++          </div>
++          <input
++            type="range"
++            min={0}
++            max={70}
++            step={5}
++            value={dimPercent}
++            onChange={(e) => setDimDraft(Number(e.target.value))}
++            onPointerUp={(e) => commitDim(Number(e.currentTarget.value))}
++            onKeyUp={(e) => commitDim(Number(e.currentTarget.value))}
++            onBlur={(e) => commitDim(Number(e.currentTarget.value))}
++            aria-label="Tingkat peredupan gambar"
++            className="mt-2 w-full accent-ink"
++          />
++        </div>
++      )}
++
++      {value.kind === "preset" && <p className="text-xs text-muted">{getPreset(value.id).label}</p>}
++
++      {value.kind === "animated" && (
++        <p className="text-xs text-muted">
++          {getAnimatedPreset(value.id).label} · {getAnimatedPreset(value.id).hint}
++        </p>
++      )}
++    </div>
++  );
++}
+diff --git a/src/components/ChatWindow.tsx b/src/components/ChatWindow.tsx
+index 20af707..fa21d30 100644
+--- a/src/components/ChatWindow.tsx
++++ b/src/components/ChatWindow.tsx
+@@ -1,8 +1,10 @@
+ "use client";
+ 
+-import { useEffect, useMemo, useRef, useState } from "react";
++import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+ import type { CharacterSummary, ChatMessage } from "@/types/chat";
+ import { lastAssistantId, messageActionsFor } from "@/lib/messageRules";
++import { chatBackgroundProps, type ChatBackground } from "@/lib/chatBackground";
++import { getIsDarkSnapshot, subscribeTheme } from "@/lib/theme";
+ import { Avatar } from "./Avatar";
+ import {
+   BackIcon,
+@@ -61,6 +63,7 @@ export function ChatWindow({
+   isSpeaking,
+   canSpeak,
+   voiceEnabled,
++  background,
+   onBack,
+   onOpenProfile,
+   onOpenVoice,
+@@ -77,6 +80,8 @@ export function ChatWindow({
+   isSpeaking: boolean;
+   canSpeak: boolean;
+   voiceEnabled: boolean;
++  /** Latar area chat pilihan pengguna; `default` memakai pola bawaan tema. */
++  background?: ChatBackground;
+   onBack: () => void;
+   onOpenProfile: () => void;
+   onOpenVoice: () => void;
+@@ -89,6 +94,8 @@ export function ChatWindow({
+ }) {
+   const scrollRef = useRef<HTMLDivElement>(null);
+   const [atBottom, setAtBottom] = useState(true);
++  const isDark = useSyncExternalStore(subscribeTheme, getIsDarkSnapshot, () => false);
++  const backdrop = chatBackgroundProps(background, isDark);
+   const { openFor, setOpenFor, startLongPress, cancelLongPress, consumeLongPress } =
+     useMessageActions();
+ 
+@@ -133,9 +140,12 @@ export function ChatWindow({
+   }
+ 
+   return (
+-    <div className="chat-wallpaper flex h-full min-h-0 flex-1 flex-col">
+-      {/* Header */}
+-      <div className="z-10 flex items-center gap-2 border-b border-line bg-header px-2 pb-2.5 pt-[max(0.625rem,var(--safe-top))] sm:px-4">
++    <div
++      className={`chat-wallpaper flex h-full min-h-0 flex-1 flex-col ${backdrop.className}`}
++      style={backdrop.style}
++    >
++      {/* Header — kaca, supaya latar chat tetap terlihat sampai status bar */}
++      <div className="top-bar z-10 flex items-center gap-2 px-2 pb-2.5 pt-[max(0.625rem,var(--safe-top))] sm:px-4">
+         <button
+           onClick={onBack}
+           className="shrink-0 p-[5px] text-ink-soft transition active:opacity-50 md:hidden"
+diff --git a/src/components/ProfileView.tsx b/src/components/ProfileView.tsx
+index 472cd22..9e7b894 100644
+--- a/src/components/ProfileView.tsx
++++ b/src/components/ProfileView.tsx
+@@ -101,7 +101,7 @@ export function ProfileView({
+ 
+   return (
+     <div className="flex h-full min-h-0 flex-1 flex-col bg-app">
+-      <div className="border-b border-line bg-header px-5 pb-3.5 pt-[max(1rem,var(--safe-top))]">
++      <div className="top-bar px-5 pb-3.5 pt-[max(1rem,var(--safe-top))]">
+         <h1 className="font-display text-xl font-bold tracking-tight text-ink">Profil saya</h1>
+         <p className="text-xs text-ink-soft">
+           Karakter membaca ini supaya tahu mereka sedang ngobrol sama siapa.
+diff --git a/src/components/SettingsView.tsx b/src/components/SettingsView.tsx
+index 8852177..81fc74f 100644
+--- a/src/components/SettingsView.tsx
++++ b/src/components/SettingsView.tsx
+@@ -9,7 +9,9 @@ import {
+ } from "@/lib/ai/providerDefaults";
+ import { MAX_BACKUP_KEYS } from "@/lib/limits";
+ import { useKeepFieldVisible } from "@/lib/keepFieldVisible";
++import type { ChatBackground } from "@/lib/chatBackground";
+ import { useAuth } from "./AuthGate";
++import { ChatBackgroundPicker } from "./ChatBackgroundPicker";
+ import { Switch } from "./Switch";
+ import { ThemeSegmented } from "./ThemeToggle";
+ import {
+@@ -29,11 +31,15 @@ export function SettingsView({
+   providers,
+   autoFallback,
+   onAutoFallbackChange,
++  chatBackground,
++  onChatBackgroundChange,
+   onChanged,
+ }: {
+   providers: ProviderSummary[];
+   autoFallback: boolean;
+   onAutoFallbackChange: (next: boolean) => void;
++  chatBackground: ChatBackground;
++  onChatBackgroundChange: (next: ChatBackground) => void;
+   onChanged: () => Promise<void>;
+ }) {
+   const { user, signOut } = useAuth();
+@@ -53,6 +59,8 @@ export function SettingsView({
+   const [signingOut, setSigningOut] = useState(false);
+   const [error, setError] = useState<string | null>(null);
+   const [tests, setTests] = useState<Record<string, TestState>>({});
++  const [bgBusy, setBgBusy] = useState(false);
++  const [bgError, setBgError] = useState<string | null>(null);
+ 
+   const scrollAreaRef = useRef<HTMLDivElement>(null);
+   useKeepFieldVisible(scrollAreaRef, true);
+@@ -220,6 +228,33 @@ export function SettingsView({
+     }
+   }
+ 
++  /**
++   * Simpan latar chat ke akun. Tampilan langsung berubah (optimistis); kalau
++   * server menolak, pilihan dikembalikan ke nilai sebelumnya supaya layar
++   * tidak berbohong.
++   */
++  async function handleBackgroundChange(next: ChatBackground) {
++    const previous = chatBackground;
++    setBgError(null);
++    onChatBackgroundChange(next);
++    setBgBusy(true);
++    try {
++      const res = await fetch("/api/appearance", {
++        method: "PATCH",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ chatBackground: next }),
++      });
++      const data = await res.json().catch(() => ({}));
++      if (!res.ok) throw new Error(data.error || "Gagal menyimpan latar.");
++      if (data.chatBackground) onChatBackgroundChange(data.chatBackground);
++    } catch (err) {
++      onChatBackgroundChange(previous);
++      setBgError(err instanceof Error ? err.message : "Gagal menyimpan latar.");
++    } finally {
++      setBgBusy(false);
++    }
++  }
++
+   async function handleToggleAutoFallback(next: boolean) {
+     const previous = autoFallback;
+     onAutoFallbackChange(next);
+@@ -240,7 +275,7 @@ export function SettingsView({
+ 
+   return (
+     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
+-      <div className="border-b border-line bg-header px-5 pb-3.5 pt-[max(1rem,var(--safe-top))]">
++      <div className="top-bar px-5 pb-3.5 pt-[max(1rem,var(--safe-top))]">
+         <h1 className="font-display text-xl font-bold tracking-tight text-ink">Setelan</h1>
+         <p className="text-xs text-ink-soft">Tema tampilan, provider AI, dan akunmu</p>
+       </div>
+@@ -256,6 +291,26 @@ export function SettingsView({
+               Tampilan
+             </h2>
+             <ThemeSegmented />
++
++            <div className="mt-4 rounded-xl border border-line px-3.5 py-3">
++              <div className="mb-2 flex items-center justify-between gap-2">
++                <div className="min-w-0">
++                  <span className="block text-sm text-ink">Latar chat</span>
++                  <span className="block text-[11px] text-muted">
++                    Tersimpan di akun, ikut ke semua perangkat
++                  </span>
++                </div>
++                {bgBusy && <span className="shrink-0 text-[11px] text-muted">Menyimpan...</span>}
++              </div>
++
++              <ChatBackgroundPicker
++                value={chatBackground}
++                onChange={handleBackgroundChange}
++                disabled={bgBusy}
++              />
++
++              {bgError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{bgError}</p>}
++            </div>
+           </section>
+ 
+           {/* Provider tersimpan */}
+diff --git a/src/components/Sidebar.tsx b/src/components/Sidebar.tsx
+index c610e5d..ce23af2 100644
+--- a/src/components/Sidebar.tsx
++++ b/src/components/Sidebar.tsx
+@@ -62,7 +62,7 @@ export function Sidebar({
+   return (
+     <aside className="flex h-full min-h-0 w-full flex-col border-r border-line bg-surface md:w-[348px] lg:w-[380px]">
+       {/* Header */}
+-      <div className="flex items-center justify-between gap-2 bg-header px-4 pb-3 pt-[max(0.75rem,var(--safe-top))]">
++      <div className="top-bar flex items-center justify-between gap-2 px-4 pb-3 pt-[max(0.75rem,var(--safe-top))]">
+         <div className="flex min-w-0 items-center gap-2.5">
+           <button
+             onClick={onOpenProfile}
+diff --git a/src/components/VoiceView.tsx b/src/components/VoiceView.tsx
+index 9244bc6..c9f7952 100644
+--- a/src/components/VoiceView.tsx
++++ b/src/components/VoiceView.tsx
+@@ -85,7 +85,7 @@ export function VoiceView({
+ 
+   return (
+     <div className="flex h-full min-h-0 w-full flex-col bg-surface">
+-      <div className="flex items-center justify-between border-b border-line bg-header px-5 pb-3.5 pt-[max(1rem,var(--safe-top))]">
++      <div className="top-bar flex items-center justify-between px-5 pb-3.5 pt-[max(1rem,var(--safe-top))]">
+         <div>
+           <h1 className="font-display text-xl font-bold tracking-tight text-ink">Suara</h1>
+           <p className="text-xs text-ink-soft">Suara lokal perangkat, gratis tanpa kuota API</p>
+diff --git a/src/db/schema.ts b/src/db/schema.ts
+index 850f673..e636c54 100644
+--- a/src/db/schema.ts
++++ b/src/db/schema.ts
+@@ -32,6 +32,15 @@ export const users = pgTable("users", {
+   /** Pindah otomatis ke provider lain saat semua key provider utama kena limit/gagal. */
+   autoFallback: boolean("auto_fallback").notNull().default(true),
+ 
++  /**
++   * Latar area chat, disimpan sebagai JSON pendek:
++   * `{"kind":"default"}`, `{"kind":"preset","id":"sand"}`,
++   * `{"kind":"animated","id":"aurora"}`, atau
++   * `{"kind":"image","imageUrl":"/uploads/..","dim":0.25}`.
++   * Disimpan di akun supaya ikut ke semua perangkat.
++   */
++  chatBackground: text("chat_background").notNull().default('{"kind":"default"}'),
++
+   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+ });
+ 
+diff --git a/src/lib/chatBackground.ts b/src/lib/chatBackground.ts
+new file mode 100644
+index 0000000..dadf0d8
+--- /dev/null
++++ b/src/lib/chatBackground.ts
+@@ -0,0 +1,200 @@
++import type { CSSProperties } from "react";
++
++/**
++ * Latar area chat.
++ *
++ * Bentuknya sengaja kecil dan datar supaya aman disimpan sebagai JSON di
++ * kolom `users.chat_background` dan mudah dibaca ulang walau versi aplikasi
++ * berubah. Pilihan yang tidak dikenal dianggap "default", jadi data lama
++ * tidak pernah membuat halaman gagal tampil.
++ */
++export type ChatBackground =
++  | { kind: "default" }
++  | { kind: "preset"; id: string }
++  | { kind: "animated"; id: string }
++  | { kind: "image"; imageUrl: string; dim: number };
++
++export const DEFAULT_CHAT_BACKGROUND: ChatBackground = { kind: "default" };
++
++/* ------------------------------------------------------------------ */
++/* Warna latar                                                         */
++/* ------------------------------------------------------------------ */
++
++export type ChatColorPreset = {
++  id: string;
++  label: string;
++  light: string;
++  dark: string;
++};
++
++/** Tiap warna punya versi terang & gelap supaya tetap enak dibaca di dua tema. */
++export const CHAT_COLOR_PRESETS: ChatColorPreset[] = [
++  { id: "paper", label: "Kertas", light: "#f7f8fa", dark: "#0b0b0d" },
++  { id: "sand", label: "Pasir", light: "#f0ece4", dark: "#161513" },
++  { id: "mist", label: "Kabut", light: "#e9eef3", dark: "#11161a" },
++  { id: "rose", label: "Sendu", light: "#f3ecee", dark: "#181315" },
++  { id: "ash", label: "Abu", light: "#e6e8eb", dark: "#131417" },
++  { id: "night", label: "Malam", light: "#dadfe4", dark: "#0d0f12" },
++];
++
++export function getPreset(id: string | undefined): ChatColorPreset {
++  return CHAT_COLOR_PRESETS.find((preset) => preset.id === id) ?? CHAT_COLOR_PRESETS[0];
++}
++
++/** Pratinjau dua warna sekaligus (terang di kiri-atas, gelap di kanan-bawah). */
++export function presetSwatch(preset: ChatColorPreset): string {
++  return `linear-gradient(135deg, ${preset.light} 0%, ${preset.light} 50%, ${preset.dark} 50%, ${preset.dark} 100%)`;
++}
++
++/* ------------------------------------------------------------------ */
++/* Latar animasi — nuansa "virtual background" video call, monokrom     */
++/* ------------------------------------------------------------------ */
++
++export type ChatAnimatedPreset = {
++  id: string;
++  label: string;
++  hint: string;
++};
++
++export const CHAT_ANIMATED_PRESETS: ChatAnimatedPreset[] = [
++  { id: "bokeh", label: "Bokeh", hint: "Bulatan lembut melayang" },
++  { id: "aurora", label: "Aurora", hint: "Gradasi bergerak pelan" },
++  { id: "waves", label: "Gelombang", hint: "Garis halus mengalir" },
++  { id: "stars", label: "Bintang", hint: "Titik berkelip samar" },
++  { id: "mist", label: "Kabut", hint: "Kabut mengambang" },
++];
++
++export function getAnimatedPreset(id: string | undefined): ChatAnimatedPreset {
++  return CHAT_ANIMATED_PRESETS.find((preset) => preset.id === id) ?? CHAT_ANIMATED_PRESETS[0];
++}
++
++/** Pratinjau statis untuk tombol pilihan; animasinya hanya di area chat. */
++export function animatedSwatch(preset: ChatAnimatedPreset, isDark: boolean): string {
++  const base = isDark ? "#0b0b0d" : "#f2f3f5";
++  const tint = isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.16)";
++  const tintSoft = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.07)";
++
++  switch (preset.id) {
++    case "bokeh":
++      return `radial-gradient(circle at 30% 28%, ${tint} 0 22%, transparent 24%), radial-gradient(circle at 72% 68%, ${tintSoft} 0 26%, transparent 28%), radial-gradient(circle at 20% 80%, ${tintSoft} 0 16%, transparent 18%), ${base}`;
++    case "aurora":
++      return `linear-gradient(115deg, ${base} 0%, ${tint} 38%, ${tintSoft} 62%, ${base} 100%)`;
++    case "waves":
++      return `repeating-linear-gradient(155deg, ${tint} 0 1.5px, transparent 1.5px 9px), ${base}`;
++    case "stars":
++      return `radial-gradient(circle at 25% 25%, ${tint} 0 1px, transparent 1.6px), radial-gradient(circle at 70% 55%, ${tintSoft} 0 1px, transparent 1.6px), radial-gradient(circle at 45% 80%, ${tint} 0 1px, transparent 1.6px), ${base}`;
++    default:
++      return `radial-gradient(ellipse at 35% 30%, ${tint} 0%, transparent 62%), ${base}`;
++  }
++}
++
++/* ------------------------------------------------------------------ */
++/* Terapkan ke area chat                                               */
++/* ------------------------------------------------------------------ */
++
++/**
++ * Kelas + style untuk area pesan.
++ * `default` dibiarkan kosong supaya memakai pola titik bawaan `.chat-wallpaper`.
++ */
++export function chatBackgroundProps(
++  background: ChatBackground | undefined,
++  isDark: boolean
++): { className: string; style: CSSProperties } {
++  if (!background || background.kind === "default") return { className: "", style: {} };
++
++  if (background.kind === "preset") {
++    const preset = getPreset(background.id);
++    return {
++      className: "",
++      style: {
++        backgroundColor: isDark ? preset.dark : preset.light,
++        backgroundImage: "none",
++      },
++    };
++  }
++
++  if (background.kind === "animated") {
++    const preset = getAnimatedPreset(background.id);
++    return {
++      className: `chat-anim chat-anim-${preset.id}`,
++      style: {
++        backgroundColor: isDark ? "#0b0b0d" : "#f2f3f5",
++        backgroundImage: "none",
++      },
++    };
++  }
++
++  const dim = Math.min(0.7, Math.max(0, background.dim ?? 0.25));
++  return {
++    className: "",
++    style: {
++      backgroundColor: isDark ? "#0b0b0d" : "#f7f8fa",
++      backgroundImage: `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), url("${background.imageUrl}")`,
++      backgroundSize: "cover",
++      backgroundPosition: "center",
++      backgroundRepeat: "no-repeat",
++    },
++  };
++}
++
++/* ------------------------------------------------------------------ */
++/* Pemeriksaan data dari klien                                         */
++/* ------------------------------------------------------------------ */
++
++const MAX_URL_CHARS = 600;
++
++/**
++ * Rapikan latar kiriman klien.
++ *
++ * Yang tidak dikenali dikembalikan sebagai `default`, bukan error: lebih baik
++ * latar kembali ke bawaan daripada seluruh halaman Setelan menolak menyimpan.
++ */
++export function normalizeChatBackground(input: unknown): ChatBackground {
++  if (!input || typeof input !== "object") return DEFAULT_CHAT_BACKGROUND;
++
++  const raw = input as Record<string, unknown>;
++  const kind = typeof raw.kind === "string" ? raw.kind : "";
++
++  if (kind === "preset") {
++    const id = typeof raw.id === "string" ? raw.id : "";
++    return CHAT_COLOR_PRESETS.some((preset) => preset.id === id)
++      ? { kind: "preset", id }
++      : DEFAULT_CHAT_BACKGROUND;
++  }
++
++  if (kind === "animated") {
++    const id = typeof raw.id === "string" ? raw.id : "";
++    return CHAT_ANIMATED_PRESETS.some((preset) => preset.id === id)
++      ? { kind: "animated", id }
++      : DEFAULT_CHAT_BACKGROUND;
++  }
++
++  if (kind === "image") {
++    const imageUrl = typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";
++    // Hanya terima alamat internal aplikasi atau data URL kecil; alamat luar
++    // yang panjangnya tak wajar ditolak supaya tidak jadi tempat menyisipkan CSS.
++    const safe =
++      imageUrl.startsWith("/uploads/") ||
++      imageUrl.startsWith("/api/attachments/") ||
++      imageUrl.startsWith("https://") ||
++      imageUrl.startsWith("data:image/");
++    if (!safe || imageUrl.length > MAX_URL_CHARS * 8) return DEFAULT_CHAT_BACKGROUND;
++    if (/["'\\)]/.test(imageUrl)) return DEFAULT_CHAT_BACKGROUND;
++
++    const dimRaw = typeof raw.dim === "number" ? raw.dim : 0.25;
++    const dim = Math.min(0.7, Math.max(0, dimRaw));
++    return { kind: "image", imageUrl, dim };
++  }
++
++  return DEFAULT_CHAT_BACKGROUND;
++}
++
++/** Baca JSON dari database; isi rusak dianggap latar bawaan. */
++export function parseChatBackground(json: string | null | undefined): ChatBackground {
++  if (!json) return DEFAULT_CHAT_BACKGROUND;
++  try {
++    return normalizeChatBackground(JSON.parse(json));
++  } catch {
++    return DEFAULT_CHAT_BACKGROUND;
++  }
++}
+diff --git a/src/lib/dbReady.ts b/src/lib/dbReady.ts
+index 6707d4a..4556bc7 100644
+--- a/src/lib/dbReady.ts
++++ b/src/lib/dbReady.ts
+@@ -88,6 +88,7 @@ const DDL = [
+   sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "about" text NOT NULL DEFAULT ''`,
+   sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatar_url" text`,
+   sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "auto_fallback" boolean NOT NULL DEFAULT true`,
++  sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "chat_background" text NOT NULL DEFAULT '{"kind":"default"}'`,
+   sql`ALTER TABLE "api_providers" ADD COLUMN IF NOT EXISTS "backup_keys" text NOT NULL DEFAULT '[]'`,
+   sql`CREATE INDEX IF NOT EXISTS "characters_user_id_idx" ON "characters" ("user_id")`,
+   sql`CREATE INDEX IF NOT EXISTS "api_providers_user_id_idx" ON "api_providers" ("user_id")`,
+diff --git a/src/lib/safeTop.ts b/src/lib/safeTop.ts
+index b4a57a7..74b3248 100644
+--- a/src/lib/safeTop.ts
++++ b/src/lib/safeTop.ts
+@@ -69,8 +69,15 @@ function readInsetTop(): number {
+ 
+ export function resolveSafeTop(): number {
+   const measured = readInsetTop();
+-  if (!isAppMode()) return Math.max(measured, 0);
+-  return Math.max(measured, deviceStatusBarHeight());
++
++  // Kalau browser sudah melaporkan jarak aman yang wajar, percayai itu.
++  // Angka tabel hanya dipakai saat env() terbaca 0 — jangan menambah jarak
++  // di atas jarak yang sudah ada, karena hasilnya pita kosong di bawah
++  // status bar.
++  if (measured > 0) return measured;
++
++  if (!isAppMode()) return 0;
++  return deviceStatusBarHeight();
+ }
+ 
+ export function useSafeTop() {
+diff --git a/src/lib/theme.ts b/src/lib/theme.ts
+index f666a78..342fe89 100644
+--- a/src/lib/theme.ts
++++ b/src/lib/theme.ts
+@@ -17,12 +17,33 @@ function resolve(choice: ThemeChoice): ResolvedTheme {
+   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+ }
+ 
++const THEME_COLORS: Record<ResolvedTheme, string> = {
++  light: "#fafafa",
++  dark: "#000000",
++};
++
++/**
++ * Warnai ulang `<meta name="theme-color">` mengikuti tema yang sedang dipakai.
++ *
++ * Ini yang membuat bilah status & bilah alat Safari di iPhone ikut berwarna
++ * aplikasi. Tanpa ini, orang yang memilih tema gelap di HP bermode terang akan
++ * melihat pita terang di atas aplikasi — seperti tampilannya terpotong.
++ */
++function syncThemeColor(resolved: ResolvedTheme) {
++  if (typeof document === "undefined") return;
++  const color = THEME_COLORS[resolved];
++  document
++    .querySelectorAll('meta[name="theme-color"]')
++    .forEach((el) => el.setAttribute("content", color));
++}
++
+ function applyToDom(choice: ThemeChoice) {
+   if (typeof document === "undefined") return;
+   const resolved = resolve(choice);
+   const root = document.documentElement;
+   root.classList.toggle("dark", resolved === "dark");
+   root.style.colorScheme = resolved;
++  syncThemeColor(resolved);
+ }
+ 
+ function init() {
+@@ -86,6 +107,22 @@ function getResolvedSnapshot(): ResolvedTheme {
+   return resolve(currentChoice);
+ }
+ 
++/**
++ * Pembaca tema untuk komponen yang hanya butuh nilainya di dalam render
++ * (mis. pratinjau latar), tanpa memakai hook.
++ *
++ * Dipakai bersama `useSyncExternalStore`: `subscribeTheme` mendaftarkan
++ * pendengar, `getIsDarkSnapshot` mengembalikan nilai saat ini. Snapshot harus
++ * stabil — karena itu hasilnya boolean, bukan objek baru tiap panggilan.
++ */
++export function subscribeTheme(fn: () => void) {
++  return subscribe(fn);
++}
++
++export function getIsDarkSnapshot(): boolean {
++  return getResolvedSnapshot() === "dark";
++}
++
+ /**
+  * Hook tema — reaktif terhadap perubahan manual & preferensi sistem.
+  */
+@@ -108,4 +145,4 @@ export function useTheme() {
+  * Skrip kecil yang dipasang di <head> sebelum aplikasi tampil, supaya saat
+  * pengguna memakai mode gelap halaman tidak sempat berkedip putih lebih dulu.
+  */
+-export const THEME_INIT_SCRIPT = `(()=>{try{var t=localStorage.getItem('${STORAGE_KEY}');var d=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;if(d)r.classList.add('dark');r.style.colorScheme=d?'dark':'light';}catch(e){}})();`;
++export const THEME_INIT_SCRIPT = `(()=>{try{var t=localStorage.getItem('${STORAGE_KEY}');var d=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;if(d)r.classList.add('dark');r.style.colorScheme=d?'dark':'light';var c=d?'#000000':'#fafafa';document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.setAttribute('content',c);});}catch(e){}})();`;
+-- 
+2.39.5
+
