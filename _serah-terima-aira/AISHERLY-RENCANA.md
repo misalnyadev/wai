@@ -116,11 +116,11 @@ Satu PR kecil per langkah, semuanya bisa dibalik.
 | Tahap | Isi | Butuh storage baru? | Status |
 |---|---|---|---|
 | **1a** | Profil user | tidak | ✅ selesai (`79070e8`) |
-| **1b** | Aksi per pesan: salin, ulangi balasan, hapus | tidak | ← sekarang |
-| **1c** | Suara lokal (TTS): baca balasan, preset, kecepatan, nada, jeda | tidak | |
+| **1b** | Aksi per pesan: salin, ulangi balasan, hapus | tidak | ✅ selesai (PR #2) |
+| **1c** | Suara lokal (TTS): baca balasan, preset, kecepatan, nada, jeda | tidak | ✅ selesai (PR #3) |
 | **1d** | Multi API key + auto-fallback 429 | tidak | |
 | **2a** | Tema terang / gelap / ikut sistem | tidak | |
-| **2b** | Navigasi 5 menu (Chat · Karakter · Suara · Profil · Setelan) | tidak | |
+| **2b** | Navigasi 5 menu (Chat · Karakter · Suara · Profil · Setelan) | tidak | ← patch `tahap2` siap |
 | **2c** | Latar chat custom + 5 latar animasi + gelembung tembus pandang | tidak (gambar boleh di server) | |
 | **2d** | Gaya gelembung, Sakelar, dan kerapian Setelan | tidak | |
 | **3a** | Sambungkan object storage + endpoint presigned URL | **ya** | |

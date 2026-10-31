@@ -1,74 +1,35 @@
-From f4c110a7fdbc58d71f387c346e6cad895d8a7279 Mon Sep 17 00:00:00 2001
-From: misalnyadev <misalnyadev@users.noreply.github.com>
-Date: Sat, 31 Oct 2026 02:40:49 +0000
-Subject: [PATCH] Tata letak bergaya WaiChat: kapsul navigasi, anti-zoom
- iPhone, dan Groq
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+From db8d13d086124b5bdd2ad2ee0fee615e852a7c32 Mon Sep 17 00:00:00 2001
+From: arena <arena@local>
+Date: Sat, 31 Oct 2026 02:50:00 +0000
+Subject: [PATCH] Tata letak Aisherly: navigasi kapsul 5 menu + halaman
+ Suara/Setelan/Profil
 
-Tiga hal yang membuat tampilan terasa belum pas, sekaligus satu perubahan provider.
-
-ANTI-ZOOM SAAT MENGETIK
-Penyebabnya: iOS Safari memperbesar halaman kalau kolom isian berfont di bawah
-16 px. Beberapa kolom masih memakai text-sm (14 px), jadi setiap kali mengetik
-halaman ikut membesar dan tidak kembali sendiri.
-- Aturan di globals.css memaksa input/textarea/select menjadi 16 px pada
-  perangkat sentuh. Ditulis di luar @layer supaya menang dari utility Tailwind.
-- Pembesaran dua jari tetap diperbolehkan; yang dicegah hanya zoom otomatis.
-- Ditambah min-width: 0 supaya kontrol form tidak melebarkan halaman.
-
-FONT UNTUK IPHONE
-- Font sistem (-apple-system) yang di iPhone berarti San Francisco. Tidak ada
-  font yang diunduh, jadi tidak ada kedipan saat halaman pertama dibuka.
-- Di layar HP, --text-xs dan --text-sm dinaikkan satu tingkat agar mudah dibaca.
-
-PANEL KAPSUL & PENEMPATAN MENU
-- HP: kapsul kaca mengambang di bawah, 4 menu (Chat, Karakter, Profil, Setelan).
-  "Suara" menyusul setelah TTS masuk — menaruhnya sekarang berarti ada menu
-  yang isinya kosong.
-- Layar lebar: rail navigasi kiri dengan menu yang sama.
-- Kapsul disembunyikan otomatis saat keyboard terbuka (kelas kb-open di <html>).
-- Pengaturan dan pembuatan karakter dipindah dari header sidebar ke tempatnya:
-  Setelan jadi halaman sendiri, Karakter jadi halaman grid dengan penghitung
-  n/10 dan tombol Baru.
-- Jarak aman iPhone dipakai di semua sisi (viewport-fit=cover +
-  env(safe-area-inset-*)).
-- SettingsModal.tsx dan ProfileModal.tsx dihapus, diganti SettingsView dan
-  ProfileView supaya tidak ada dua versi layar yang sama.
-
-PROVIDER: GROQ MASUK, XAI KELUAR
-- Daftar provider sekarang: Gemini, Groq, OpenRouter, Custom.
-- Groq memakai llama-3.3-70b-versatile lewat endpoint OpenAI-compatible.
-- Tipe "grok" (xAI) tetap dikenali di lapisan AI supaya API key lama tidak
-  langsung mati, tapi tidak muncul di daftar tambah provider.
-
-Uji: tsc bersih, build sukses, halaman utama dibuka lewat server lokal (HTTP
-200, judul dan viewport-fit benar), dan aturan CSS yang dikirim ke browser
-sudah diperiksa isinya (pointer:coarse, font-size:16px, glass-capsule,
-safe-area-inset). Lint tetap 1 error lama di ChatApp.tsx.
-
-Belum diuji di iPhone sungguhan — perilaku zoom dan kapsul perlu dicoba di HP.
+- Menu pindah ke kapsul bawah di HP dan rail kiri di desktop
+- Setelan & Suara jadi halaman penuh, bukan jendela mengambang
+- Sidebar diringkas: tinggal cari karakter dan batas 10 karakter
+- Daftar percakapan memakai tinggi layar penuh dan menghormati safe-area
+- Font/zoom iPhone: input 16px, viewport-fit=cover, teks HP dibesarkan
+- Provider: Groq masuk (llama-3.3-70b-versatile), xAI/Grok keluar dari pilihan
+  (key lama tetap diterima supaya tidak langsung mati)
 ---
- README.md                         |  37 ++++
  src/app/globals.css               | 103 +++++++++++
  src/app/layout.tsx                |  22 ++-
- src/components/CharactersView.tsx |  79 +++++++++
- src/components/ChatApp.tsx        | 141 +++++++++------
- src/components/Composer.tsx       |  23 ++-
- src/components/Navigation.tsx     | 130 ++++++++++++++
- src/components/PageShell.tsx      |  40 +++++
- src/components/ProfileModal.tsx   | 179 -------------------
- src/components/ProfileView.tsx    | 178 +++++++++++++++++++
- src/components/SettingsModal.tsx  | 281 ------------------------------
- src/components/SettingsView.tsx   | 272 +++++++++++++++++++++++++++++
- src/components/Sidebar.tsx        |  53 ++----
+ src/components/CharactersView.tsx |  79 ++++++++
+ src/components/ChatApp.tsx        | 173 ++++++++++--------
+ src/components/Navigation.tsx     | 127 +++++++++++++
+ src/components/PageShell.tsx      |  40 ++++
+ src/components/ProfileModal.tsx   | 179 ------------------
+ src/components/ProfileView.tsx    | 172 +++++++++++++++++
+ src/components/SettingsModal.tsx  | 291 -----------------------------
+ src/components/SettingsView.tsx   | 295 ++++++++++++++++++++++++++++++
+ src/components/Sidebar.tsx        |  67 ++-----
+ src/components/VoiceModal.tsx     |  39 ++--
  src/components/icons.tsx          |  55 ++++++
- src/db/schema.ts                  |   9 +-
+ src/db/schema.ts                  |   4 +-
  src/lib/ai/index.ts               |   7 +
- src/lib/ai/providerDefaults.ts    |  17 +-
- src/types/chat.ts                 |   3 +-
- 18 files changed, 1064 insertions(+), 565 deletions(-)
+ src/lib/ai/providerDefaults.ts    |  10 +-
+ src/types/chat.ts                 |   2 +-
+ 17 files changed, 1048 insertions(+), 617 deletions(-)
  create mode 100644 src/components/CharactersView.tsx
  create mode 100644 src/components/Navigation.tsx
  create mode 100644 src/components/PageShell.tsx
@@ -77,62 +38,8 @@ Belum diuji di iPhone sungguhan — perilaku zoom dan kapsul perlu dicoba di HP.
  delete mode 100644 src/components/SettingsModal.tsx
  create mode 100644 src/components/SettingsView.tsx
 
-diff --git a/README.md b/README.md
-index bdbd1a7..162780b 100644
---- a/README.md
-+++ b/README.md
-@@ -267,8 +267,32 @@ Sengaja "gagal tertutup": kalau variabelnya lupa dipasang, yang terjadi adalah t
- 
- Ganti kode kapan saja di Vercel → Settings → Environment Variables, lalu **Redeploy**.
- 
-+## Tampilan & navigasi
-+
-+Tata letak mengikuti WaiChat:
-+
-+- **HP**: kapsul kaca mengambang di bawah berisi 4 menu — Chat · Karakter · Profil · Setelan.
-+  Kapsul disembunyikan otomatis saat keyboard terbuka supaya tidak menutupi kolom ketik.
-+- **Layar lebar**: rail navigasi di sisi kiri dengan menu yang sama.
-+- Jarak aman iPhone dipakai di semua sisi (`env(safe-area-inset-*)` + `viewport-fit=cover`).
-+
-+### Kenapa tidak zoom lagi saat mengetik
-+
-+iOS Safari memperbesar halaman bila kolom isian berfont **di bawah 16 px**. Dulu beberapa
-+kolom memakai `text-sm` (14 px), jadi setiap kali mengetik halaman ikut membesar dan tidak
-+kembali sendiri. Sekarang ada aturan di `globals.css` yang memaksa **semua** input, textarea,
-+dan select menjadi 16 px pada perangkat sentuh.
-+
-+Pembesaran dua jari tetap diperbolehkan — yang dicegah hanya zoom otomatis, bukan aksesibilitas.
-+
-+### Font
-+
-+Memakai font sistem (`-apple-system`), yang di iPhone berarti **San Francisco**. Tidak ada
-+font yang diunduh, jadi tidak ada kedipan saat halaman pertama dibuka.
-+
- ## Batas 10 karakter
- 
-+
- Maksimal **10 karakter per akun**, dijaga dua lapis:
- 
- - Di tampilan: penghitung `n/10` di header, tombol **+** mati saat penuh.
-@@ -331,3 +355,16 @@ Polanya sengaja dipersempit ke **pengakuan diri**, bukan kata "AI" secara umum 
-    upload **foto profil**, isi **nama**, **status singkat**, **kepribadian & latar belakang** (makin detail makin nyata), **pesan pembuka**, dan opsional provider/model khusus.
- 3. Chat seperti biasa. Tap 📎 untuk mengirim foto — karakter merespons seperti benar-benar melihat fotonya.
- 4. Tap nama karakter di header chat untuk melihat profil, mengedit, atau menghapus karakter.
-+
-+## Provider AI
-+
-+| Provider | Model bawaan | Keterangan |
-+|---|---|---|
-+| Google Gemini | `gemini-2.5-flash` | ada kuota gratis |
-+| **Groq** | `llama-3.3-70b-versatile` | paling cepat, kuota gratis cukup |
-+| OpenRouter | `openai/gpt-4o-mini` | banyak pilihan model |
-+| Custom | — | endpoint OpenAI-compatible sendiri |
-+
-+**xAI/Grok sudah tidak ditawarkan** — mengikuti WaiChat. API key xAI yang terlanjur tersimpan
-+masih bisa dipakai (supaya tidak langsung mati), tapi tidak muncul di daftar tambah provider
-+dan bisa diganti dengan Groq kapan saja dari Setelan.
 diff --git a/src/app/globals.css b/src/app/globals.css
-index 5e682ee..862510c 100644
+index 5e682ee..ad7beb1 100644
 --- a/src/app/globals.css
 +++ b/src/app/globals.css
 @@ -1,10 +1,113 @@
@@ -229,8 +136,8 @@ index 5e682ee..862510c 100644
 +}
 +
 +/*
-+ * Kapsul disembunyikan saat keyboard aktif: aturan di sini dipicu lewat kelas
-+ * di <html> yang dipasang composer saat kolom ketik difokuskan.
++ * Kapsul disembunyikan saat keyboard aktif: kelas di <html> dipasang oleh
++ * composer saat kolom ketik difokuskan.
 + */
 +.mobile-tabbar {
 +  transition: opacity 0.18s ease, transform 0.18s ease;
@@ -371,14 +278,15 @@ index 0000000..5737270
 +  );
 +}
 diff --git a/src/components/ChatApp.tsx b/src/components/ChatApp.tsx
-index 087a764..e57a041 100644
+index b51793b..d51acac 100644
 --- a/src/components/ChatApp.tsx
 +++ b/src/components/ChatApp.tsx
-@@ -8,9 +8,12 @@ import { useAuth } from "./AuthGate";
+@@ -17,10 +17,13 @@ import { useAuth } from "./AuthGate";
  import { Sidebar } from "./Sidebar";
  import { ChatWindow } from "./ChatWindow";
  import { Composer } from "./Composer";
 -import { SettingsModal } from "./SettingsModal";
+ import { VoiceModal } from "./VoiceModal";
  import { CharacterModal } from "./CharacterModal";
  import { CharacterProfileModal } from "./CharacterProfileModal";
 +import { CharactersView } from "./CharactersView";
@@ -388,34 +296,32 @@ index 087a764..e57a041 100644
  import { XIcon } from "./icons";
  
  function sleep(ms: number) {
-@@ -24,8 +27,9 @@ function typingDelayFor(text: string) {
- }
- 
- export function ChatApp() {
--  const { expire } = useAuth();
-+  const { user, expire } = useAuth();
+@@ -42,6 +45,7 @@ export function ChatApp() {
+   // iOS Safari: buka mesin suara pada sentuhan pertama supaya auto-baca tidak dibungkam.
+   useSpeechUnlock();
  
 +  const [view, setView] = useState<AppView>("chats");
    const [characters, setCharacters] = useState<CharacterSummary[]>([]);
    const [providers, setProviders] = useState<ProviderSummary[]>([]);
    const [limit, setLimit] = useState<number>(MAX_CHARACTERS);
-@@ -34,7 +38,6 @@ export function ChatApp() {
+@@ -50,8 +54,6 @@ export function ChatApp() {
    const [typingFor, setTypingFor] = useState<string | null>(null);
    const [loaded, setLoaded] = useState(false);
  
 -  const [showSettings, setShowSettings] = useState(false);
+-  const [showVoice, setShowVoice] = useState(false);
    const [showCreate, setShowCreate] = useState(false);
    const [showProfile, setShowProfile] = useState(false);
    const [editDetail, setEditDetail] = useState<CharacterDetail | null>(null);
-@@ -95,6 +98,7 @@ export function ChatApp() {
-   );
+@@ -121,6 +123,7 @@ export function ChatApp() {
  
    function handleSelect(id: string) {
+     if (id !== activeId) stopSpeaking();
 +    setView("chats");
      setActiveId(id);
      setMobileShowChat(true);
      if (!messagesMap[id]) fetchMessages(id);
-@@ -153,7 +157,7 @@ export function ChatApp() {
+@@ -181,7 +184,7 @@ export function ChatApp() {
  
        if (!res.ok) {
          setTypingFor(null);
@@ -424,29 +330,7 @@ index 087a764..e57a041 100644
          return;
        }
  
-@@ -175,13 +179,11 @@ export function ChatApp() {
-     }
-   }
- 
--  /** Salin teks pesan ke papan klip, dengan cadangan untuk browser lama. */
-   async function handleCopyMessage(text: string) {
-     try {
-       await navigator.clipboard.writeText(text);
-       showToast("Teks disalin.");
-     } catch {
--      // Safari lama / bukan HTTPS: pakai textarea sementara.
-       const area = document.createElement("textarea");
-       area.value = text;
-       area.style.position = "fixed";
-@@ -208,7 +210,6 @@ export function ChatApp() {
-       return;
-     }
- 
--    // Buang dari layar tanpa memuat ulang seluruh riwayat.
-     setMessagesMap((prev) => {
-       const next: Record<string, ChatMessage[]> = {};
-       for (const [key, list] of Object.entries(prev)) {
-@@ -283,6 +284,7 @@ export function ChatApp() {
+@@ -328,6 +331,7 @@ export function ChatApp() {
    const activeCharacter = characters.find((c) => c.id === activeId) ?? null;
    const activeMessages = activeId ? messagesMap[activeId] ?? [] : [];
    const hasProviders = providers.length > 0;
@@ -454,7 +338,7 @@ index 087a764..e57a041 100644
  
    if (!loaded) {
      return (
-@@ -294,64 +296,85 @@ export function ChatApp() {
+@@ -339,87 +343,100 @@ export function ChatApp() {
  
    return (
      <div className="flex h-screen w-full overflow-hidden bg-slate-100">
@@ -474,7 +358,7 @@ index 087a764..e57a041 100644
 +        </div>
 +
 +        <div
-+          className={`${mobileShowChat ? "flex" : "hidden"} min-w-0 w-full flex-1 flex-col md:flex`}
++          className={`${mobileShowChat ? "flex" : "hidden"} w-full min-w-0 flex-1 flex-col md:flex`}
 +        >
 +          {activeCharacter ? (
 +            <>
@@ -482,10 +366,19 @@ index 087a764..e57a041 100644
 +                character={activeCharacter}
 +                messages={activeMessages}
 +                isTyping={typingFor === activeId}
-+                onBack={() => setMobileShowChat(false)}
++                isSpeaking={isSpeaking}
++                canSpeak={speechSupported}
++                voiceEnabled={voice.enabled}
++                onBack={() => {
++                  stopSpeaking();
++                  setMobileShowChat(false);
++                }}
 +                onOpenProfile={() => openProfile(activeCharacter.id)}
++                onOpenVoice={() => setView("voice")}
 +                onImageClick={(url) => setLightbox(url)}
 +                onCopyMessage={handleCopyMessage}
++                onSpeakMessage={handleSpeakMessage}
++                onStopSpeaking={stopSpeaking}
 +                onDeleteMessage={handleDeleteMessage}
 +                onRegenerate={handleRegenerate}
 +              />
@@ -522,11 +415,11 @@ index 087a764..e57a041 100644
 -          onSelect={handleSelect}
 -          onNewCharacter={() => setShowCreate(true)}
 -          onOpenSettings={() => setShowSettings(true)}
+-          onOpenVoice={() => setShowVoice(true)}
 -          hasProviders={hasProviders}
+-          voiceEnabled={voice.enabled}
            limit={limit}
-+          onOpen={(id) => {
-+            handleSelect(id);
-+          }}
++          onOpen={handleSelect}
 +          onCreate={() => setShowCreate(true)}
          />
 -      </div>
@@ -539,10 +432,19 @@ index 087a764..e57a041 100644
 -              character={activeCharacter}
 -              messages={activeMessages}
 -              isTyping={typingFor === activeId}
--              onBack={() => setMobileShowChat(false)}
+-              isSpeaking={isSpeaking}
+-              canSpeak={speechSupported}
+-              voiceEnabled={voice.enabled}
+-              onBack={() => {
+-                stopSpeaking();
+-                setMobileShowChat(false);
+-              }}
 -              onOpenProfile={() => openProfile(activeCharacter.id)}
+-              onOpenVoice={() => setShowVoice(true)}
 -              onImageClick={(url) => setLightbox(url)}
 -              onCopyMessage={handleCopyMessage}
+-              onSpeakMessage={handleSpeakMessage}
+-              onStopSpeaking={stopSpeaking}
 -              onDeleteMessage={handleDeleteMessage}
 -              onRegenerate={handleRegenerate}
 -            />
@@ -569,26 +471,45 @@ index 087a764..e57a041 100644
 -          </div>
 -        )}
 -      </div>
-+      {view === "profile" && <ProfileView />}
++      {view === "voice" && (
++        <div className="min-w-0 flex-1">
++          <VoiceModal asPage settings={voice} onChange={setVoice} onClose={() => setView("chats")} />
++        </div>
++      )}
  
 -      {showSettings && (
 -        <SettingsModal
++      {view === "profile" && <ProfileView />}
++
 +      {view === "settings" && (
 +        <SettingsView
            providers={providers}
 -          onClose={() => setShowSettings(false)}
            onRefresh={fetchProviders}
+-          onOpenVoice={() => {
+-            setShowSettings(false);
+-            setShowVoice(true);
+-          }}
 +          onOpenProfile={() => setView("profile")}
++          onOpenVoice={() => setView("voice")}
++          voiceEnabled={voice.enabled}
          />
        )}
  
+-      {showVoice && (
+-        <VoiceModal
+-          settings={voice}
+-          onChange={setVoice}
+-          onClose={() => setShowVoice(false)}
+-        />
+-      )}
 +      <MobileTabBar view={view} onChange={setView} />
-+
+ 
 +      {/* ---------------- Modal ---------------- */}
        {showCreate && (
          <CharacterModal
            providers={providers}
-@@ -392,12 +415,16 @@ export function ChatApp() {
+@@ -460,12 +477,16 @@ export function ChatApp() {
            <button className="absolute right-5 top-5 text-white" onClick={() => setLightbox(null)}>
              <XIcon className="h-7 w-7" />
            </button>
@@ -607,74 +528,12 @@ index 087a764..e57a041 100644
            {toast}
          </div>
        )}
-diff --git a/src/components/Composer.tsx b/src/components/Composer.tsx
-index dc3d8a6..1022895 100644
---- a/src/components/Composer.tsx
-+++ b/src/components/Composer.tsx
-@@ -3,6 +3,12 @@
- import { useRef, useState } from "react";
- import { PaperclipIcon, SendIcon, XIcon } from "./icons";
- 
-+/** Perangkat sentuh (iPhone/iPad) — Enter dipakai untuk baris baru. */
-+function isCoarsePointer(): boolean {
-+  if (typeof window === "undefined") return false;
-+  return window.matchMedia("(pointer: coarse)").matches;
-+}
-+
- export function Composer({
-   onSend,
-   disabled,
-@@ -16,6 +22,14 @@ export function Composer({
-   const fileRef = useRef<HTMLInputElement>(null);
-   const textareaRef = useRef<HTMLTextAreaElement>(null);
- 
-+  /*
-+   * Kapsul navigasi disembunyikan selama keyboard terbuka (lihat globals.css),
-+   * supaya tidak menutupi kolom ketik dan tombol kirim.
-+   */
-+  function setKeyboardOpen(open: boolean) {
-+    document.documentElement.classList.toggle("kb-open", open);
-+  }
-+
-   function handlePickFile(file: File) {
-     setImageFile(file);
-     setImagePreview(URL.createObjectURL(file));
-@@ -37,7 +51,7 @@ export function Composer({
-   }
- 
-   return (
--    <div className="border-t border-slate-200 bg-[#f0f2f5] px-3 py-2.5">
-+    <div className="border-t border-slate-200 bg-[#f0f2f5] px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
-       {imagePreview && (
-         <div className="mb-2 flex items-center gap-2">
-           <div className="relative">
-@@ -80,15 +94,18 @@ export function Composer({
-             e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-           }}
-           onKeyDown={(e) => {
--            if (e.key === "Enter" && !e.shiftKey) {
-+            // Di iPhone jangan kirim dengan Enter — baris baru yang diharapkan.
-+            if (e.key === "Enter" && !e.shiftKey && !isCoarsePointer()) {
-               e.preventDefault();
-               handleSubmit();
-             }
-           }}
-+          onFocus={() => setKeyboardOpen(true)}
-+          onBlur={() => setKeyboardOpen(false)}
-           rows={1}
-           placeholder="Ketik pesan"
-           disabled={disabled}
--          className="max-h-[120px] flex-1 resize-none rounded-full border-none bg-white px-4 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 disabled:opacity-60"
-+          className="max-h-[120px] flex-1 resize-none rounded-full border-none bg-white px-4 py-2.5 text-slate-800 outline-none placeholder:text-slate-400 disabled:opacity-60"
-         />
-         <button
-           onClick={handleSubmit}
 diff --git a/src/components/Navigation.tsx b/src/components/Navigation.tsx
 new file mode 100644
-index 0000000..b6613d4
+index 0000000..ee78e33
 --- /dev/null
 +++ b/src/components/Navigation.tsx
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,127 @@
 +"use client";
 +
 +import { Avatar } from "./Avatar";
@@ -682,18 +541,12 @@ index 0000000..b6613d4
 +  ChatsIcon,
 +  GridIcon,
 +  SettingsIcon,
++  SpeakerIcon,
 +  UserIcon,
 +} from "./icons";
 +
-+export type AppView = "chats" | "characters" | "profile" | "settings";
++export type AppView = "chats" | "characters" | "voice" | "profile" | "settings";
 +
-+/**
-+ * Menu sementara empat.
-+ *
-+ * "Suara" menyusul setelah fitur TTS masuk (tahap 1c). Menaruhnya sekarang
-+ * berarti ada menu yang dibuka tapi isinya kosong — lebih baik ditambahkan
-+ * saat benar-benar ada isinya.
-+ */
 +const ITEMS: {
 +  view: AppView;
 +  label: string;
@@ -701,6 +554,7 @@ index 0000000..b6613d4
 +}[] = [
 +  { view: "chats", label: "Chat", Icon: ChatsIcon },
 +  { view: "characters", label: "Karakter", Icon: GridIcon },
++  { view: "voice", label: "Suara", Icon: SpeakerIcon },
 +  { view: "profile", label: "Profil", Icon: UserIcon },
 +  { view: "settings", label: "Setelan", Icon: SettingsIcon },
 +];
@@ -718,7 +572,7 @@ index 0000000..b6613d4
 +  avatarUrl?: string | null;
 +}) {
 +  return (
-+    <nav className="hidden w-[76px] shrink-0 flex-col items-center gap-1 bg-[#f0f2f5] py-3 md:flex">
++    <nav className="hidden w-[76px] shrink-0 flex-col items-center gap-0.5 bg-[#f0f2f5] py-3 md:flex">
 +      <button
 +        onClick={() => onChange("profile")}
 +        className="mb-2 rounded-full ring-2 ring-transparent transition hover:ring-slate-300"
@@ -748,7 +602,9 @@ index 0000000..b6613d4
 +            >
 +              <Icon className="h-5 w-5" />
 +            </span>
-+            <span className={`text-[11px] font-medium ${active ? "text-slate-900" : "text-slate-500"}`}>
++            <span
++              className={`text-[11px] font-medium ${active ? "text-slate-900" : "text-slate-500"}`}
++            >
 +              {label}
 +            </span>
 +          </button>
@@ -776,7 +632,7 @@ index 0000000..b6613d4
 +    <div className="mobile-tabbar pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.4rem))] md:hidden">
 +      <nav
 +        aria-label="Navigasi utama"
-+        className="glass-capsule pointer-events-auto flex w-full max-w-[420px] items-center gap-0.5 rounded-full p-1.5"
++        className="glass-capsule pointer-events-auto flex w-full max-w-[440px] items-center gap-0.5 rounded-full p-1.5"
 +      >
 +        {ITEMS.map(({ view: item, label, Icon }) => {
 +          const active = view === item;
@@ -786,7 +642,7 @@ index 0000000..b6613d4
 +              onClick={() => onChange(item)}
 +              aria-current={active}
 +              aria-label={label}
-+              className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition active:scale-[0.97] ${
++              className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-full px-0.5 py-2 transition active:scale-[0.97] ${
 +                active ? "bg-slate-900/10 text-slate-900" : "text-slate-500"
 +              }`}
 +            >
@@ -807,7 +663,7 @@ index 0000000..b6613d4
 +}
 diff --git a/src/components/PageShell.tsx b/src/components/PageShell.tsx
 new file mode 100644
-index 0000000..5d9df95
+index 0000000..cb45e2d
 --- /dev/null
 +++ b/src/components/PageShell.tsx
 @@ -0,0 +1,40 @@
@@ -816,7 +672,7 @@ index 0000000..5d9df95
 +import type { ReactNode } from "react";
 +
 +/**
-+ * Bingkai halaman untuk menu non-chat (Karakter, Profil, Setelan).
++ * Bingkai halaman untuk menu non-chat.
 + *
 + * Padding bawah memakai `--tabbar-space` supaya isi terakhir tidak tertutup
 + * kapsul navigasi. Padding atas memakai `env(safe-area-inset-top)` supaya
@@ -834,7 +690,7 @@ index 0000000..5d9df95
 +  children: ReactNode;
 +}) {
 +  return (
-+    <div className="flex h-full w-full flex-col bg-slate-50">
++    <div className="flex h-full min-w-0 w-full flex-1 flex-col bg-slate-50">
 +      <header className="shrink-0 border-b border-slate-200 bg-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:px-6 md:pt-5">
 +        <div className="flex items-start justify-between gap-3">
 +          <div className="min-w-0">
@@ -1038,10 +894,10 @@ index 1c54ae6..0000000
 -}
 diff --git a/src/components/ProfileView.tsx b/src/components/ProfileView.tsx
 new file mode 100644
-index 0000000..1cde890
+index 0000000..3af2356
 --- /dev/null
 +++ b/src/components/ProfileView.tsx
-@@ -0,0 +1,178 @@
+@@ -0,0 +1,172 @@
 +"use client";
 +
 +import { useEffect, useState } from "react";
@@ -1140,10 +996,7 @@ index 0000000..1cde890
 +          </Field>
 +
 +          <div className="grid grid-cols-2 gap-2">
-+            <Field
-+              label="Panggilan sehari-hari"
-+              hint={counter(profile.nickname, MAX_NICKNAME_CHARS)}
-+            >
++            <Field label="Panggilan sehari-hari" hint={counter(profile.nickname, MAX_NICKNAME_CHARS)}>
 +              <input
 +                value={profile.nickname}
 +                onChange={(e) => set("nickname", e.target.value)}
@@ -1174,10 +1027,7 @@ index 0000000..1cde890
 +            />
 +          </Field>
 +
-+          <Field
-+            label="Cerita tentang dirimu"
-+            hint={counter(profile.about, MAX_ABOUT_CHARS)}
-+          >
++          <Field label="Cerita tentang dirimu" hint={counter(profile.about, MAX_ABOUT_CHARS)}>
 +            <textarea
 +              value={profile.about}
 +              onChange={(e) => set("about", e.target.value)}
@@ -1222,10 +1072,10 @@ index 0000000..1cde890
 +}
 diff --git a/src/components/SettingsModal.tsx b/src/components/SettingsModal.tsx
 deleted file mode 100644
-index a70a8c9..0000000
+index 80e074f..0000000
 --- a/src/components/SettingsModal.tsx
 +++ /dev/null
-@@ -1,281 +0,0 @@
+@@ -1,291 +0,0 @@
 -"use client";
 -
 -import { useState } from "react";
@@ -1259,10 +1109,12 @@ index a70a8c9..0000000
 -  providers,
 -  onClose,
 -  onRefresh,
+-  onOpenVoice,
 -}: {
 -  providers: ProviderSummary[];
 -  onClose: () => void;
 -  onRefresh: () => Promise<void>;
+-  onOpenVoice?: () => void;
 -}) {
 -  const [type, setType] = useState<ProviderType>("gemini");
 -  const [label, setLabel] = useState("");
@@ -1484,13 +1336,21 @@ index a70a8c9..0000000
 -              <p className="mt-0.5 text-[11px] text-slate-400">
 -                Karakter & API key di akun ini terpisah dari akun lain.
 -              </p>
--              <div className="mt-2 flex items-center gap-2">
+-              <div className="mt-2 flex flex-wrap items-center gap-2">
 -                <button
 -                  onClick={() => setShowProfile(true)}
 -                  className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
 -                >
 -                  Profil Saya
 -                </button>
+-                {onOpenVoice && (
+-                  <button
+-                    onClick={onOpenVoice}
+-                    className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+-                  >
+-                    Suara
+-                  </button>
+-                )}
 -                <button
 -                  onClick={() => void signOut()}
 -                  className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white"
@@ -1509,10 +1369,10 @@ index a70a8c9..0000000
 -}
 diff --git a/src/components/SettingsView.tsx b/src/components/SettingsView.tsx
 new file mode 100644
-index 0000000..b421c3a
+index 0000000..dde4d91
 --- /dev/null
 +++ b/src/components/SettingsView.tsx
-@@ -0,0 +1,272 @@
+@@ -0,0 +1,295 @@
 +"use client";
 +
 +import { useState } from "react";
@@ -1527,10 +1387,14 @@ index 0000000..b421c3a
 +  providers,
 +  onRefresh,
 +  onOpenProfile,
++  onOpenVoice,
++  voiceEnabled,
 +}: {
 +  providers: ProviderSummary[];
 +  onRefresh: () => Promise<void>;
 +  onOpenProfile: () => void;
++  onOpenVoice: () => void;
++  voiceEnabled: boolean;
 +}) {
 +  const { user, signOut } = useAuth();
 +
@@ -1611,6 +1475,25 @@ index 0000000..b421c3a
 +      }
 +    >
 +      <div className="mx-auto max-w-xl space-y-4">
++        {/* ---------------- Suara ---------------- */}
++        <section>
++          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
++            Suara
++          </h2>
++          <button
++            onClick={onOpenVoice}
++            className="flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-3 text-left ring-1 ring-slate-200 hover:bg-slate-50"
++          >
++            <span className="min-w-0">
++              <span className="block text-sm font-medium text-slate-900">Suara karakter</span>
++              <span className="block text-xs text-slate-500">
++                {voiceEnabled ? "Bacakan balasan: aktif" : "Bacakan balasan: mati"}
++              </span>
++            </span>
++            <span className="shrink-0 text-xs font-semibold text-emerald-700">Atur</span>
++          </button>
++        </section>
++
 +        {/* ---------------- API key ---------------- */}
 +        <section>
 +          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -1786,28 +1669,27 @@ index 0000000..b421c3a
 +  );
 +}
 diff --git a/src/components/Sidebar.tsx b/src/components/Sidebar.tsx
-index e57462b..119432e 100644
+index 3c075d5..c69fb00 100644
 --- a/src/components/Sidebar.tsx
 +++ b/src/components/Sidebar.tsx
 @@ -3,7 +3,7 @@
  import { useMemo, useState } from "react";
  import type { CharacterSummary } from "@/types/chat";
  import { Avatar } from "./Avatar";
--import { PlusIcon, SearchIcon, SettingsIcon } from "./icons";
+-import { PlusIcon, SearchIcon, SettingsIcon, SpeakerIcon } from "./icons";
 +import { SearchIcon } from "./icons";
  
  function formatListTime(iso: string) {
    const d = new Date(iso);
-@@ -13,21 +13,22 @@ function formatListTime(iso: string) {
+@@ -13,25 +13,21 @@ function formatListTime(iso: string) {
    return d.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
  }
  
 +/**
 + * Daftar percakapan.
 + *
-+ * Tombol pengaturan dan tambah karakter sudah dipindahkan ke kapsul navigasi
-+ * bawah dan halaman Karakter — header di sini tinggal nama aplikasi dan
-+ * penghitung batas karakter.
++ * Tombol pengaturan, suara, dan tambah karakter sudah pindah ke kapsul
++ * navigasi — header di sini tinggal nama aplikasi dan penghitung batas.
 + */
  export function Sidebar({
    characters,
@@ -1815,7 +1697,9 @@ index e57462b..119432e 100644
    onSelect,
 -  onNewCharacter,
 -  onOpenSettings,
+-  onOpenVoice,
 -  hasProviders,
+-  voiceEnabled,
    limit,
  }: {
    characters: CharacterSummary[];
@@ -1823,11 +1707,13 @@ index e57462b..119432e 100644
    onSelect: (id: string) => void;
 -  onNewCharacter: () => void;
 -  onOpenSettings: () => void;
+-  onOpenVoice: () => void;
 -  hasProviders: boolean;
+-  voiceEnabled: boolean;
    limit: number;
  }) {
    const [query, setQuery] = useState("");
-@@ -41,7 +42,7 @@ export function Sidebar({
+@@ -45,7 +41,7 @@ export function Sidebar({
  
    return (
      <div className="flex h-full w-full flex-col border-r border-slate-200 bg-white md:w-[380px]">
@@ -1836,11 +1722,22 @@ index e57462b..119432e 100644
          <div className="flex items-baseline gap-2">
            <h1 className="text-lg font-bold text-slate-900">Aisherly</h1>
            <span
-@@ -51,45 +52,25 @@ export function Sidebar({
+@@ -55,56 +51,25 @@ export function Sidebar({
              {characters.length}/{limit}
            </span>
          </div>
 -        <div className="flex items-center gap-1">
+-          <button
+-            onClick={onOpenVoice}
+-            className="relative rounded-full p-2 text-slate-600 hover:bg-slate-200"
+-            title="Pengaturan Suara"
+-            aria-label="Pengaturan Suara"
+-          >
+-            <SpeakerIcon className="h-5 w-5" />
+-            {voiceEnabled && (
+-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-500" />
+-            )}
+-          </button>
 -          <button
 -            onClick={onOpenSettings}
 -            className="relative rounded-full p-2 text-slate-600 hover:bg-slate-200"
@@ -1887,7 +1784,7 @@ index e57462b..119432e 100644
                : "Karakter tidak ditemukan."}
            </div>
          )}
-@@ -120,12 +101,6 @@ export function Sidebar({
+@@ -135,12 +100,6 @@ export function Sidebar({
              </div>
            </button>
          ))}
@@ -1900,11 +1797,86 @@ index e57462b..119432e 100644
        </div>
      </div>
    );
+diff --git a/src/components/VoiceModal.tsx b/src/components/VoiceModal.tsx
+index 9fb540a..82c1812 100644
+--- a/src/components/VoiceModal.tsx
++++ b/src/components/VoiceModal.tsx
+@@ -57,10 +57,13 @@ export function VoiceModal({
+   settings,
+   onChange,
+   onClose,
++  asPage = false,
+ }: {
+   settings: VoiceSettings;
+   onChange: (next: VoiceSettings) => void;
+   onClose: () => void;
++  /** Ditampilkan sebagai halaman penuh (menu Suara), bukan jendela mengambang. */
++  asPage?: boolean;
+ }) {
+   const supported = useSpeechSupported();
+   const voices = useVoices();
+@@ -94,14 +97,22 @@ export function VoiceModal({
+ 
+   return (
+     <div
+-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+-      onClick={onClose}
++      className={
++        asPage
++          ? "flex h-full w-full flex-1 flex-col bg-slate-50"
++          : "fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
++      }
++      onClick={asPage ? undefined : onClose}
+     >
+       <div
+-        className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl"
++        className={
++          asPage
++            ? "mx-auto flex h-full w-full max-w-2xl flex-col bg-white md:my-4 md:rounded-2xl md:shadow-sm md:ring-1 md:ring-slate-200"
++            : "flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl"
++        }
+         onClick={(e) => e.stopPropagation()}
+       >
+-        <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-5 py-4">
++        <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-5 py-4 pt-[max(1rem,env(safe-area-inset-top))] md:pt-4">
+           <h2 className="text-lg font-semibold text-slate-900">Suara Karakter</h2>
+           <div className="flex items-center gap-2">
+             {supported && (
+@@ -117,18 +128,20 @@ export function VoiceModal({
+                 {isSpeaking ? "Hentikan" : "Coba suara"}
+               </button>
+             )}
+-            <button
+-              type="button"
+-              onClick={onClose}
+-              className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"
+-              aria-label="Tutup"
+-            >
+-              <XIcon className="h-5 w-5" />
+-            </button>
++            {!asPage && (
++              <button
++                type="button"
++                onClick={onClose}
++                className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"
++                aria-label="Tutup"
++              >
++                <XIcon className="h-5 w-5" />
++              </button>
++            )}
+           </div>
+         </div>
+ 
+-        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
++        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4 pb-[calc(var(--tabbar-space)+1rem)] md:pb-4">
+           {!supported && (
+             <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800">
+               Browser ini belum mendukung suara (Web Speech API). Coba Safari di iPhone atau Chrome
 diff --git a/src/components/icons.tsx b/src/components/icons.tsx
-index c3d9725..ea560cd 100644
+index 26f97f9..69ca68e 100644
 --- a/src/components/icons.tsx
 +++ b/src/components/icons.tsx
-@@ -108,3 +108,58 @@ export function CameraIcon({ className }: { className?: string }) {
+@@ -126,3 +126,58 @@ export function SpeakerOffIcon({ className }: { className?: string }) {
      </svg>
    );
  }
@@ -1964,33 +1936,21 @@ index c3d9725..ea560cd 100644
 +  );
 +}
 diff --git a/src/db/schema.ts b/src/db/schema.ts
-index d654b1b..c8651e6 100644
+index d654b1b..c02ca32 100644
 --- a/src/db/schema.ts
 +++ b/src/db/schema.ts
-@@ -1,6 +1,11 @@
+@@ -1,6 +1,8 @@
  import { boolean, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
  
 -export const providerTypeValues = ["gemini", "grok", "openrouter", "custom"] as const;
-+/**
-+ * "grok" (xAI) adalah tipe LAMA yang sudah tidak ditawarkan lagi di pengaturan.
-+ * Nilainya tetap diterima supaya API key yang sudah tersimpan tidak langsung
-+ * mati — pemiliknya bisa menggantinya dengan Groq kapan saja.
-+ */
-+export const providerTypeValues = ["gemini", "groq", "openrouter", "custom", "grok"] as const;
++// "grok" sengaja tetap ada supaya API key xAI lama tidak langsung mati,
++// tapi tidak lagi ditawarkan di daftar pilihan pengguna.
++export const providerTypeValues = ["gemini", "groq", "grok", "openrouter", "custom"] as const;
  export type ProviderType = (typeof providerTypeValues)[number];
  
  /**
-@@ -51,7 +56,7 @@ export const apiProviders = pgTable("api_providers", {
-     .$defaultFn(() => crypto.randomUUID()),
-   /** Pemilik key. Null hanya untuk data lama sebelum ada sistem akun. */
-   userId: uuid("user_id"),
--  type: text("type").notNull(), // gemini | grok | openrouter | custom
-+  type: text("type").notNull(), // gemini | groq | openrouter | custom (+ grok lama)
-   label: text("label").notNull(),
-   apiKey: text("api_key").notNull().default(""),
-   baseUrl: text("base_url"),
 diff --git a/src/lib/ai/index.ts b/src/lib/ai/index.ts
-index 6a87d20..5d1d527 100644
+index 6a87d20..ff7e8d9 100644
 --- a/src/lib/ai/index.ts
 +++ b/src/lib/ai/index.ts
 @@ -15,6 +15,13 @@ export async function generateCharacterReply(
@@ -2003,22 +1963,18 @@ index 6a87d20..5d1d527 100644
 +        baseUrl: input.baseUrl || PROVIDER_META.groq.baseUrl!,
 +        providerLabel: "Groq",
 +      });
-+    // Tipe lama: key xAI yang belum sempat diganti tetap bisa dipakai.
++    // Key xAI lama tetap dilayani walau tidak lagi ditawarkan di daftar pilihan.
      case "grok":
        return generateOpenAICompatibleReply({
          ...input,
 diff --git a/src/lib/ai/providerDefaults.ts b/src/lib/ai/providerDefaults.ts
-index cd20a96..e7f1a07 100644
+index cd20a96..8e9e3f8 100644
 --- a/src/lib/ai/providerDefaults.ts
 +++ b/src/lib/ai/providerDefaults.ts
-@@ -10,8 +10,20 @@ export const PROVIDER_META: Record<
+@@ -10,6 +10,14 @@ export const PROVIDER_META: Record<
      needsBaseUrl: false,
      keyHelpUrl: "https://aistudio.google.com/apikey",
    },
-+  /**
-+   * Groq — menggantikan xAI/Grok yang dihapus dari WaiChat.
-+   * Server Groq sangat cepat dan punya kuota gratis yang cukup untuk chat.
-+   */
 +  groq: {
 +    name: "Groq",
 +    defaultModel: "llama-3.3-70b-versatile",
@@ -2026,28 +1982,23 @@ index cd20a96..e7f1a07 100644
 +    needsBaseUrl: false,
 +    keyHelpUrl: "https://console.groq.com/keys",
 +  },
-+  /** Tipe lama (xAI). Tidak ditawarkan lagi, hanya untuk key yang sudah ada. */
++  // Tidak ditawarkan lagi, hanya untuk mempertahankan key lama.
    grok: {
--    name: "Grok (xAI)",
-+    name: "Grok (xAI) — lama",
+     name: "Grok (xAI)",
      defaultModel: "grok-4",
-     baseUrl: "https://api.x.ai/v1",
-     needsBaseUrl: false,
-@@ -32,4 +44,5 @@ export const PROVIDER_META: Record<
+@@ -32,4 +40,4 @@ export const PROVIDER_META: Record<
    },
  };
  
 -export const PROVIDER_ORDER: ProviderType[] = ["gemini", "grok", "openrouter", "custom"];
-+/** Urutan yang ditawarkan di pengaturan. xAI sengaja tidak ada di daftar ini. */
 +export const PROVIDER_ORDER: ProviderType[] = ["gemini", "groq", "openrouter", "custom"];
 diff --git a/src/types/chat.ts b/src/types/chat.ts
-index 5f73077..ca973c1 100644
+index 5f73077..71669b1 100644
 --- a/src/types/chat.ts
 +++ b/src/types/chat.ts
-@@ -1,4 +1,5 @@
+@@ -1,4 +1,4 @@
 -export type ProviderType = "gemini" | "grok" | "openrouter" | "custom";
-+/** "grok" hanya untuk key xAI lama — tidak ditawarkan lagi di pengaturan. */
-+export type ProviderType = "gemini" | "groq" | "openrouter" | "custom" | "grok";
++export type ProviderType = "gemini" | "groq" | "grok" | "openrouter" | "custom";
  
  export type ProviderSummary = {
    id: string;
