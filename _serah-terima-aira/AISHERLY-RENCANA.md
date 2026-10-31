@@ -108,43 +108,45 @@ Yang perlu disiapkan:
 
 ## 5. Urutan pengerjaan
 
+**Cakupan: PARITAS PENUH.** Aisherly = WaiChat versi online. Semua fitur dan
+pengaturan disamakan, bedanya data disimpan di server per akun, bukan di HP.
+
 Satu PR kecil per langkah, semuanya bisa dibalik.
 
-### Tahap 1 — yang tidak butuh server baru
+| Tahap | Isi | Butuh storage baru? | Status |
+|---|---|---|---|
+| **1a** | Profil user | tidak | ✅ selesai (`79070e8`) |
+| **1b** | Aksi per pesan: salin, ulangi balasan, hapus | tidak | ← sekarang |
+| **1c** | Suara lokal (TTS): baca balasan, preset, kecepatan, nada, jeda | tidak | |
+| **1d** | Multi API key + auto-fallback 429 | tidak | |
+| **2a** | Tema terang / gelap / ikut sistem | tidak | |
+| **2b** | Navigasi 5 menu (Chat · Karakter · Suara · Profil · Setelan) | tidak | |
+| **2c** | Latar chat custom + 5 latar animasi + gelembung tembus pandang | tidak (gambar boleh di server) | |
+| **2d** | Gaya gelembung, Sakelar, dan kerapian Setelan | tidak | |
+| **3a** | Sambungkan object storage + endpoint presigned URL | **ya** | |
+| **3b** | Audio: suara telepon per karakter | **ya** | |
+| **3c** | Video saat chat (panel 16:9 / latar penuh) | **ya** | |
+| **3d** | Video video call + zoom 100–200% | **ya** | |
+| **4** | Panggilan suara & video call (butuh 3b–3d) | — | |
 
-| # | Fitur | Kenapa duluan |
+### Kenapa urutannya begini
+
+- **1b–1d** tidak menyentuh database, cepat terasa, dan aman.
+- **2a–2d** adalah wajah aplikasi. Dikerjakan berurutan karena tema harus ada
+  dulu sebelum navigasi dan latar chat bisa mengikutinya. Ini juga satu-satunya
+  tahap yang **menyentuh `globals.css`** — dan sekarang alasannya terukur:
+  paritas tampilan memang membutuhkannya.
+- **3a–3d** adalah tembok teknis (lihat §4). Baru masuk setelah storage siap.
+- **4** tidak mungkin dikerjakan sebelum medianya ada.
+
+### Yang tetap membedakan Aisherly dari WaiChat
+
+| | WaiChat | Aisherly |
 |---|---|---|
-| 1 | **Profil user** | Sekali isi, semua karakter langsung manggil kamu dengan benar |
-| 2 | **Tema terang/gelap** | Murni tampilan, cepat terasa |
-| 3 | **Aksi per pesan** (salin, ulangi, hapus) | Mandiri, tidak menyentuh data |
-| 4 | **Suara lokal (TTS)** | Tanpa API key, tanpa biaya, langsung bikin hidup |
-
-Keempatnya tidak perlu storage baru dan tidak menyentuh skema database
-(kecuali profil user — satu kolom).
-
-### Tahap 2 — tampilan
-
-| # | Fitur |
-|---|---|
-| 5 | Navigasi 5 menu (butuh tema dari tahap 1) |
-| 6 | Latar chat custom + latar animasi + gelembung tembus pandang |
-| 7 | Penanda 📖 dan penghitung 10 karakter dibuat lebih jelas |
-
-### Tahap 3 — media (paling berat)
-
-| # | Fitur |
-|---|---|
-| 8 | Sambungkan object storage + endpoint presigned URL |
-| 9 | Unggah 1 audio (suara telepon) — paling ringan, uji dulu di sini |
-| 10 | Video saat chat (panel 16:9) |
-| 11 | Video video call + zoom 100–200% |
-| 12 | Panggilan suara & video call (butuh 9–11) |
-
-**Saran:** jangan mulai dari tahap 3. Media adalah fitur paling mahal dan paling
-gampang bikin frustrasi kalau storage belum siap. Tahap 1 memberi hasil terasa
-dalam hitungan hari.
-
----
+| Data | perangkat (IndexedDB) | server, per akun |
+| Akun | tidak ada | email + kata sandi |
+| Cadangan JSON | ada | tidak perlu |
+| Lintas perangkat | tidak | ya |
 
 ## 6. Yang tidak bisa dibawa apa adanya
 
